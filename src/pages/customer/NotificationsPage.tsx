@@ -48,28 +48,28 @@ const NotificationsPage = () => {
       ) : (
         <ul className="space-y-2">
           {notifications.map((n) => {
-            const Wrapper = n.link ? Link : "div";
-            const wrapperProps = n.link ? { to: n.link } : ({} as never);
+            const className = cn(
+              "block rounded-2xl bg-card p-4 shadow-card transition-colors",
+              !n.read_at && "ring-1 ring-foreground/20",
+            );
+            const inner = (
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-display text-sm font-bold">{n.title}</p>
+                  {n.body ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{n.body}</p> : null}
+                </div>
+                <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {new Date(n.created_at).toLocaleDateString("en-GB")}
+                </span>
+              </div>
+            );
             return (
               <li key={n.id}>
-                {/* @ts-expect-error dynamic component */}
-                <Wrapper
-                  {...wrapperProps}
-                  className={cn(
-                    "block rounded-2xl bg-card p-4 shadow-card transition-colors",
-                    !n.read_at && "ring-1 ring-foreground/20",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-display text-sm font-bold">{n.title}</p>
-                      {n.body ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{n.body}</p> : null}
-                    </div>
-                    <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground">
-                      {new Date(n.created_at).toLocaleDateString("en-GB")}
-                    </span>
-                  </div>
-                </Wrapper>
+                {n.link ? (
+                  <Link to={n.link} className={className}>{inner}</Link>
+                ) : (
+                  <div className={className}>{inner}</div>
+                )}
               </li>
             );
           })}

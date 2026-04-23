@@ -48,11 +48,11 @@ const AddressesPage = () => {
         phone: String(fd.get("phone") ?? "") || undefined,
       });
       if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
-      const { error } = await supabase.from("addresses").insert({
+      const { error } = await supabase.from("addresses").insert([{
         ...parsed.data,
         user_id: user.id,
         is_default: addresses.length === 0,
-      });
+      }]);
       if (error) throw error;
     },
     onSuccess: () => {
