@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Eye, EyeOff, Info, Loader2, Zap } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Info, Loader2, Sparkles, Zap } from "lucide-react";
 import { z } from "zod";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,28 @@ const loginSchema = z.object({
   password: z.string().min(8, "At least 8 characters").max(128),
 });
 
-const testAccounts = [
-  { role: "Customer", email: "customer@test.bizorder", color: "bg-foreground/10" },
-  { role: "Business", email: "provider@test.bizorder", color: "bg-foreground/15" },
-  { role: "Crew", email: "crew@test.bizorder", color: "bg-foreground/10" },
-  { role: "Admin", email: "admin@test.bizorder", color: "bg-foreground/15" },
+const TEST_PASSWORD = "Test1234!";
+
+type SeedRole = "customer" | "business";
+
+const testAccounts: {
+  role: string;
+  email: string;
+  signupRole: SeedRole;
+  fullName: string;
+  color: string;
+}[] = [
+  { role: "Customer", email: "customer@test.bizorder", signupRole: "customer", fullName: "Test Customer", color: "bg-foreground/10" },
+  { role: "Business", email: "provider@test.bizorder", signupRole: "business", fullName: "Test Provider", color: "bg-foreground/15" },
+  { role: "Crew", email: "crew@test.bizorder", signupRole: "business", fullName: "Test Crew", color: "bg-foreground/10" },
+  { role: "Admin", email: "admin@test.bizorder", signupRole: "customer", fullName: "Test Admin", color: "bg-foreground/15" },
 ];
+
+const roleHomeFor = (role: string | null | undefined) => {
+  if (role === "admin") return "/admin";
+  if (role === "business") return "/business";
+  return "/customer";
+};
 
 const LoginPage = () => {
   const { toast } = useToast();
