@@ -34,6 +34,7 @@ const testAccounts: {
 const roleHomeFor = (role: string | null | undefined) => {
   if (role === "admin") return "/admin";
   if (role === "business") return "/business";
+  if (role === "crew") return "/crew";
   return "/customer";
 };
 
