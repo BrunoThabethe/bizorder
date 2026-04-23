@@ -40,6 +40,20 @@ import PayoutsPage from "./pages/business/PayoutsPage.tsx";
 import BusinessNotificationsPage from "./pages/business/BusinessNotificationsPage.tsx";
 import CrewManagementPage from "./pages/business/CrewManagementPage.tsx";
 import CrewDashboardPage from "./pages/crew/CrewDashboardPage.tsx";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage.tsx";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage.tsx";
+import AdminUsersPage from "./pages/admin/AdminUsersPage.tsx";
+import AdminBusinessesPage from "./pages/admin/AdminBusinessesPage.tsx";
+import AdminVerificationPage from "./pages/admin/AdminVerificationPage.tsx";
+import AdminDisputesPage from "./pages/admin/AdminDisputesPage.tsx";
+import AdminPayoutsPage from "./pages/admin/AdminPayoutsPage.tsx";
+import AdminUploadsPage from "./pages/admin/AdminUploadsPage.tsx";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage.tsx";
+import AdminAiAssistantPage from "./pages/admin/AdminAiAssistantPage.tsx";
+import AdminCampaignsPage from "./pages/admin/AdminCampaignsPage.tsx";
+import AdminNewsletterPage from "./pages/admin/AdminNewsletterPage.tsx";
+import AdminSettingsPage from "./pages/admin/AdminSettingsPage.tsx";
+import AdminAuditPage from "./pages/admin/AdminAuditPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +105,22 @@ const App = () => (
 
             {/* Crew sub-portal */}
             <Route path="/crew" element={<RoleGuard allow={["crew"]}><CrewDashboardPage /></RoleGuard>} />
+
+            {/* Admin portal */}
+            <Route path="/admin" element={<RoleGuard allow={["admin"]}><AdminDashboardPage /></RoleGuard>} />
+            <Route path="/admin/orders" element={<RoleGuard allow={["admin"]}><AdminOrdersPage /></RoleGuard>} />
+            <Route path="/admin/users" element={<RoleGuard allow={["admin"]}><AdminUsersPage /></RoleGuard>} />
+            <Route path="/admin/businesses" element={<RoleGuard allow={["admin"]}><AdminBusinessesPage /></RoleGuard>} />
+            <Route path="/admin/verification" element={<RoleGuard allow={["admin"]}><AdminVerificationPage /></RoleGuard>} />
+            <Route path="/admin/disputes" element={<RoleGuard allow={["admin"]}><AdminDisputesPage /></RoleGuard>} />
+            <Route path="/admin/payouts" element={<RoleGuard allow={["admin"]}><AdminPayoutsPage /></RoleGuard>} />
+            <Route path="/admin/uploads" element={<RoleGuard allow={["admin"]}><AdminUploadsPage /></RoleGuard>} />
+            <Route path="/admin/analytics" element={<RoleGuard allow={["admin"]}><AdminAnalyticsPage /></RoleGuard>} />
+            <Route path="/admin/ai-assistant" element={<RoleGuard allow={["admin"]}><AdminAiAssistantPage /></RoleGuard>} />
+            <Route path="/admin/campaigns" element={<RoleGuard allow={["admin"]}><AdminCampaignsPage /></RoleGuard>} />
+            <Route path="/admin/newsletter" element={<RoleGuard allow={["admin"]}><AdminNewsletterPage /></RoleGuard>} />
+            <Route path="/admin/settings" element={<RoleGuard allow={["admin"]}><AdminSettingsPage /></RoleGuard>} />
+            <Route path="/admin/audit" element={<RoleGuard allow={["admin"]}><AdminAuditPage /></RoleGuard>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
