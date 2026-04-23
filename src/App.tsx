@@ -54,6 +54,20 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/refunds" element={<RefundPage />} />
             <Route path="/rules" element={<PlatformRulesPage />} />
+
+            {/* Customer portal */}
+            <Route path="/customer" element={<RoleGuard allow={["customer"]}><CustomerDashboardPage /></RoleGuard>} />
+            <Route path="/customer/browse" element={<RoleGuard allow={["customer"]}><BrowseBusinessesPage /></RoleGuard>} />
+            <Route path="/customer/business/:slug" element={<RoleGuard allow={["customer"]}><BusinessProfilePage /></RoleGuard>} />
+            <Route path="/customer/order/new" element={<RoleGuard allow={["customer"]}><CreateOrderPage /></RoleGuard>} />
+            <Route path="/customer/orders" element={<RoleGuard allow={["customer"]}><OrdersPage /></RoleGuard>} />
+            <Route path="/customer/orders/:orderId" element={<RoleGuard allow={["customer"]}><OrderDetailPage /></RoleGuard>} />
+            <Route path="/customer/messages" element={<RoleGuard allow={["customer"]}><MessagesPage /></RoleGuard>} />
+            <Route path="/customer/addresses" element={<RoleGuard allow={["customer"]}><AddressesPage /></RoleGuard>} />
+            <Route path="/customer/notifications" element={<RoleGuard allow={["customer"]}><NotificationsPage /></RoleGuard>} />
+            <Route path="/customer/reviews" element={<RoleGuard allow={["customer"]}><ReviewsPage /></RoleGuard>} />
+            <Route path="/customer/settings" element={<RoleGuard allow={["customer"]}><SettingsPage /></RoleGuard>} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
