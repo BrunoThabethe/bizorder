@@ -30,6 +30,16 @@ import AddressesPage from "./pages/customer/AddressesPage.tsx";
 import NotificationsPage from "./pages/customer/NotificationsPage.tsx";
 import ReviewsPage from "./pages/customer/ReviewsPage.tsx";
 import SettingsPage from "./pages/customer/SettingsPage.tsx";
+import BusinessDashboardPage from "./pages/business/BusinessDashboardPage.tsx";
+import OrdersQueuePage from "./pages/business/OrdersQueuePage.tsx";
+import BusinessOrderDetailPage from "./pages/business/BusinessOrderDetailPage.tsx";
+import ServicesManagerPage from "./pages/business/ServicesManagerPage.tsx";
+import BusinessSettingsPage from "./pages/business/BusinessSettingsPage.tsx";
+import BusinessReviewsPage from "./pages/business/BusinessReviewsPage.tsx";
+import PayoutsPage from "./pages/business/PayoutsPage.tsx";
+import BusinessNotificationsPage from "./pages/business/BusinessNotificationsPage.tsx";
+import CrewManagementPage from "./pages/business/CrewManagementPage.tsx";
+import CrewDashboardPage from "./pages/crew/CrewDashboardPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +77,20 @@ const App = () => (
             <Route path="/customer/notifications" element={<RoleGuard allow={["customer"]}><NotificationsPage /></RoleGuard>} />
             <Route path="/customer/reviews" element={<RoleGuard allow={["customer"]}><ReviewsPage /></RoleGuard>} />
             <Route path="/customer/settings" element={<RoleGuard allow={["customer"]}><SettingsPage /></RoleGuard>} />
+
+            {/* Provider portal */}
+            <Route path="/business" element={<RoleGuard allow={["business"]}><BusinessDashboardPage /></RoleGuard>} />
+            <Route path="/business/orders" element={<RoleGuard allow={["business"]}><OrdersQueuePage /></RoleGuard>} />
+            <Route path="/business/orders/:orderId" element={<RoleGuard allow={["business"]}><BusinessOrderDetailPage /></RoleGuard>} />
+            <Route path="/business/services" element={<RoleGuard allow={["business"]}><ServicesManagerPage /></RoleGuard>} />
+            <Route path="/business/settings" element={<RoleGuard allow={["business"]}><BusinessSettingsPage /></RoleGuard>} />
+            <Route path="/business/reviews" element={<RoleGuard allow={["business"]}><BusinessReviewsPage /></RoleGuard>} />
+            <Route path="/business/payouts" element={<RoleGuard allow={["business"]}><PayoutsPage /></RoleGuard>} />
+            <Route path="/business/notifications" element={<RoleGuard allow={["business"]}><BusinessNotificationsPage /></RoleGuard>} />
+            <Route path="/business/crew" element={<RoleGuard allow={["business"]}><CrewManagementPage /></RoleGuard>} />
+
+            {/* Crew sub-portal */}
+            <Route path="/crew" element={<RoleGuard allow={["crew"]}><CrewDashboardPage /></RoleGuard>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

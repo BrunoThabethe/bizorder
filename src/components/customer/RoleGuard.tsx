@@ -25,7 +25,14 @@ export const RoleGuard = ({ allow, children }: RoleGuardProps) => {
   }
 
   if (role && !allow.includes(role)) {
-    const home = role === "admin" ? "/admin" : role === "business" ? "/business" : "/customer";
+    const home =
+      role === "admin"
+        ? "/admin"
+        : role === "business"
+          ? "/business"
+          : role === "crew"
+            ? "/crew"
+            : "/customer";
     return <Navigate to={home} replace />;
   }
 
