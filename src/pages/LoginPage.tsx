@@ -188,10 +188,27 @@ const LoginPage = () => {
             </div>
             <h2 className="mt-4 font-display text-2xl font-bold">Test accounts</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Tap any role to auto-fill the form.
+              Tap any role to auto-fill, then sign in. First time? Create them in one click.
             </p>
 
-            <ul className="mt-5 space-y-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="mt-4 w-full"
+              onClick={seedTestAccounts}
+              disabled={seeding}
+            >
+              {seeding ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" /> Create test accounts
+                </>
+              )}
+            </Button>
+
+            <ul className="mt-4 space-y-2">
               {testAccounts.map((acc) => (
                 <li key={acc.email}>
                   <button
@@ -212,7 +229,7 @@ const LoginPage = () => {
             <div className="mt-6 flex gap-2 rounded-xl bg-foreground/5 p-4 text-xs text-muted-foreground">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
               <p>
-                Default password: <span className="font-mono font-semibold text-foreground">Test1234!</span> — seed these accounts via signup to use them.
+                Password: <span className="font-mono font-semibold text-foreground">Test1234!</span>. Email confirmation may need to be turned off in Supabase Auth for instant sign in.
               </p>
             </div>
           </div>
