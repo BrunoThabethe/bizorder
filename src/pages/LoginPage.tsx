@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Eye, EyeOff, Info, Loader2, Zap } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Info, Loader2, Sparkles, Zap } from "lucide-react";
 import { z } from "zod";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,28 @@ const loginSchema = z.object({
   password: z.string().min(8, "At least 8 characters").max(128),
 });
 
-const testAccounts = [
-  { role: "Customer", email: "customer@test.bizorder", color: "bg-foreground/10" },
-  { role: "Business", email: "provider@test.bizorder", color: "bg-foreground/15" },
-  { role: "Crew", email: "crew@test.bizorder", color: "bg-foreground/10" },
-  { role: "Admin", email: "admin@test.bizorder", color: "bg-foreground/15" },
+const TEST_PASSWORD = "Test1234!";
+
+type SeedRole = "customer" | "business";
+
+const testAccounts: {
+  role: string;
+  email: string;
+  signupRole: SeedRole;
+  fullName: string;
+  color: string;
+}[] = [
+  { role: "Customer", email: "customer@test.bizorder", signupRole: "customer", fullName: "Test Customer", color: "bg-foreground/10" },
+  { role: "Business", email: "provider@test.bizorder", signupRole: "business", fullName: "Test Provider", color: "bg-foreground/15" },
+  { role: "Crew", email: "crew@test.bizorder", signupRole: "business", fullName: "Test Crew", color: "bg-foreground/10" },
+  { role: "Admin", email: "admin@test.bizorder", signupRole: "customer", fullName: "Test Admin", color: "bg-foreground/15" },
 ];
+
+const roleHomeFor = (role: string | null | undefined) => {
+  if (role === "admin") return "/admin";
+  if (role === "business") return "/business";
+  return "/customer";
+};
 
 const LoginPage = () => {
   const { toast } = useToast();
@@ -28,6 +44,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -42,20 +59,50 @@ const LoginPage = () => {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-
-    if (error) {
-      toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      setLoading(false);
+      toast({ title: "Sign in failed", description: error?.message ?? "Try again", variant: "destructive" });
       return;
     }
+
+    const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });
+    setLoading(false);
     toast({ title: "Welcome back", description: "You're signed in." });
-    navigate("/");
+    navigate(roleHomeFor(roleData as string | null));
   };
 
   const fillTestAccount = (testEmail: string) => {
     setEmail(testEmail);
-    setPassword("Test1234!");
+    setPassword(TEST_PASSWORD);
+  };
+
+  const seedTestAccounts = async () => {
+    setSeeding(true);
+    let created = 0;
+    let existed = 0;
+    for (const acc of testAccounts) {
+      const { error } = await supabase.auth.signUp({
+        email: acc.email,
+        password: TEST_PASSWORD,
+        options: {
+          data: {
+            full_name: acc.fullName,
+            business_name: acc.signupRole === "business" ? acc.fullName : null,
+            role: acc.signupRole,
+          },
+        },
+      });
+      if (!error) created += 1;
+      else if (/registered|exists/i.test(error.message)) existed += 1;
+    }
+    // Sign back out — signUp leaves the last account signed in.
+    await supabase.auth.signOut();
+    setSeeding(false);
+    toast({
+      title: "Test accounts ready",
+      description: `${created} created, ${existed} already existed. Password: ${TEST_PASSWORD}`,
+    });
   };
 
   return (
@@ -141,10 +188,27 @@ const LoginPage = () => {
             </div>
             <h2 className="mt-4 font-display text-2xl font-bold">Test accounts</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Tap any role to auto-fill the form.
+              Tap any role to auto-fill, then sign in. First time? Create them in one click.
             </p>
 
-            <ul className="mt-5 space-y-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="mt-4 w-full"
+              onClick={seedTestAccounts}
+              disabled={seeding}
+            >
+              {seeding ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" /> Create test accounts
+                </>
+              )}
+            </Button>
+
+            <ul className="mt-4 space-y-2">
               {testAccounts.map((acc) => (
                 <li key={acc.email}>
                   <button
@@ -165,7 +229,7 @@ const LoginPage = () => {
             <div className="mt-6 flex gap-2 rounded-xl bg-foreground/5 p-4 text-xs text-muted-foreground">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
               <p>
-                Default password: <span className="font-mono font-semibold text-foreground">Test1234!</span> — seed these accounts via signup to use them.
+                Password: <span className="font-mono font-semibold text-foreground">Test1234!</span>. Email confirmation may need to be turned off in Supabase Auth for instant sign in.
               </p>
             </div>
           </div>
