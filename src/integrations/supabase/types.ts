@@ -131,6 +131,39 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_members: {
+        Row: {
+          business_id: string
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          role_title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean
+          role_title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          role_title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           attachment_url: string | null
@@ -237,6 +270,81 @@ export type Database = {
           },
         ]
       }
+      order_progress: {
+        Row: {
+          author_id: string
+          business_id: string
+          created_at: string
+          id: string
+          media_urls: string[]
+          note: string | null
+          order_id: string
+          stage: string | null
+          task_id: string | null
+        }
+        Insert: {
+          author_id: string
+          business_id: string
+          created_at?: string
+          id?: string
+          media_urls?: string[]
+          note?: string | null
+          order_id: string
+          stage?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          author_id?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          media_urls?: string[]
+          note?: string | null
+          order_id?: string
+          stage?: string | null
+          task_id?: string | null
+        }
+        Relationships: []
+      }
+      order_tasks: {
+        Row: {
+          business_id: string
+          created_at: string
+          crew_member_id: string | null
+          due_at: string | null
+          id: string
+          instructions: string | null
+          order_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          crew_member_id?: string | null
+          due_at?: string | null
+          id?: string
+          instructions?: string | null
+          order_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          crew_member_id?: string | null
+          due_at?: string | null
+          id?: string
+          instructions?: string | null
+          order_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           address_id: string | null
@@ -244,8 +352,10 @@ export type Database = {
           created_at: string
           currency: string
           customer_id: string
+          estimated_completion_at: string | null
           id: string
           notes: string | null
+          rejected_reason: string | null
           scheduled_for: string | null
           service_id: string | null
           status: Database["public"]["Enums"]["order_status"]
@@ -258,8 +368,10 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_id: string
+          estimated_completion_at?: string | null
           id?: string
           notes?: string | null
+          rejected_reason?: string | null
           scheduled_for?: string | null
           service_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -272,8 +384,10 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_id?: string
+          estimated_completion_at?: string | null
           id?: string
           notes?: string | null
+          rejected_reason?: string | null
           scheduled_for?: string | null
           service_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -303,6 +417,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payouts: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          currency: string
+          id: string
+          order_id: string | null
+          paid_at: string | null
+          released_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          order_id?: string | null
+          paid_at?: string | null
+          released_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          order_id?: string | null
+          paid_at?: string | null
+          released_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -458,6 +611,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      crew_member_id_for: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: string
+      }
       get_primary_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -469,9 +626,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_business_owner: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_crew_of_business: {
+        Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "customer" | "business" | "admin"
+      app_role: "customer" | "business" | "admin" | "crew"
       order_status:
         | "pending"
         | "accepted"
@@ -606,7 +771,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["customer", "business", "admin"],
+      app_role: ["customer", "business", "admin", "crew"],
       order_status: [
         "pending",
         "accepted",
