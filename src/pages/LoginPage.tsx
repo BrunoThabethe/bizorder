@@ -44,6 +44,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -58,20 +59,50 @@ const LoginPage = () => {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-
-    if (error) {
-      toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      setLoading(false);
+      toast({ title: "Sign in failed", description: error?.message ?? "Try again", variant: "destructive" });
       return;
     }
+
+    const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });
+    setLoading(false);
     toast({ title: "Welcome back", description: "You're signed in." });
-    navigate("/");
+    navigate(roleHomeFor(roleData as string | null));
   };
 
   const fillTestAccount = (testEmail: string) => {
     setEmail(testEmail);
-    setPassword("Test1234!");
+    setPassword(TEST_PASSWORD);
+  };
+
+  const seedTestAccounts = async () => {
+    setSeeding(true);
+    let created = 0;
+    let existed = 0;
+    for (const acc of testAccounts) {
+      const { error } = await supabase.auth.signUp({
+        email: acc.email,
+        password: TEST_PASSWORD,
+        options: {
+          data: {
+            full_name: acc.fullName,
+            business_name: acc.signupRole === "business" ? acc.fullName : null,
+            role: acc.signupRole,
+          },
+        },
+      });
+      if (!error) created += 1;
+      else if (/registered|exists/i.test(error.message)) existed += 1;
+    }
+    // Sign back out — signUp leaves the last account signed in.
+    await supabase.auth.signOut();
+    setSeeding(false);
+    toast({
+      title: "Test accounts ready",
+      description: `${created} created, ${existed} already existed. Password: ${TEST_PASSWORD}`,
+    });
   };
 
   return (
