@@ -40,7 +40,7 @@ const CrewDashboardPage = () => {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderTask["status"] }) => {
-      const { error } = await supabase.from("order_tasks" as never).update({ status }).eq("id", id);
+      const { error } = await sb.from("order_tasks").update({ status }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -105,7 +105,7 @@ const CrewTaskCard = ({
     try {
       const urls: string[] = [];
       for (const f of files) urls.push(await uploadOrderMedia(user.id, f));
-      const { error } = await supabase.from("order_progress" as never).insert({
+      const { error } = await sb.from("order_progress").insert({
         order_id: task.order_id,
         business_id: task.business_id,
         task_id: task.id,

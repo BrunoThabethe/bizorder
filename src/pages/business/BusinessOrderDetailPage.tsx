@@ -98,7 +98,7 @@ const BusinessOrderDetailPage = () => {
       setUploading(true);
       const urls: string[] = [];
       for (const f of files) urls.push(await uploadOrderMedia(user.id, f));
-      const { error } = await supabase.from("order_progress" as never).insert({
+      const { error } = await sb.from("order_progress").insert({
         order_id: orderId,
         business_id: businessId,
         author_id: user.id,
@@ -123,7 +123,7 @@ const BusinessOrderDetailPage = () => {
 
   const addTask = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("order_tasks" as never).insert({
+      const { error } = await sb.from("order_tasks").insert({
         order_id: orderId,
         business_id: businessId,
         crew_member_id: taskCrew || null,

@@ -65,7 +65,7 @@ const CrewManagementPage = () => {
       if (currentSession) await supabase.auth.setSession(currentSession);
 
       // Add crew_member row + ensure crew role
-      const { error: cmErr } = await supabase.from("crew_members" as never).insert({
+      const { error: cmErr } = await sb.from("crew_members").insert({
         business_id: business.id,
         user_id: newUserId,
         display_name: displayName,
@@ -89,7 +89,7 @@ const CrewManagementPage = () => {
 
   const toggle = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
-      const { error } = await supabase.from("crew_members" as never).update({ is_active: active }).eq("id", id);
+      const { error } = await sb.from("crew_members").update({ is_active: active }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["business-crew", business?.id] }),
