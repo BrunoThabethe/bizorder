@@ -25,6 +25,7 @@ import {
   STATUS_LABEL,
   STATUS_TONE,
   uploadOrderMedia,
+  sb,
   type OrderStatus,
 } from "@/lib/business/queries";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,7 +78,7 @@ const BusinessOrderDetailPage = () => {
 
   const setStatus = useMutation({
     mutationFn: async (next: OrderStatus) => {
-      const patch: Record<string, unknown> = { status: next };
+      const patch: { status: OrderStatus; estimated_completion_at?: string; rejected_reason?: string } = { status: next };
       if (next === "accepted" && eta) patch.estimated_completion_at = new Date(eta).toISOString();
       if (next === "cancelled" && rejectReason) patch.rejected_reason = rejectReason;
       const { error } = await supabase.from("orders").update(patch).eq("id", orderId);
