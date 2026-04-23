@@ -19,7 +19,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchCrew, fetchMyBusiness } from "@/lib/business/queries";
+import { fetchCrew, fetchMyBusiness, sb } from "@/lib/business/queries";
 import { cn } from "@/lib/utils";
 
 const CrewManagementPage = () => {
