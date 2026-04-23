@@ -3,33 +3,51 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index.tsx";
+import HowItWorksPage from "./pages/HowItWorksPage.tsx";
+import ForBusinessesPage from "./pages/ForBusinessesPage.tsx";
+import ForCustomersPage from "./pages/ForCustomersPage.tsx";
+import PricingPage from "./pages/PricingPage.tsx";
+import ContactPage from "./pages/ContactPage.tsx";
+import LoginPage from "./pages/LoginPage.tsx";
+import SignupPage from "./pages/SignupPage.tsx";
+import PrivacyPage from "./pages/PrivacyPage.tsx";
+import TermsPage from "./pages/TermsPage.tsx";
+import RefundPage from "./pages/RefundPage.tsx";
+import PlatformRulesPage from "./pages/PlatformRulesPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import AuthPage from "./pages/auth.tsx";
-import CustomerDashboard from "./pages/customer-dashboard.tsx";
-import BusinessDashboard from "./pages/business-dashboard.tsx";
-import AdminDashboard from "./pages/admin-dashboard.tsx";
-import { ProtectedRoute } from "./components/protected-route.tsx";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
-          <Route path="/business" element={<ProtectedRoute allowedRoles={["business"]}><BusinessDashboard /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/for-businesses" element={<ForBusinessesPage />} />
+            <Route path="/for-customers" element={<ForCustomersPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/refunds" element={<RefundPage />} />
+            <Route path="/rules" element={<PlatformRulesPage />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
