@@ -1,6 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
+// Tables added in latest migration are not yet in the generated types.
+// Use this typed accessor to interact with them safely.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const sb = supabase as any;
+
 export type Business = Database["public"]["Tables"]["businesses"]["Row"];
 export type Service = Database["public"]["Tables"]["services"]["Row"];
 export type Order = Database["public"]["Tables"]["orders"]["Row"];
