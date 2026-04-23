@@ -94,21 +94,37 @@ export const fetchMyBusiness = async (userId: string) => {
 export const fetchBusinessOrders = async (businessId: string) => {
   const { data, error } = await supabase
     .from("orders")
-    .select("*, services(title), profiles:customer_id(full_name, email)")
+    .select("*, services(title)")
     .eq("business_id", businessId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data;
+  const orders = data ?? [];
+  const customerIds = Array.from(new Set(orders.map((o) => o.customer_id)));
+  let profiles: Record<string, { full_name: string | null; email: string }> = {};
+  if (customerIds.length) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", customerIds);
+    profiles = Object.fromEntries((profs ?? []).map((p) => [p.id, { full_name: p.full_name, email: p.email }]));
+  }
+  return orders.map((o) => ({ ...o, profiles: profiles[o.customer_id] ?? null }));
 };
 
 export const fetchBusinessOrderById = async (orderId: string) => {
   const { data, error } = await supabase
     .from("orders")
-    .select("*, services(title, description), addresses(*), profiles:customer_id(full_name, email)")
+    .select("*, services(title, description), addresses(*)")
     .eq("id", orderId)
     .maybeSingle();
   if (error) throw error;
-  return data;
+  if (!data) return null;
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", data.customer_id)
+    .maybeSingle();
+  return { ...data, profiles: prof ?? null };
 };
 
 export const fetchBusinessServices = async (businessId: string) => {
@@ -124,11 +140,18 @@ export const fetchBusinessServices = async (businessId: string) => {
 export const fetchBusinessReviews = async (businessId: string) => {
   const { data, error } = await supabase
     .from("reviews")
-    .select("*, profiles:customer_id(full_name)")
+    .select("*")
     .eq("business_id", businessId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data;
+  const reviews = data ?? [];
+  const customerIds = Array.from(new Set(reviews.map((r) => r.customer_id)));
+  let profiles: Record<string, { full_name: string | null }> = {};
+  if (customerIds.length) {
+    const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", customerIds);
+    profiles = Object.fromEntries((profs ?? []).map((p) => [p.id, { full_name: p.full_name }]));
+  }
+  return reviews.map((r) => ({ ...r, profiles: profiles[r.customer_id] ?? null }));
 };
 
 export const fetchPayouts = async (businessId: string) => {
