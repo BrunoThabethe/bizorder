@@ -1,0 +1,140 @@
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+export type Business = Database["public"]["Tables"]["businesses"]["Row"];
+export type Service = Database["public"]["Tables"]["services"]["Row"];
+export type Order = Database["public"]["Tables"]["orders"]["Row"];
+export type OrderEvent = Database["public"]["Tables"]["order_events"]["Row"];
+export type Message = Database["public"]["Tables"]["messages"]["Row"];
+export type Address = Database["public"]["Tables"]["addresses"]["Row"];
+export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+export type Review = Database["public"]["Tables"]["reviews"]["Row"];
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type OrderStatus = Database["public"]["Enums"]["order_status"];
+
+export const STATUS_LABEL: Record<OrderStatus, string> = {
+  pending: "Pending",
+  accepted: "Accepted",
+  in_progress: "In progress",
+  ready: "Ready",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
+export const STATUS_TONE: Record<OrderStatus, string> = {
+  pending: "bg-muted text-foreground",
+  accepted: "bg-foreground/15 text-foreground",
+  in_progress: "bg-foreground text-background",
+  ready: "bg-foreground/20 text-foreground",
+  completed: "bg-foreground/10 text-muted-foreground",
+  cancelled: "bg-destructive/15 text-destructive",
+};
+
+export const formatPrice = (value: number, currency = "ZAR") =>
+  new Intl.NumberFormat("en-ZA", { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
+
+export const fetchPublishedBusinesses = async () => {
+  const { data, error } = await supabase
+    .from("businesses")
+    .select("*")
+    .eq("is_published", true)
+    .order("rating_avg", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return data as Business[];
+};
+
+export const fetchBusinessBySlug = async (slug: string) => {
+  const { data, error } = await supabase.from("businesses").select("*").eq("slug", slug).maybeSingle();
+  if (error) throw error;
+  return data as Business | null;
+};
+
+export const fetchBusinessServices = async (businessId: string) => {
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .eq("business_id", businessId)
+    .eq("is_active", true)
+    .order("price");
+  if (error) throw error;
+  return data as Service[];
+};
+
+export const fetchMyOrders = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*, businesses(name, slug, logo_url), services(title)")
+    .eq("customer_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+};
+
+export const fetchOrderById = async (orderId: string) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*, businesses(name, slug, logo_url, owner_id), services(title, description), addresses(*)")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+export const fetchOrderEvents = async (orderId: string) => {
+  const { data, error } = await supabase
+    .from("order_events")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at");
+  if (error) throw error;
+  return data as OrderEvent[];
+};
+
+export const fetchOrderMessages = async (orderId: string) => {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at");
+  if (error) throw error;
+  return data as Message[];
+};
+
+export const fetchMyAddresses = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("addresses")
+    .select("*")
+    .eq("user_id", userId)
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as Address[];
+};
+
+export const fetchMyNotifications = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return data as Notification[];
+};
+
+export const fetchMyReviews = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*, businesses(name, slug, logo_url)")
+    .eq("customer_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+};
+
+export const fetchMyProfile = async (userId: string) => {
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+  if (error) throw error;
+  return data as Profile | null;
+};
