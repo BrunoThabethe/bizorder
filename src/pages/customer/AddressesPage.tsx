@@ -48,9 +48,16 @@ const AddressesPage = () => {
         phone: String(fd.get("phone") ?? "") || undefined,
       });
       if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+      const v = parsed.data;
       const { error } = await supabase.from("addresses").insert([{
-        ...parsed.data,
         user_id: user.id,
+        label: v.label,
+        recipient: v.recipient,
+        line1: v.line1,
+        line2: v.line2 ?? null,
+        city: v.city,
+        postal_code: v.postal_code ?? null,
+        phone: v.phone ?? null,
         is_default: addresses.length === 0,
       }]);
       if (error) throw error;
