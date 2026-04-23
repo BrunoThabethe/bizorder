@@ -18,6 +18,18 @@ import TermsPage from "./pages/TermsPage.tsx";
 import RefundPage from "./pages/RefundPage.tsx";
 import PlatformRulesPage from "./pages/PlatformRulesPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import { RoleGuard } from "@/components/customer/RoleGuard";
+import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage.tsx";
+import BrowseBusinessesPage from "./pages/customer/BrowseBusinessesPage.tsx";
+import BusinessProfilePage from "./pages/customer/BusinessProfilePage.tsx";
+import CreateOrderPage from "./pages/customer/CreateOrderPage.tsx";
+import OrderDetailPage from "./pages/customer/OrderDetailPage.tsx";
+import OrdersPage from "./pages/customer/OrdersPage.tsx";
+import MessagesPage from "./pages/customer/MessagesPage.tsx";
+import AddressesPage from "./pages/customer/AddressesPage.tsx";
+import NotificationsPage from "./pages/customer/NotificationsPage.tsx";
+import ReviewsPage from "./pages/customer/ReviewsPage.tsx";
+import SettingsPage from "./pages/customer/SettingsPage.tsx";
 
 const queryClient = new QueryClient();
 
