@@ -71,12 +71,10 @@ const OrderDetailPage = () => {
   const approveCompletion = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not signed in");
-      const { error } = await supabase.from("orders").update({ status: "completed" as OrderStatus }).eq("id", orderId);
-      if (error) throw error;
-      await supabase.from("order_events").insert({ order_id: orderId, actor_id: user.id, type: "approved", message: "Customer approved completion" });
+      await customerConfirmCompletion(orderId);
     },
     onSuccess: () => {
-      toast({ title: "Approved", description: "Thanks — leave a review below." });
+      toast({ title: "Approved", description: "Thanks — payout queued. Leave a review below." });
       qc.invalidateQueries({ queryKey: ["order", orderId] });
       qc.invalidateQueries({ queryKey: ["order-events", orderId] });
     },
