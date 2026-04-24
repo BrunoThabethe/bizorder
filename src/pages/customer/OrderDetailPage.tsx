@@ -19,7 +19,9 @@ import {
   STATUS_TONE,
   type OrderStatus,
 } from "@/lib/customer/queries";
-import { fetchOrderProgress } from "@/lib/business/queries";
+import { customerConfirmCompletion, fetchOrderProgress } from "@/lib/business/queries";
+import { SignedImage } from "@/components/orders/SignedImage";
+import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
 import { cn } from "@/lib/utils";
 
 const OrderDetailPage = () => {
