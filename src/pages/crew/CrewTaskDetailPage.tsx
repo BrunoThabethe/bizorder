@@ -11,11 +11,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
   fetchCrewTaskById,
+  fetchOrderTasksForOrder,
   fetchTaskProgress,
   sb,
   uploadOrderMedia,
   type OrderTask,
 } from "@/lib/business/queries";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE: Record<OrderTask["status"], string> = {
@@ -55,6 +57,29 @@ const CrewTaskDetailPage = () => {
     mutationFn: async (status: OrderTask["status"]) => {
       const { error } = await sb.from("order_tasks").update({ status }).eq("id", taskId);
       if (error) throw error;
+
+      // When marking done, check if all tasks for this order are done.
+      // If so, notify the business owner so they can move the order to "ready".
+      if (status === "done" && t) {
+        const allTasks = await fetchOrderTasksForOrder(t.order_id);
+        const remaining = allTasks.filter((x) => x.id !== taskId && x.status !== "done");
+        if (remaining.length === 0) {
+          const { data: biz } = await supabase
+            .from("businesses")
+            .select("owner_id, name")
+            .eq("id", t.business_id)
+            .maybeSingle();
+          if (biz?.owner_id) {
+            await supabase.from("notifications").insert({
+              user_id: biz.owner_id,
+              type: "tasks_complete",
+              title: "All crew tasks completed",
+              body: `Order #${t.order_id.slice(0, 8)} is ready to be marked as ready for the customer.`,
+              link: `/business/orders/${t.order_id}`,
+            });
+          }
+        }
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crew-task", taskId] });
