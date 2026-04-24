@@ -69,6 +69,11 @@ const LoginPage = () => {
       return;
     }
 
+    // Self-heal: promote the crew seed account to the crew role on sign-in.
+    if (data.user.email === "crew@test.bizorder") {
+      await supabase.rpc("promote_test_crew");
+    }
+
     const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });
     setLoading(false);
     toast({ title: "Welcome back", description: "You're signed in." });
