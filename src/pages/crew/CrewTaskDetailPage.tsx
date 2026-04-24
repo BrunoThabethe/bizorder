@@ -53,6 +53,13 @@ const CrewTaskDetailPage = () => {
     [files],
   );
 
+  const t = task as
+    | (null
+        | (OrderTask & {
+            orders?: { id: string; status: string; notes: string | null; scheduled_for: string | null } | null;
+          }))
+    | undefined;
+
   const updateStatus = useMutation({
     mutationFn: async (status: OrderTask["status"]) => {
       const { error } = await sb.from("order_tasks").update({ status }).eq("id", taskId);
@@ -88,13 +95,6 @@ const CrewTaskDetailPage = () => {
     },
     onError: (e: Error) => toast({ title: "Update failed", description: e.message, variant: "destructive" }),
   });
-
-  const t = task as
-    | (null
-        | (OrderTask & {
-            orders?: { id: string; status: string; notes: string | null; scheduled_for: string | null } | null;
-          }))
-    | undefined;
 
   const post = async () => {
     if (!user || !t) return;
