@@ -133,7 +133,7 @@ const BusinessOrderDetailPage = () => {
         business_id: businessId,
         author_id: user.id,
         note: note || null,
-        media_urls: urls,
+        media_urls: paths,
         stage,
       });
       if (error) throw error;
