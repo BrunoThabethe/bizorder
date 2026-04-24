@@ -30,6 +30,7 @@ import {
 } from "@/lib/business/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { SignedImage } from "@/components/orders/SignedImage";
+import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
