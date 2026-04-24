@@ -222,6 +222,36 @@ export const fetchCrewTasks = async (crewMemberId: string) => {
   return data ?? [];
 };
 
+export const fetchCrewTaskById = async (taskId: string) => {
+  const { data, error } = await sb
+    .from("order_tasks")
+    .select("*, orders(id, status, total, currency, scheduled_for, notes, customer_id)")
+    .eq("id", taskId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+export const fetchTaskProgress = async (taskId: string) => {
+  const { data, error } = await sb
+    .from("order_progress")
+    .select("*")
+    .eq("task_id", taskId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as OrderProgress[];
+};
+
+export const fetchOrderTasksForOrder = async (orderId: string) => {
+  const { data, error } = await sb
+    .from("order_tasks")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at");
+  if (error) throw error;
+  return (data ?? []) as unknown as OrderTask[];
+};
+
 export const uploadOrderMedia = async (userId: string, file: File) => {
   const ext = file.name.split(".").pop() ?? "bin";
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
