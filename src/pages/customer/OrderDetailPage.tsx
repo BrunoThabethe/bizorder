@@ -152,11 +152,18 @@ const OrderDetailPage = () => {
           </div>
         </div>
 
-        {status === "ready" ? (
-          <Button className="mt-5" size="lg" onClick={() => approveCompletion.mutate()} disabled={approveCompletion.isPending}>
-            {approveCompletion.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> Approve completion</>}
-          </Button>
-        ) : null}
+        {status === "ready_for_review" || status === "out_for_delivery" || status === "ready" ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button size="lg" onClick={() => approveCompletion.mutate()} disabled={approveCompletion.isPending}>
+              {approveCompletion.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> Approve completion</>}
+            </Button>
+            <OpenDisputeButton orderId={order.id} variant="outline" />
+          </div>
+        ) : (
+          <div className="mt-5">
+            <OpenDisputeButton orderId={order.id} variant="outline" />
+          </div>
+        )}
       </header>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
