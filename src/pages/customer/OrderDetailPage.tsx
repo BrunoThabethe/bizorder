@@ -19,6 +19,7 @@ import {
   STATUS_TONE,
   type OrderStatus,
 } from "@/lib/customer/queries";
+import { fetchOrderProgress } from "@/lib/business/queries";
 import { cn } from "@/lib/utils";
 
 const OrderDetailPage = () => {
@@ -44,6 +45,11 @@ const OrderDetailPage = () => {
   const { data: messages = [] } = useQuery({
     queryKey: ["order-messages", orderId],
     queryFn: () => fetchOrderMessages(orderId),
+    enabled: !!orderId,
+  });
+  const { data: progressUpdates = [] } = useQuery({
+    queryKey: ["order-progress", orderId],
+    queryFn: () => fetchOrderProgress(orderId),
     enabled: !!orderId,
   });
 
