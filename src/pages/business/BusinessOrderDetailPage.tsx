@@ -29,11 +29,20 @@ import {
   type OrderStatus,
 } from "@/lib/business/queries";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedImage } from "@/components/orders/SignedImage";
+import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-const NEXT_STATUSES: OrderStatus[] = ["pending", "accepted", "in_progress", "ready", "completed", "cancelled"];
+// Statuses the provider can move to from a non-pending state.
+const PROVIDER_NEXT_STATUSES: OrderStatus[] = [
+  "in_progress",
+  "ready",
+  "out_for_delivery",
+  "ready_for_review",
+  "cancelled",
+];
 
 const BusinessOrderDetailPage = () => {
   const { orderId = "" } = useParams();
@@ -92,18 +101,40 @@ const BusinessOrderDetailPage = () => {
     onError: (e: Error) => toast({ title: "Update failed", description: e.message, variant: "destructive" }),
   });
 
+  const updateEta = useMutation({
+    mutationFn: async () => {
+      if (!eta) throw new Error("Pick a date and time");
+      const { error } = await supabase
+        .from("orders")
+        .update({ estimated_completion_at: new Date(eta).toISOString() })
+        .eq("id", orderId);
+      if (error) throw error;
+      await supabase.from("order_events").insert({
+        order_id: orderId,
+        type: "eta_updated",
+        actor_id: user!.id,
+        message: `New ETA: ${new Date(eta).toLocaleString("en-ZA")}`,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["business-order", orderId] });
+      toast({ title: "Estimated completion updated" });
+    },
+    onError: (e: Error) => toast({ title: "Could not update", description: e.message, variant: "destructive" }),
+  });
+
   const addProgress = useMutation({
     mutationFn: async () => {
       if (!user) return;
       setUploading(true);
-      const urls: string[] = [];
-      for (const f of files) urls.push(await uploadOrderMedia(user.id, f));
+      const paths: string[] = [];
+      for (const f of files) paths.push(await uploadOrderMedia(orderId, f));
       const { error } = await sb.from("order_progress").insert({
         order_id: orderId,
         business_id: businessId,
         author_id: user.id,
         note: note || null,
-        media_urls: urls,
+        media_urls: paths,
         stage,
       });
       if (error) throw error;
@@ -286,12 +317,38 @@ const BusinessOrderDetailPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {NEXT_STATUSES.filter((s) => s !== o.status).map((s) => (
-                    <Button key={s} size="sm" variant="secondary" onClick={() => setStatus.mutate(s)} disabled={setStatus.isPending}>
-                      Move to {STATUS_LABEL[s]}
-                    </Button>
-                  ))}
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-border p-3">
+                    <Label htmlFor="eta-edit">Update estimated completion</Label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Input
+                        id="eta-edit"
+                        type="datetime-local"
+                        value={eta}
+                        onChange={(e) => setEta(e.target.value)}
+                        className="h-10 max-w-[260px]"
+                      />
+                      <Button onClick={() => updateEta.mutate()} disabled={!eta || updateEta.isPending}>
+                        Save ETA
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {PROVIDER_NEXT_STATUSES.filter((s) => s !== o.status).map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setStatus.mutate(s)}
+                        disabled={setStatus.isPending}
+                      >
+                        Move to {STATUS_LABEL[s]}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    The customer marks the order completed after you set it to "Awaiting your confirmation".
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -373,9 +430,9 @@ const BusinessOrderDetailPage = () => {
                       {p.media_urls.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {p.media_urls.map((u) => (
-                            <a key={u} href={u} target="_blank" rel="noreferrer" className="block h-20 w-20 overflow-hidden rounded-xl bg-muted">
-                              <img src={u} alt="proof" className="h-full w-full object-cover" />
-                            </a>
+                            <div key={u} className="block h-20 w-20 overflow-hidden rounded-xl bg-muted">
+                              <SignedImage path={u} alt="proof" className="h-full w-full object-cover" />
+                            </div>
                           ))}
                         </div>
                       )}
@@ -453,11 +510,28 @@ const BusinessOrderDetailPage = () => {
               <h2 className="mb-2 font-display text-lg font-bold">Quick actions</h2>
               <div className="space-y-2">
                 <Button className="w-full" onClick={() => setStatus.mutate("ready")} disabled={setStatus.isPending}>
-                  <CheckCircle2 className="h-4 w-4" /> Mark ready
+                  <CheckCircle2 className="h-4 w-4" /> Mark ready for pickup
                 </Button>
-                <Button variant="secondary" className="w-full" onClick={() => setStatus.mutate("completed")} disabled={setStatus.isPending}>
-                  Mark completed
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  onClick={() => setStatus.mutate("out_for_delivery")}
+                  disabled={setStatus.isPending}
+                >
+                  Mark out for delivery
                 </Button>
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  onClick={() => setStatus.mutate("ready_for_review")}
+                  disabled={setStatus.isPending}
+                >
+                  Send for customer confirmation
+                </Button>
+                <p className="pt-1 text-[11px] text-muted-foreground">
+                  The customer marks the order completed and triggers the payout.
+                </p>
+                <OpenDisputeButton orderId={orderId} fullWidth />
               </div>
             </CardContent>
           </Card>

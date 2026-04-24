@@ -18,6 +18,7 @@ import {
   type OrderTask,
 } from "@/lib/business/queries";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedImage } from "@/components/orders/SignedImage";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE: Record<OrderTask["status"], string> = {
@@ -100,15 +101,15 @@ const CrewTaskDetailPage = () => {
     if (!user || !t) return;
     setUploading(true);
     try {
-      const urls: string[] = [];
-      for (const f of files) urls.push(await uploadOrderMedia(user.id, f));
+      const paths: string[] = [];
+      for (const f of files) paths.push(await uploadOrderMedia(t.order_id, f));
       const { error } = await sb.from("order_progress").insert({
         order_id: t.order_id,
         business_id: t.business_id,
         task_id: t.id,
         author_id: user.id,
         note: note || null,
-        media_urls: urls,
+        media_urls: paths,
         stage: "in_progress",
       });
       if (error) throw error;
@@ -266,9 +267,9 @@ const CrewTaskDetailPage = () => {
                   {p.media_urls.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {p.media_urls.map((u) => (
-                        <a key={u} href={u} target="_blank" rel="noreferrer" className="block h-20 w-20 overflow-hidden rounded-xl bg-muted">
-                          <img src={u} alt="proof" className="h-full w-full object-cover" />
-                        </a>
+                        <div key={u} className="block h-20 w-20 overflow-hidden rounded-xl bg-muted">
+                          <SignedImage path={u} alt="proof" className="h-full w-full object-cover" />
+                        </div>
                       ))}
                     </div>
                   )}

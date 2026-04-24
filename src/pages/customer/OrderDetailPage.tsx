@@ -19,7 +19,9 @@ import {
   STATUS_TONE,
   type OrderStatus,
 } from "@/lib/customer/queries";
-import { fetchOrderProgress } from "@/lib/business/queries";
+import { customerConfirmCompletion, fetchOrderProgress } from "@/lib/business/queries";
+import { SignedImage } from "@/components/orders/SignedImage";
+import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
 import { cn } from "@/lib/utils";
 
 const OrderDetailPage = () => {
@@ -69,12 +71,10 @@ const OrderDetailPage = () => {
   const approveCompletion = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not signed in");
-      const { error } = await supabase.from("orders").update({ status: "completed" as OrderStatus }).eq("id", orderId);
-      if (error) throw error;
-      await supabase.from("order_events").insert({ order_id: orderId, actor_id: user.id, type: "approved", message: "Customer approved completion" });
+      await customerConfirmCompletion(orderId);
     },
     onSuccess: () => {
-      toast({ title: "Approved", description: "Thanks — leave a review below." });
+      toast({ title: "Approved", description: "Thanks — payout queued. Leave a review below." });
       qc.invalidateQueries({ queryKey: ["order", orderId] });
       qc.invalidateQueries({ queryKey: ["order-events", orderId] });
     },
@@ -152,11 +152,18 @@ const OrderDetailPage = () => {
           </div>
         </div>
 
-        {status === "ready" ? (
-          <Button className="mt-5" size="lg" onClick={() => approveCompletion.mutate()} disabled={approveCompletion.isPending}>
-            {approveCompletion.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> Approve completion</>}
-          </Button>
-        ) : null}
+        {status === "ready_for_review" || status === "out_for_delivery" || status === "ready" ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button size="lg" onClick={() => approveCompletion.mutate()} disabled={approveCompletion.isPending}>
+              {approveCompletion.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> Approve completion</>}
+            </Button>
+            <OpenDisputeButton orderId={order.id} variant="outline" />
+          </div>
+        ) : (
+          <div className="mt-5">
+            <OpenDisputeButton orderId={order.id} variant="outline" />
+          </div>
+        )}
       </header>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">

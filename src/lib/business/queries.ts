@@ -67,7 +67,9 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "New",
   accepted: "Accepted",
   in_progress: "In progress",
-  ready: "Ready",
+  ready: "Ready for pickup",
+  out_for_delivery: "Out for delivery",
+  ready_for_review: "Awaiting your confirmation",
   completed: "Completed",
   cancelled: "Cancelled",
 };
@@ -77,6 +79,8 @@ export const STATUS_TONE: Record<OrderStatus, string> = {
   accepted: "bg-foreground/15 text-foreground",
   in_progress: "bg-foreground/85 text-background",
   ready: "bg-foreground/20 text-foreground",
+  out_for_delivery: "bg-foreground/30 text-foreground",
+  ready_for_review: "bg-foreground text-background",
   completed: "bg-foreground/10 text-muted-foreground",
   cancelled: "bg-destructive/15 text-destructive",
 };
@@ -252,11 +256,34 @@ export const fetchOrderTasksForOrder = async (orderId: string) => {
   return (data ?? []) as unknown as OrderTask[];
 };
 
-export const uploadOrderMedia = async (userId: string, file: File) => {
-  const ext = file.name.split(".").pop() ?? "bin";
-  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+// Uploads land at order-media/<orderId>/<uuid>.<ext>. Bucket is private,
+// so we store the path and resolve a short-lived signed URL on read.
+export const uploadOrderMedia = async (orderId: string, file: File) => {
+  const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
+  const path = `${orderId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from("order-media").upload(path, file, { upsert: false });
   if (error) throw error;
-  const { data } = supabase.storage.from("order-media").getPublicUrl(path);
-  return data.publicUrl;
+  return path;
+};
+
+export const signOrderMedia = async (paths: string[], expiresInSeconds = 3600) => {
+  if (paths.length === 0) return [] as string[];
+  const { data, error } = await supabase.storage.from("order-media").createSignedUrls(paths, expiresInSeconds);
+  if (error) throw error;
+  return (data ?? []).map((d) => d.signedUrl);
+};
+
+export const customerConfirmCompletion = async (orderId: string) => {
+  const { error } = await supabase.rpc("customer_confirm_completion" as never, { _order_id: orderId } as never);
+  if (error) throw error;
+};
+
+export const openDispute = async (orderId: string, reason: string, details: string | null) => {
+  const { data, error } = await supabase.rpc("open_dispute" as never, {
+    _order_id: orderId,
+    _reason: reason,
+    _details: details,
+  } as never);
+  if (error) throw error;
+  return data as unknown as string;
 };
