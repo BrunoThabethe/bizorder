@@ -100,12 +100,34 @@ const BusinessOrderDetailPage = () => {
     onError: (e: Error) => toast({ title: "Update failed", description: e.message, variant: "destructive" }),
   });
 
+  const updateEta = useMutation({
+    mutationFn: async () => {
+      if (!eta) throw new Error("Pick a date and time");
+      const { error } = await supabase
+        .from("orders")
+        .update({ estimated_completion_at: new Date(eta).toISOString() })
+        .eq("id", orderId);
+      if (error) throw error;
+      await supabase.from("order_events").insert({
+        order_id: orderId,
+        type: "eta_updated",
+        actor_id: user!.id,
+        message: `New ETA: ${new Date(eta).toLocaleString("en-ZA")}`,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["business-order", orderId] });
+      toast({ title: "Estimated completion updated" });
+    },
+    onError: (e: Error) => toast({ title: "Could not update", description: e.message, variant: "destructive" }),
+  });
+
   const addProgress = useMutation({
     mutationFn: async () => {
       if (!user) return;
       setUploading(true);
-      const urls: string[] = [];
-      for (const f of files) urls.push(await uploadOrderMedia(user.id, f));
+      const paths: string[] = [];
+      for (const f of files) paths.push(await uploadOrderMedia(orderId, f));
       const { error } = await sb.from("order_progress").insert({
         order_id: orderId,
         business_id: businessId,
