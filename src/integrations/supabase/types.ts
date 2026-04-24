@@ -894,6 +894,10 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: string
       }
+      customer_confirm_completion: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
       get_primary_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -913,6 +917,10 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      open_dispute: {
+        Args: { _details: string; _order_id: string; _reason: string }
+        Returns: string
+      }
       promote_test_crew: { Args: never; Returns: undefined }
     }
     Enums: {
@@ -924,6 +932,8 @@ export type Database = {
         | "ready"
         | "completed"
         | "cancelled"
+        | "out_for_delivery"
+        | "ready_for_review"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1059,6 +1069,8 @@ export const Constants = {
         "ready",
         "completed",
         "cancelled",
+        "out_for_delivery",
+        "ready_for_review",
       ],
     },
   },
