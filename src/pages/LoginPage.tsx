@@ -17,18 +17,20 @@ const loginSchema = z.object({
 const TEST_PASSWORD = "Test1234!";
 
 type SeedRole = "customer" | "business";
+type FinalRole = "customer" | "business" | "crew" | "admin";
 
 const testAccounts: {
   role: string;
   email: string;
   signupRole: SeedRole;
+  finalRole: FinalRole;
   fullName: string;
   color: string;
 }[] = [
-  { role: "Customer", email: "customer@test.bizorder", signupRole: "customer", fullName: "Test Customer", color: "bg-foreground/10" },
-  { role: "Business", email: "provider@test.bizorder", signupRole: "business", fullName: "Test Provider", color: "bg-foreground/15" },
-  { role: "Crew", email: "crew@test.bizorder", signupRole: "business", fullName: "Test Crew", color: "bg-foreground/10" },
-  { role: "Admin", email: "admin@test.bizorder", signupRole: "customer", fullName: "Test Admin", color: "bg-foreground/15" },
+  { role: "Customer", email: "customer@test.bizorder", signupRole: "customer", finalRole: "customer", fullName: "Test Customer", color: "bg-foreground/10" },
+  { role: "Business", email: "provider@test.bizorder", signupRole: "business", finalRole: "business", fullName: "Test Provider", color: "bg-foreground/15" },
+  { role: "Crew", email: "crew@test.bizorder", signupRole: "customer", finalRole: "crew", fullName: "Test Crew", color: "bg-foreground/10" },
+  { role: "Admin", email: "admin@test.bizorder", signupRole: "customer", finalRole: "admin", fullName: "Test Admin", color: "bg-foreground/15" },
 ];
 
 const roleHomeFor = (role: string | null | undefined) => {
