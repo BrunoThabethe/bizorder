@@ -18,6 +18,7 @@ import {
   type OrderTask,
 } from "@/lib/business/queries";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedImage } from "@/components/orders/SignedImage";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE: Record<OrderTask["status"], string> = {
