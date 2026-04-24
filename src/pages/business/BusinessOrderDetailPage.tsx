@@ -531,6 +531,7 @@ const BusinessOrderDetailPage = () => {
                 <p className="pt-1 text-[11px] text-muted-foreground">
                   The customer marks the order completed and triggers the payout.
                 </p>
+                <OpenDisputeButton orderId={orderId} fullWidth />
               </div>
             </CardContent>
           </Card>
