@@ -67,7 +67,9 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "New",
   accepted: "Accepted",
   in_progress: "In progress",
-  ready: "Ready",
+  ready: "Ready for pickup",
+  out_for_delivery: "Out for delivery",
+  ready_for_review: "Awaiting your confirmation",
   completed: "Completed",
   cancelled: "Cancelled",
 };
@@ -77,6 +79,8 @@ export const STATUS_TONE: Record<OrderStatus, string> = {
   accepted: "bg-foreground/15 text-foreground",
   in_progress: "bg-foreground/85 text-background",
   ready: "bg-foreground/20 text-foreground",
+  out_for_delivery: "bg-foreground/30 text-foreground",
+  ready_for_review: "bg-foreground text-background",
   completed: "bg-foreground/10 text-muted-foreground",
   cancelled: "bg-destructive/15 text-destructive",
 };
