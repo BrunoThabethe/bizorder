@@ -29,11 +29,19 @@ import {
   type OrderStatus,
 } from "@/lib/business/queries";
 import { supabase } from "@/integrations/supabase/client";
+import { SignedImage } from "@/components/orders/SignedImage";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-const NEXT_STATUSES: OrderStatus[] = ["pending", "accepted", "in_progress", "ready", "completed", "cancelled"];
+// Statuses the provider can move to from a non-pending state.
+const PROVIDER_NEXT_STATUSES: OrderStatus[] = [
+  "in_progress",
+  "ready",
+  "out_for_delivery",
+  "ready_for_review",
+  "cancelled",
+];
 
 const BusinessOrderDetailPage = () => {
   const { orderId = "" } = useParams();
