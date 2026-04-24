@@ -316,12 +316,38 @@ const BusinessOrderDetailPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {NEXT_STATUSES.filter((s) => s !== o.status).map((s) => (
-                    <Button key={s} size="sm" variant="secondary" onClick={() => setStatus.mutate(s)} disabled={setStatus.isPending}>
-                      Move to {STATUS_LABEL[s]}
-                    </Button>
-                  ))}
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-border p-3">
+                    <Label htmlFor="eta-edit">Update estimated completion</Label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Input
+                        id="eta-edit"
+                        type="datetime-local"
+                        value={eta}
+                        onChange={(e) => setEta(e.target.value)}
+                        className="h-10 max-w-[260px]"
+                      />
+                      <Button onClick={() => updateEta.mutate()} disabled={!eta || updateEta.isPending}>
+                        Save ETA
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {PROVIDER_NEXT_STATUSES.filter((s) => s !== o.status).map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setStatus.mutate(s)}
+                        disabled={setStatus.isPending}
+                      >
+                        Move to {STATUS_LABEL[s]}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    The customer marks the order completed after you set it to "Awaiting your confirmation".
+                  </p>
                 </div>
               )}
             </CardContent>
