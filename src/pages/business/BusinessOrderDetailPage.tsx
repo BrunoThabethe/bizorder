@@ -429,9 +429,9 @@ const BusinessOrderDetailPage = () => {
                       {p.media_urls.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {p.media_urls.map((u) => (
-                            <a key={u} href={u} target="_blank" rel="noreferrer" className="block h-20 w-20 overflow-hidden rounded-xl bg-muted">
-                              <img src={u} alt="proof" className="h-full w-full object-cover" />
-                            </a>
+                            <div key={u} className="block h-20 w-20 overflow-hidden rounded-xl bg-muted">
+                              <SignedImage path={u} alt="proof" className="h-full w-full object-cover" />
+                            </div>
                           ))}
                         </div>
                       )}
