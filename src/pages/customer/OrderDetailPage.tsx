@@ -188,6 +188,40 @@ const OrderDetailPage = () => {
             </ol>
           )}
 
+          <div className="mt-6">
+            <h2 className="font-display text-base font-bold">Progress updates</h2>
+            {progressUpdates.length === 0 ? (
+              <p className="mt-3 rounded-2xl bg-muted/40 p-4 text-center text-xs text-muted-foreground">
+                Photos and notes from your provider will appear here.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-3">
+                {progressUpdates.map((p) => (
+                  <li key={p.id} className="rounded-2xl border border-border p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {p.stage ?? "update"}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {new Date(p.created_at).toLocaleString("en-GB")}
+                      </span>
+                    </div>
+                    {p.note ? <p className="mt-2 text-sm">{p.note}</p> : null}
+                    {p.media_urls.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {p.media_urls.map((u) => (
+                          <a key={u} href={u} target="_blank" rel="noreferrer" className="block h-20 w-20 overflow-hidden rounded-xl bg-muted">
+                            <img src={u} alt="proof" className="h-full w-full object-cover" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           {status === "completed" ? (
             <div className="mt-6 rounded-2xl bg-muted/40 p-4">
               <h3 className="font-display text-sm font-bold">Leave a review</h3>
