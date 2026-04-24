@@ -123,15 +123,33 @@ const BusinessOrderDetailPage = () => {
 
   const addTask = useMutation({
     mutationFn: async () => {
-      const { error } = await sb.from("order_tasks").insert({
-        order_id: orderId,
-        business_id: businessId,
-        crew_member_id: taskCrew || null,
-        title: taskTitle,
-        instructions: taskInstructions || null,
-        status: "pending",
-      });
+      const { data: inserted, error } = await sb
+        .from("order_tasks")
+        .insert({
+          order_id: orderId,
+          business_id: businessId,
+          crew_member_id: taskCrew || null,
+          title: taskTitle,
+          instructions: taskInstructions || null,
+          status: "pending",
+        })
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+
+      // Notify the assigned crew member, if any
+      if (taskCrew) {
+        const member = crew.find((c) => c.id === taskCrew);
+        if (member?.user_id) {
+          await supabase.from("notifications").insert({
+            user_id: member.user_id,
+            type: "task_assigned",
+            title: "New task assigned",
+            body: `"${taskTitle}" — open to view instructions.`,
+            link: inserted?.id ? `/crew/tasks/${inserted.id}` : "/crew/tasks",
+          });
+        }
+      }
     },
     onSuccess: () => {
       setTaskTitle("");
