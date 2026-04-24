@@ -40,6 +40,10 @@ import PayoutsPage from "./pages/business/PayoutsPage.tsx";
 import BusinessNotificationsPage from "./pages/business/BusinessNotificationsPage.tsx";
 import CrewManagementPage from "./pages/business/CrewManagementPage.tsx";
 import CrewDashboardPage from "./pages/crew/CrewDashboardPage.tsx";
+import CrewTasksPage from "./pages/crew/CrewTasksPage.tsx";
+import CrewTaskDetailPage from "./pages/crew/CrewTaskDetailPage.tsx";
+import CrewNotificationsPage from "./pages/crew/CrewNotificationsPage.tsx";
+import CrewProfilePage from "./pages/crew/CrewProfilePage.tsx";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage.tsx";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage.tsx";
 import AdminUsersPage from "./pages/admin/AdminUsersPage.tsx";
@@ -105,6 +109,10 @@ const App = () => (
 
             {/* Crew sub-portal */}
             <Route path="/crew" element={<RoleGuard allow={["crew"]}><CrewDashboardPage /></RoleGuard>} />
+            <Route path="/crew/tasks" element={<RoleGuard allow={["crew"]}><CrewTasksPage /></RoleGuard>} />
+            <Route path="/crew/tasks/:taskId" element={<RoleGuard allow={["crew"]}><CrewTaskDetailPage /></RoleGuard>} />
+            <Route path="/crew/notifications" element={<RoleGuard allow={["crew"]}><CrewNotificationsPage /></RoleGuard>} />
+            <Route path="/crew/profile" element={<RoleGuard allow={["crew"]}><CrewProfilePage /></RoleGuard>} />
 
             {/* Admin portal */}
             <Route path="/admin" element={<RoleGuard allow={["admin"]}><AdminDashboardPage /></RoleGuard>} />
