@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { fetchSystemSettings, upsertSystemSetting } from "@/lib/admin/queries";
+import { fetchSystemSettings, logAdminAction, upsertSystemSetting } from "@/lib/admin/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,14 +19,16 @@ const AdminSettingsPage = () => {
   const { data, isLoading } = useQuery({ queryKey: ["admin", "system-settings"], queryFn: fetchSystemSettings });
 
   const saveMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       let parsed: Record<string, unknown>;
       try {
         parsed = JSON.parse(form.value);
       } catch {
         throw new Error("Value must be valid JSON.");
       }
-      return upsertSystemSetting(form.key.trim(), parsed, form.description.trim() || null, user!.id);
+      const key = form.key.trim();
+      await upsertSystemSetting(key, parsed, form.description.trim() || null, user!.id);
+      await logAdminAction(user!.id, "system_setting.upsert", "system_setting", undefined, { key }, "warning");
     },
     onSuccess: () => {
       toast({ title: "Setting saved" });

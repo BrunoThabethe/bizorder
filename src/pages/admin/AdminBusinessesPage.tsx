@@ -7,17 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fetchAllBusinesses, setBusinessPublished, setBusinessVerified } from "@/lib/admin/queries";
+import { fetchAllBusinesses, logAdminAction, setBusinessPublished, setBusinessVerified } from "@/lib/admin/queries";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminBusinessesPage = () => {
   const [q, setQ] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["admin", "businesses"], queryFn: fetchAllBusinesses });
 
   const verifyMutation = useMutation({
-    mutationFn: ({ id, value }: { id: string; value: boolean }) => setBusinessVerified(id, value),
+    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
+      await setBusinessVerified(id, value);
+      if (user) {
+        await logAdminAction(user.id, value ? "business.verified" : "business.unverified", "business", id, { value });
+      }
+    },
     onSuccess: () => {
       toast({ title: "Verification updated" });
       queryClient.invalidateQueries({ queryKey: ["admin", "businesses"] });
@@ -25,7 +32,12 @@ const AdminBusinessesPage = () => {
   });
 
   const publishMutation = useMutation({
-    mutationFn: ({ id, value }: { id: string; value: boolean }) => setBusinessPublished(id, value),
+    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
+      await setBusinessPublished(id, value);
+      if (user) {
+        await logAdminAction(user.id, value ? "business.published" : "business.hidden", "business", id, { value });
+      }
+    },
     onSuccess: () => {
       toast({ title: "Visibility updated" });
       queryClient.invalidateQueries({ queryKey: ["admin", "businesses"] });
