@@ -913,6 +913,7 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      promote_test_crew: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "customer" | "business" | "admin" | "crew"
