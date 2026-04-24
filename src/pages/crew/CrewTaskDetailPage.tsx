@@ -100,15 +100,15 @@ const CrewTaskDetailPage = () => {
     if (!user || !t) return;
     setUploading(true);
     try {
-      const urls: string[] = [];
-      for (const f of files) urls.push(await uploadOrderMedia(user.id, f));
+      const paths: string[] = [];
+      for (const f of files) paths.push(await uploadOrderMedia(t.order_id, f));
       const { error } = await sb.from("order_progress").insert({
         order_id: t.order_id,
         business_id: t.business_id,
         task_id: t.id,
         author_id: user.id,
         note: note || null,
-        media_urls: urls,
+        media_urls: paths,
         stage: "in_progress",
       });
       if (error) throw error;
