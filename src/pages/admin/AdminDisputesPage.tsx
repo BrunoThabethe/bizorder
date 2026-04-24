@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchAllDisputes, updateDisputeStatus, type Dispute } from "@/lib/admin/queries";
+import { fetchAllDisputes, logAdminAction, updateDisputeStatus, type Dispute } from "@/lib/admin/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,8 +25,17 @@ const AdminDisputesPage = () => {
   const { data, isLoading } = useQuery({ queryKey: ["admin", "disputes"], queryFn: fetchAllDisputes });
 
   const updateMutation = useMutation({
-    mutationFn: (input: { id: string; status: Dispute["status"]; resolution: string | null }) =>
-      updateDisputeStatus(input.id, input.status, user!.id, input.resolution),
+    mutationFn: async (input: { id: string; status: Dispute["status"]; resolution: string | null }) => {
+      await updateDisputeStatus(input.id, input.status, user!.id, input.resolution);
+      await logAdminAction(
+        user!.id,
+        `dispute.${input.status}`,
+        "dispute",
+        input.id,
+        { resolution: input.resolution },
+        input.status === "resolved" ? "info" : "warning",
+      );
+    },
     onSuccess: () => {
       toast({ title: "Dispute updated" });
       queryClient.invalidateQueries({ queryKey: ["admin", "disputes"] });

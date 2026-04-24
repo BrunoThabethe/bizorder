@@ -4,7 +4,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { fetchVerificationRequests, reviewVerification } from "@/lib/admin/queries";
+import { fetchVerificationRequests, logAdminAction, reviewVerification } from "@/lib/admin/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,8 +21,17 @@ const AdminVerificationPage = () => {
   const { data, isLoading } = useQuery({ queryKey: ["admin", "verifications"], queryFn: fetchVerificationRequests });
 
   const reviewMutation = useMutation({
-    mutationFn: (input: { id: string; status: "approved" | "rejected" }) =>
-      reviewVerification(input.id, input.status, user!.id, null),
+    mutationFn: async (input: { id: string; status: "approved" | "rejected" }) => {
+      await reviewVerification(input.id, input.status, user!.id, null);
+      await logAdminAction(
+        user!.id,
+        `verification.${input.status}`,
+        "verification_request",
+        input.id,
+        { status: input.status },
+        input.status === "rejected" ? "warning" : "info",
+      );
+    },
     onSuccess: () => {
       toast({ title: "Decision recorded" });
       queryClient.invalidateQueries({ queryKey: ["admin", "verifications"] });

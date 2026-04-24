@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fetchAllPayouts, formatPrice, updatePayoutStatus, type Payout } from "@/lib/admin/queries";
+import { fetchAllPayouts, formatPrice, logAdminAction, updatePayoutStatus, type Payout } from "@/lib/admin/queries";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
 const TONE: Record<string, string> = {
@@ -16,11 +17,17 @@ const TONE: Record<string, string> = {
 
 const AdminPayoutsPage = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["admin", "payouts"], queryFn: fetchAllPayouts });
 
   const updateMutation = useMutation({
-    mutationFn: (input: { id: string; status: Payout["status"] }) => updatePayoutStatus(input.id, input.status),
+    mutationFn: async (input: { id: string; status: Payout["status"] }) => {
+      await updatePayoutStatus(input.id, input.status);
+      if (user) {
+        await logAdminAction(user.id, `payout.${input.status}`, "payout", input.id, { status: input.status });
+      }
+    },
     onSuccess: () => {
       toast({ title: "Payout updated" });
       queryClient.invalidateQueries({ queryKey: ["admin", "payouts"] });
