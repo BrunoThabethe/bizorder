@@ -118,7 +118,16 @@ export const fetchOrderMessages = async (orderId: string) => {
     .eq("order_id", orderId)
     .order("created_at");
   if (error) throw error;
-  return data as Message[];
+};
+
+export const fetchOrderDisputes = async (orderId: string) => {
+  const { data, error } = await supabase
+    .from("disputes")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as Dispute[];
 };
 
 export const fetchMyAddresses = async (userId: string) => {
