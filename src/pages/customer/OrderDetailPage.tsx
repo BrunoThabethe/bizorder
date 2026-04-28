@@ -12,11 +12,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchOrderById,
+  fetchOrderDisputes,
   fetchOrderEvents,
   fetchOrderMessages,
   formatPrice,
+  DISPUTE_STATUS_LABEL,
+  DISPUTE_STATUS_TONE,
   STATUS_LABEL,
   STATUS_TONE,
+  type DisputeStatus,
   type OrderStatus,
 } from "@/lib/customer/queries";
 import { customerConfirmCompletion, fetchOrderProgress } from "@/lib/business/queries";
