@@ -40,6 +40,7 @@ export const OpenDisputeButton = ({ orderId, variant = "secondary", fullWidth, o
       setOpen(false);
       setReason("");
       setDetails("");
+      onOpened?.();
     },
     onError: (e: Error) =>
       toast({ title: "Could not open dispute", description: e.message, variant: "destructive" }),
