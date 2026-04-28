@@ -10,7 +10,23 @@ export type Address = Database["public"]["Tables"]["addresses"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 export type Review = Database["public"]["Tables"]["reviews"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type Dispute = Database["public"]["Tables"]["disputes"]["Row"];
+export type DisputeStatus = "open" | "reviewing" | "resolved" | "rejected";
 export type OrderStatus = Database["public"]["Enums"]["order_status"];
+
+export const DISPUTE_STATUS_LABEL: Record<DisputeStatus, string> = {
+  open: "Open",
+  reviewing: "Under review",
+  resolved: "Resolved",
+  rejected: "Rejected",
+};
+
+export const DISPUTE_STATUS_TONE: Record<DisputeStatus, string> = {
+  open: "bg-destructive/15 text-destructive",
+  reviewing: "bg-foreground/15 text-foreground",
+  resolved: "bg-foreground text-background",
+  rejected: "bg-muted text-muted-foreground",
+};
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Pending",
