@@ -12,11 +12,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchOrderById,
+  fetchOrderDisputes,
   fetchOrderEvents,
   fetchOrderMessages,
   formatPrice,
+  DISPUTE_STATUS_LABEL,
+  DISPUTE_STATUS_TONE,
   STATUS_LABEL,
   STATUS_TONE,
+  type DisputeStatus,
   type OrderStatus,
 } from "@/lib/customer/queries";
 import { customerConfirmCompletion, fetchOrderProgress } from "@/lib/business/queries";
@@ -52,6 +56,11 @@ const OrderDetailPage = () => {
   const { data: progressUpdates = [] } = useQuery({
     queryKey: ["order-progress", orderId],
     queryFn: () => fetchOrderProgress(orderId),
+    enabled: !!orderId,
+  });
+  const { data: disputes = [] } = useQuery({
+    queryKey: ["order-disputes", orderId],
+    queryFn: () => fetchOrderDisputes(orderId),
     enabled: !!orderId,
   });
 
@@ -152,19 +161,79 @@ const OrderDetailPage = () => {
           </div>
         </div>
 
-        {status === "ready_for_review" || status === "out_for_delivery" || status === "ready" ? (
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Button size="lg" onClick={() => approveCompletion.mutate()} disabled={approveCompletion.isPending}>
-              {approveCompletion.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> Approve completion</>}
-            </Button>
-            <OpenDisputeButton orderId={order.id} variant="outline" />
-          </div>
-        ) : (
-          <div className="mt-5">
-            <OpenDisputeButton orderId={order.id} variant="outline" />
-          </div>
-        )}
+        {(() => {
+          const hasActiveDispute = disputes.some((d) => d.status === "open" || d.status === "reviewing");
+          const showApprove = status === "ready_for_review" || status === "out_for_delivery" || status === "ready";
+          return (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {showApprove && (
+                <Button size="lg" onClick={() => approveCompletion.mutate()} disabled={approveCompletion.isPending}>
+                  {approveCompletion.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> Approve completion</>}
+                </Button>
+              )}
+              {!hasActiveDispute && (
+                <OpenDisputeButton
+                  orderId={order.id}
+                  variant="outline"
+                  onOpened={() => qc.invalidateQueries({ queryKey: ["order-disputes", orderId] })}
+                />
+              )}
+            </div>
+          );
+        })()}
       </header>
+
+      {disputes.length > 0 && (
+        <section className="mt-4 rounded-3xl bg-card p-5 shadow-card">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-base font-bold">Dispute history</h2>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {disputes.length} {disputes.length === 1 ? "case" : "cases"}
+            </span>
+          </div>
+          <ul className="mt-3 space-y-3">
+            {disputes.map((d) => {
+              const dStatus = d.status as DisputeStatus;
+              const isResolved = dStatus === "resolved" || dStatus === "rejected";
+              return (
+                <li key={d.id} className="rounded-2xl border border-border p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={cn("rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider", DISPUTE_STATUS_TONE[dStatus])}>
+                      {DISPUTE_STATUS_LABEL[dStatus]}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Opened {new Date(d.created_at).toLocaleDateString("en-GB")}
+                    </span>
+                    {isResolved && d.resolved_at && (
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        · Closed {new Date(d.resolved_at).toLocaleDateString("en-GB")}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 font-display text-sm font-bold">{d.reason}</p>
+                  {d.details && <p className="mt-1 text-sm text-muted-foreground">{d.details}</p>}
+                  {isResolved ? (
+                    <div className="mt-3 rounded-2xl bg-muted/60 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Resolution</p>
+                      <p className="mt-1 text-sm">
+                        {d.resolution?.trim()
+                          ? d.resolution
+                          : dStatus === "rejected"
+                            ? "Admin reviewed this case and closed it without changes."
+                            : "Admin marked this case as resolved."}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      An admin is reviewing your case. You'll get a notification when there's an update.
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <section className="rounded-3xl bg-card p-5 shadow-card">

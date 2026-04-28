@@ -21,9 +21,10 @@ type OpenDisputeButtonProps = {
   orderId: string;
   variant?: "secondary" | "destructive" | "outline";
   fullWidth?: boolean;
+  onOpened?: () => void;
 };
 
-export const OpenDisputeButton = ({ orderId, variant = "secondary", fullWidth }: OpenDisputeButtonProps) => {
+export const OpenDisputeButton = ({ orderId, variant = "secondary", fullWidth, onOpened }: OpenDisputeButtonProps) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -39,6 +40,7 @@ export const OpenDisputeButton = ({ orderId, variant = "secondary", fullWidth }:
       setOpen(false);
       setReason("");
       setDetails("");
+      onOpened?.();
     },
     onError: (e: Error) =>
       toast({ title: "Could not open dispute", description: e.message, variant: "destructive" }),
