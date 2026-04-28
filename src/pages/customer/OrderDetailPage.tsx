@@ -58,6 +58,11 @@ const OrderDetailPage = () => {
     queryFn: () => fetchOrderProgress(orderId),
     enabled: !!orderId,
   });
+  const { data: disputes = [] } = useQuery({
+    queryKey: ["order-disputes", orderId],
+    queryFn: () => fetchOrderDisputes(orderId),
+    enabled: !!orderId,
+  });
 
   const sendMessage = useMutation({
     mutationFn: async (body: string) => {
