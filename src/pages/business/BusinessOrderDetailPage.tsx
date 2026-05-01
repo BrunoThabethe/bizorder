@@ -492,32 +492,34 @@ const BusinessOrderDetailPage = () => {
           <Card className="rounded-3xl border-0 shadow-card">
             <CardContent className="space-y-3 p-5">
               <h2 className="font-display text-lg font-bold">Crew tasks</h2>
-              <div className="space-y-2">
-                <Input placeholder="Task title" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} maxLength={120} />
-                <Textarea
-                  placeholder="Instructions"
-                  value={taskInstructions}
-                  onChange={(e) => setTaskInstructions(e.target.value)}
-                  maxLength={500}
-                />
-                <Select value={taskCrew} onValueChange={setTaskCrew}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Assign to crew (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {crew
-                      .filter((c) => c.is_active)
-                      .map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.display_name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <Button className="w-full" onClick={() => addTask.mutate()} disabled={!taskTitle}>
-                  Add task
-                </Button>
-              </div>
+              {!isLocked && (
+                <div className="space-y-2">
+                  <Input placeholder="Task title" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} maxLength={120} />
+                  <Textarea
+                    placeholder="Instructions"
+                    value={taskInstructions}
+                    onChange={(e) => setTaskInstructions(e.target.value)}
+                    maxLength={500}
+                  />
+                  <Select value={taskCrew} onValueChange={setTaskCrew}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Assign to crew (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {crew
+                        .filter((c) => c.is_active)
+                        .map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.display_name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button className="w-full" onClick={() => addTask.mutate()} disabled={!taskTitle}>
+                    Add task
+                  </Button>
+                </div>
+              )}
               <ul className="mt-3 space-y-2">
                 {tasks.map((t) => {
                   const owner = crew.find((c) => c.id === t.crew_member_id);
