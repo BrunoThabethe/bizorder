@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { SignedImage } from "@/components/orders/SignedImage";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchProgressLogs } from "@/lib/admin/queries";
 
@@ -58,11 +59,10 @@ const AdminUploadsPage = () => {
                     <div className="grid grid-cols-3 gap-2">
                       {log.media_urls.map((url) => (
                         <a key={url} href={url} target="_blank" rel="noreferrer" className="block">
-                          <img
-                            src={url}
+                          <SignedImage
+                            path={url}
                             alt="Proof"
                             className="aspect-square w-full rounded-xl object-cover"
-                            loading="lazy"
                           />
                         </a>
                       ))}

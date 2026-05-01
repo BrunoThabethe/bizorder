@@ -63,6 +63,15 @@ export type Payout = {
   updated_at: string;
 };
 
+export const proofPhotoMimeTypes = ["image/jpeg", "image/png", "image/webp"] as const;
+export const proofPhotoAccept = proofPhotoMimeTypes.join(",");
+const proofPhotoExtensions = ["jpg", "jpeg", "png", "webp"] as const;
+
+export const isProofPhoto = (file: File) => {
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  return proofPhotoMimeTypes.includes(file.type as (typeof proofPhotoMimeTypes)[number]) && proofPhotoExtensions.includes(ext as (typeof proofPhotoExtensions)[number]);
+};
+
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "New",
   accepted: "Accepted",
@@ -259,9 +268,14 @@ export const fetchOrderTasksForOrder = async (orderId: string) => {
 // Uploads land at order-media/<orderId>/<uuid>.<ext>. Bucket is private,
 // so we store the path and resolve a short-lived signed URL on read.
 export const uploadOrderMedia = async (orderId: string, file: File) => {
+  if (!isProofPhoto(file)) throw new Error("Proof uploads must be JPG, PNG, or WebP photos.");
+  if (file.size > 10 * 1024 * 1024) throw new Error("Proof photos must be smaller than 10 MB.");
   const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
   const path = `${orderId}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from("order-media").upload(path, file, { upsert: false });
+  const { error } = await supabase.storage.from("order-media").upload(path, file, {
+    contentType: file.type,
+    upsert: false,
+  });
   if (error) throw error;
   return path;
 };
