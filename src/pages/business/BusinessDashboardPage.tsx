@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { ArrowRight, Inbox, Star, Wallet } from "lucide-react";
+import { ArrowRight, Inbox, ShieldAlert, Star, Wallet } from "lucide-react";
 import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
