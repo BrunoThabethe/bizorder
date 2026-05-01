@@ -459,6 +459,16 @@ const OrderDetailPage = () => {
           </section>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!lightboxPath} onOpenChange={(open) => !open && setLightboxPath(null)}>
+        <DialogContent className="max-w-3xl border-0 bg-transparent p-0 shadow-none">
+          {lightboxPath ? (
+            <div className="overflow-hidden rounded-2xl bg-black">
+              <SignedImage path={lightboxPath} alt="Proof photo full size" className="h-auto w-full object-contain" />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </CustomerLayout>
   );
 };
