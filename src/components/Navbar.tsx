@@ -28,7 +28,7 @@ export const Navbar = () => {
     <header
       className={cn(
         "fixed left-1/2 top-4 z-50 w-[min(1200px,94vw)] -translate-x-1/2 rounded-2xl transition-all duration-500",
-        scrolled ? "bg-background/60 backdrop-blur-xl" : "bg-transparent",
+        scrolled || open ? "bg-background/60 backdrop-blur-xl" : "bg-transparent",
       )}
     >
       <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
