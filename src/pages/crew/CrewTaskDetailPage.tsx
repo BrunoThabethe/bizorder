@@ -13,6 +13,8 @@ import {
   fetchCrewTaskById,
   fetchOrderTasksForOrder,
   fetchTaskProgress,
+  isProofPhoto,
+  proofPhotoAccept,
   sb,
   uploadOrderMedia,
   type OrderTask,
@@ -50,7 +52,7 @@ const CrewTaskDetailPage = () => {
   const [uploading, setUploading] = useState(false);
 
   const previews = useMemo(
-    () => files.map((f) => ({ name: f.name, url: URL.createObjectURL(f), isImg: f.type.startsWith("image/") })),
+    () => files.map((f) => ({ name: f.name, url: URL.createObjectURL(f) })),
     [files],
   );
 
@@ -215,24 +217,27 @@ const CrewTaskDetailPage = () => {
             maxLength={500}
           />
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-3 text-sm font-semibold hover:bg-muted">
-            <UploadCloud className="h-4 w-4" /> Upload proof photos / video
+            <UploadCloud className="h-4 w-4" /> Upload proof photos
             <input
               type="file"
               multiple
-              accept="image/*,video/*"
+              accept={proofPhotoAccept}
               className="sr-only"
-              onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 6))}
+              onChange={(e) => {
+                const selected = Array.from(e.target.files ?? []);
+                const photos = selected.filter(isProofPhoto).slice(0, 6);
+                setFiles(photos);
+                if (selected.length !== photos.length) {
+                  toast({ title: "Only photos can be used as proof", description: "Upload JPG, PNG, or WebP images only.", variant: "destructive" });
+                }
+              }}
             />
           </label>
           {previews.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {previews.map((f, i) => (
                 <div key={i} className="relative h-20 w-20 overflow-hidden rounded-xl bg-muted">
-                  {f.isImg ? (
-                    <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center text-[10px] text-muted-foreground">video</div>
-                  )}
+                  <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
                   <button
                     onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
                     className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-foreground text-background"
