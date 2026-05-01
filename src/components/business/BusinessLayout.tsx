@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { OnboardingGate } from "@/components/business/OnboardingGate";
 
 type Props = { children: ReactNode };
 
@@ -129,7 +130,9 @@ export const BusinessLayout = ({ children }: Props) => {
             </div>
           </header>
 
-          <main className="flex-1 pb-24 md:pb-0">{children}</main>
+          <main className="flex-1 pb-24 md:pb-0">
+            <OnboardingGate>{children}</OnboardingGate>
+          </main>
         </div>
       </div>
 
