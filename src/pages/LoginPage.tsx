@@ -84,9 +84,9 @@ const LoginPage = () => {
     }
 
     const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });
-    setLoading(false);
     toast({ title: "Welcome back", description: "You're signed in." });
     const nextRoute = await roleHomeFor(roleData as string | null, data.user.id);
+    setLoading(false);
     navigate(nextRoute);
   };
 
