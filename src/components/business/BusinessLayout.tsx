@@ -131,7 +131,7 @@ export const BusinessLayout = ({ children }: Props) => {
           </header>
 
           <main className="flex-1 pb-24 md:pb-0">
-            <OnboardingGate>{children}</OnboardingGate>
+            {children}
           </main>
         </div>
       </div>
