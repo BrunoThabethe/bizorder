@@ -235,13 +235,17 @@ const CreateOrderPage = () => {
 
           <section className="rounded-3xl bg-card p-5 shadow-card">
             <h2 className="font-display text-base font-bold">Payment</h2>
-            <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)} className="mt-3 grid gap-2">
-              <PaymentOption value="escrow" title="Escrow payment" text="Held safely until you approve completion." />
-              <PaymentOption value="cash" title="Pay on delivery" text="Pay the provider directly when work is done." />
-            </RadioGroup>
-            <p className="mt-3 flex items-start gap-2 rounded-2xl bg-muted/40 p-3 text-xs text-muted-foreground">
-              <Wallet className="mt-0.5 h-3 w-3 shrink-0" /> Escrow integration coming soon — for now, the order is recorded and the provider will confirm payment offline.
-            </p>
+            <div className="mt-3 flex items-start gap-3 rounded-2xl bg-muted/50 p-4">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-foreground text-background">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-display text-sm font-bold">Pay on completion</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  No money moves now. You'll pay your provider once you've approved the work — secure online payments are coming soon.
+                </p>
+              </div>
+            </div>
           </section>
         </div>
 
