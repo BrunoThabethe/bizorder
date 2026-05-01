@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,7 @@ import {
 import { customerConfirmCompletion, fetchOrderProgress } from "@/lib/business/queries";
 import { SignedImage } from "@/components/orders/SignedImage";
 import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
+import { OrderStatusStepper } from "@/components/orders/OrderStatusStepper";
 import { cn } from "@/lib/utils";
 
 const OrderDetailPage = () => {
