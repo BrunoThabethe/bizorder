@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, FileText, Globe, Loader2, MapPin, ShieldCheck, Upload } from "lucide-react";
+import { CheckCircle2, FileText, Globe, Loader2, LogOut, MapPin, ShieldCheck, Upload, Zap } from "lucide-react";
 import { z } from "zod";
-import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { fetchMyBusiness } from "@/lib/business/queries";
 import {
   DOCUMENT_LABELS,
@@ -68,6 +68,12 @@ export const BusinessOnboardingPage = () => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [savingDetails, setSavingDetails] = useState(false);
   const [uploadingType, setUploadingType] = useState<DocumentType | null>(null);
+
+  const onSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({ title: "Signed out" });
+    navigate("/login");
+  };
 
   useEffect(() => {
     if (!business) return;
@@ -158,16 +164,31 @@ export const BusinessOnboardingPage = () => {
 
   if (isLoading) {
     return (
-      <BusinessLayout>
+      <div className="min-h-screen bg-background text-foreground">
         <div className="grid place-items-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      </BusinessLayout>
+      </div>
     );
   }
 
   return (
-    <BusinessLayout>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground text-background">
+              <Zap className="h-5 w-5" strokeWidth={2.5} />
+            </span>
+            <span className="font-display text-lg font-bold">BizOrder</span>
+          </div>
+          <Button variant="secondary" onClick={() => void onSignOut()}>
+            <LogOut className="h-4 w-4" /> Sign out
+          </Button>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
       <PageHeader
         title="Complete your business verification"
         description="Upload the required documents and confirm your trading details. We keep these private — only you and the admin team can see them."
@@ -331,7 +352,8 @@ export const BusinessOnboardingPage = () => {
           </Button>
         </div>
       </div>
-    </BusinessLayout>
+      </main>
+    </div>
   );
 };
 
