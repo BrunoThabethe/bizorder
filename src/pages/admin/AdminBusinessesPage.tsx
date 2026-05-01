@@ -1,18 +1,20 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, ShieldCheck, ShieldOff } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { VerificationWizard } from "@/components/admin/VerificationWizard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fetchAllBusinesses, logAdminAction, setBusinessPublished, setBusinessVerified } from "@/lib/admin/queries";
+import { fetchAllBusinesses, logAdminAction, setBusinessPublished } from "@/lib/admin/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminBusinessesPage = () => {
   const [q, setQ] = useState("");
+  const [verifyTarget, setVerifyTarget] = useState<{ id: string; name: string; isVerified: boolean } | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
