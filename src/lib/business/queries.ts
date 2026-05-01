@@ -301,3 +301,150 @@ export const openDispute = async (orderId: string, reason: string, details: stri
   if (error) throw error;
   return data as unknown as string;
 };
+
+// ---------- Business profile (settings, hours, change requests, media) ----------
+
+export type Availability = "available" | "busy" | "closed" | "away";
+
+export const AVAILABILITY_LABEL: Record<Availability, string> = {
+  available: "Available now",
+  busy: "Busy",
+  closed: "Closed",
+  away: "Away",
+};
+
+export const AVAILABILITY_TONE: Record<Availability, string> = {
+  available: "bg-foreground text-background",
+  busy: "bg-foreground/20 text-foreground",
+  closed: "bg-muted text-muted-foreground",
+  away: "bg-foreground/15 text-foreground",
+};
+
+export type BusinessSettings = {
+  id: string;
+  business_id: string;
+  availability: Availability;
+  away_until: string | null;
+  cover_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BusinessHourRow = {
+  id: string;
+  business_id: string;
+  day_of_week: number;
+  opens_at: string;
+  closes_at: string;
+  is_open: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProfileChangeRequest = {
+  id: string;
+  business_id: string;
+  submitted_by: string;
+  field: "name" | "phone" | "email";
+  current_value: string | null;
+  requested_value: string;
+  reason: string | null;
+  status: "pending" | "approved" | "denied";
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  decision_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const fetchBusinessSettings = async (businessId: string) => {
+  const { data, error } = await sb
+    .from("business_settings")
+    .select("*")
+    .eq("business_id", businessId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data ?? null) as BusinessSettings | null;
+};
+
+export const upsertBusinessSettings = async (
+  businessId: string,
+  patch: Partial<Pick<BusinessSettings, "availability" | "away_until" | "cover_url">>,
+) => {
+  const { error } = await sb
+    .from("business_settings")
+    .upsert({ business_id: businessId, ...patch }, { onConflict: "business_id" });
+  if (error) throw error;
+};
+
+export const fetchBusinessHours = async (businessId: string) => {
+  const { data, error } = await sb
+    .from("business_hours")
+    .select("*")
+    .eq("business_id", businessId)
+    .order("day_of_week")
+    .order("opens_at");
+  if (error) throw error;
+  return (data ?? []) as BusinessHourRow[];
+};
+
+export const replaceBusinessHours = async (
+  businessId: string,
+  rows: Array<Pick<BusinessHourRow, "day_of_week" | "opens_at" | "closes_at" | "is_open">>,
+) => {
+  const { error: delErr } = await sb.from("business_hours").delete().eq("business_id", businessId);
+  if (delErr) throw delErr;
+  if (rows.length === 0) return;
+  const { error } = await sb
+    .from("business_hours")
+    .insert(rows.map((r) => ({ ...r, business_id: businessId })));
+  if (error) throw error;
+};
+
+export const fetchMyChangeRequests = async (businessId: string) => {
+  const { data, error } = await sb
+    .from("profile_change_requests")
+    .select("*")
+    .eq("business_id", businessId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as ProfileChangeRequest[];
+};
+
+export const submitChangeRequest = async (input: {
+  business_id: string;
+  submitted_by: string;
+  field: "name" | "phone" | "email";
+  current_value: string | null;
+  requested_value: string;
+  reason: string | null;
+}) => {
+  const { error } = await sb.from("profile_change_requests").insert(input);
+  if (error) throw error;
+};
+
+// Public bucket: business-media/<businessId>/<kind>-<uuid>.<ext>
+export const businessImageMimeTypes = ["image/jpeg", "image/png", "image/webp"] as const;
+export const businessImageAccept = businessImageMimeTypes.join(",");
+
+export const uploadBusinessImage = async (
+  businessId: string,
+  file: File,
+  kind: "logo" | "cover" | "product",
+) => {
+  if (!businessImageMimeTypes.includes(file.type as (typeof businessImageMimeTypes)[number])) {
+    throw new Error("Use JPG, PNG, or WebP images.");
+  }
+  if (file.size > 5 * 1024 * 1024) throw new Error("Image must be smaller than 5 MB.");
+  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+  const path = `${businessId}/${kind}-${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("business-media").upload(path, file, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from("business-media").getPublicUrl(path);
+  return data.publicUrl;
+};
+
+export const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
