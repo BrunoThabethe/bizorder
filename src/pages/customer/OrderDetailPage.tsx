@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,7 @@ const OrderDetailPage = () => {
   const [message, setMessage] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [lightboxPath, setLightboxPath] = useState<string | null>(null);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", orderId],
@@ -375,9 +377,15 @@ const OrderDetailPage = () => {
                     {p.media_urls.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {p.media_urls.map((u) => (
-                          <div key={u} className="block h-24 w-24 overflow-hidden rounded-xl bg-muted">
+                          <button
+                            key={u}
+                            type="button"
+                            onClick={() => setLightboxPath(u)}
+                            className="block h-24 w-24 overflow-hidden rounded-xl bg-muted ring-offset-background transition hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            aria-label="View proof photo full size"
+                          >
                             <SignedImage path={u} alt="Progress proof" className="h-full w-full object-cover" />
-                          </div>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -451,6 +459,16 @@ const OrderDetailPage = () => {
           </section>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!lightboxPath} onOpenChange={(open) => !open && setLightboxPath(null)}>
+        <DialogContent className="max-w-3xl border-0 bg-transparent p-0 shadow-none">
+          {lightboxPath ? (
+            <div className="overflow-hidden rounded-2xl bg-black">
+              <SignedImage path={lightboxPath} alt="Proof photo full size" className="h-auto w-full object-contain" />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </CustomerLayout>
   );
 };

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, Loader2, Send, UploadCloud, X } from "lucide-react";
+import { ArrowLeft, Loader2, Send, UploadCloud, X } from "lucide-react";
 import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -249,6 +249,8 @@ const BusinessOrderDetailPage = () => {
     );
   }
 
+  const isLocked = o.status === "completed" || o.status === "cancelled";
+
   return (
     <BusinessLayout>
       <PageHeader
@@ -280,20 +282,52 @@ const BusinessOrderDetailPage = () => {
                 ) : null}
               </div>
 
-              {o.notes ? <p className="rounded-2xl bg-muted p-3 text-sm">{o.notes}</p> : null}
-
-              {o.addresses ? (
-                <div className="rounded-2xl bg-muted p-3 text-sm">
-                  <p className="font-semibold">{o.addresses.recipient}</p>
-                  <p className="text-muted-foreground">
-                    {o.addresses.line1}
-                    {o.addresses.line2 ? `, ${o.addresses.line2}` : ""}, {o.addresses.city}
-                    {o.addresses.postal_code ? ` ${o.addresses.postal_code}` : ""}
-                  </p>
+              {/* Customer & job details — always visible */}
+              <div className="grid gap-3 rounded-2xl bg-muted p-4 text-sm md:grid-cols-2">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Customer</p>
+                  <p className="mt-1 font-semibold">{o.profiles?.full_name ?? "—"}</p>
+                  {o.profiles?.email ? (
+                    <a href={`mailto:${o.profiles.email}`} className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+                      {o.profiles.email}
+                    </a>
+                  ) : null}
                 </div>
-              ) : null}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Requested</p>
+                  <p className="mt-1 font-semibold">{new Date(o.created_at).toLocaleString("en-ZA")}</p>
+                  {o.scheduled_for ? (
+                    <p className="text-xs text-muted-foreground">
+                      Scheduled for {new Date(o.scheduled_for).toLocaleString("en-ZA")}
+                    </p>
+                  ) : null}
+                </div>
+                {o.addresses ? (
+                  <div className="md:col-span-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Service address</p>
+                    <p className="mt-1 font-semibold">{o.addresses.recipient}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {o.addresses.line1}
+                      {o.addresses.line2 ? `, ${o.addresses.line2}` : ""}, {o.addresses.city}
+                      {o.addresses.postal_code ? ` ${o.addresses.postal_code}` : ""}, {o.addresses.country}
+                    </p>
+                  </div>
+                ) : null}
+                {o.notes ? (
+                  <div className="md:col-span-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Customer notes</p>
+                    <p className="mt-1 text-sm">{o.notes}</p>
+                  </div>
+                ) : null}
+              </div>
 
-              {o.status === "pending" ? (
+              {isLocked ? (
+                <div className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
+                  {o.status === "completed"
+                    ? "This order is complete. Photos and timeline are saved as a permanent record — no further changes can be made."
+                    : "This order was cancelled. The record is locked."}
+                </div>
+              ) : o.status === "pending" ? (
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-2xl border border-border p-3">
                     <Label htmlFor="eta">Estimated completion</Label>
@@ -360,68 +394,69 @@ const BusinessOrderDetailPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border-0 shadow-card">
-            <CardContent className="space-y-4 p-5">
-              <h2 className="font-display text-lg font-bold">Post a progress update</h2>
-              <Textarea
-                placeholder="Tell the customer what just happened…"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                maxLength={1000}
-              />
-              <div className="grid gap-3 md:grid-cols-[1fr_220px]">
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-3 text-sm font-semibold hover:bg-muted">
-                  <UploadCloud className="h-4 w-4" /> Attach proof photos
-                  <input
-                    type="file"
-                    multiple
-                    accept={proofPhotoAccept}
-                    className="sr-only"
-                    onChange={(e) => {
-                      const selected = Array.from(e.target.files ?? []);
-                      const photos = selected.filter(isProofPhoto).slice(0, 6);
-                      setFiles(photos);
-                      if (selected.length !== photos.length) {
-                        toast({ title: "Only photos can be used as proof", description: "Upload JPG, PNG, or WebP images only.", variant: "destructive" });
-                      }
-                    }}
-                  />
-                </label>
-                <Select value={stage} onValueChange={setStage}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Stage" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="accepted">Accepted</SelectItem>
-                    <SelectItem value="in_progress">In progress</SelectItem>
-                    <SelectItem value="ready">Ready for pickup</SelectItem>
-                    <SelectItem value="out_for_delivery">Out for delivery</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {filePreviews.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {filePreviews.map((f, i) => (
-                    <div key={i} className="relative h-20 w-20 overflow-hidden rounded-xl bg-muted">
-                      <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
-                      <button
-                        onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-foreground text-background"
-                        aria-label="Remove"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
+          {!isLocked && (
+            <Card className="rounded-3xl border-0 shadow-card">
+              <CardContent className="space-y-4 p-5">
+                <h2 className="font-display text-lg font-bold">Post a progress update</h2>
+                <Textarea
+                  placeholder="Tell the customer what just happened…"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={1000}
+                />
+                <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-3 text-sm font-semibold hover:bg-muted">
+                    <UploadCloud className="h-4 w-4" /> Attach proof photos
+                    <input
+                      type="file"
+                      multiple
+                      accept={proofPhotoAccept}
+                      className="sr-only"
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.files ?? []);
+                        const photos = selected.filter(isProofPhoto).slice(0, 6);
+                        setFiles(photos);
+                        if (selected.length !== photos.length) {
+                          toast({ title: "Only photos can be used as proof", description: "Upload JPG, PNG, or WebP images only.", variant: "destructive" });
+                        }
+                      }}
+                    />
+                  </label>
+                  <Select value={stage} onValueChange={setStage}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="accepted">Accepted</SelectItem>
+                      <SelectItem value="in_progress">In progress</SelectItem>
+                      <SelectItem value="ready">Ready for pickup</SelectItem>
+                      <SelectItem value="out_for_delivery">Out for delivery</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-              <Button onClick={() => addProgress.mutate()} disabled={uploading || (!note && files.length === 0)}>
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Post update
-              </Button>
-            </CardContent>
-          </Card>
-
+                {filePreviews.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {filePreviews.map((f, i) => (
+                      <div key={i} className="relative h-20 w-20 overflow-hidden rounded-xl bg-muted">
+                        <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
+                        <button
+                          onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                          className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-foreground text-background"
+                          aria-label="Remove"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Button onClick={() => addProgress.mutate()} disabled={uploading || (!note && files.length === 0)}>
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Post update
+                </Button>
+              </CardContent>
+            </Card>
+          )}
           <Card className="rounded-3xl border-0 shadow-card">
             <CardContent className="space-y-3 p-5">
               <h2 className="font-display text-lg font-bold">Progress timeline</h2>
@@ -457,32 +492,34 @@ const BusinessOrderDetailPage = () => {
           <Card className="rounded-3xl border-0 shadow-card">
             <CardContent className="space-y-3 p-5">
               <h2 className="font-display text-lg font-bold">Crew tasks</h2>
-              <div className="space-y-2">
-                <Input placeholder="Task title" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} maxLength={120} />
-                <Textarea
-                  placeholder="Instructions"
-                  value={taskInstructions}
-                  onChange={(e) => setTaskInstructions(e.target.value)}
-                  maxLength={500}
-                />
-                <Select value={taskCrew} onValueChange={setTaskCrew}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Assign to crew (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {crew
-                      .filter((c) => c.is_active)
-                      .map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.display_name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <Button className="w-full" onClick={() => addTask.mutate()} disabled={!taskTitle}>
-                  Add task
-                </Button>
-              </div>
+              {!isLocked && (
+                <div className="space-y-2">
+                  <Input placeholder="Task title" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} maxLength={120} />
+                  <Textarea
+                    placeholder="Instructions"
+                    value={taskInstructions}
+                    onChange={(e) => setTaskInstructions(e.target.value)}
+                    maxLength={500}
+                  />
+                  <Select value={taskCrew} onValueChange={setTaskCrew}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Assign to crew (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {crew
+                        .filter((c) => c.is_active)
+                        .map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.display_name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button className="w-full" onClick={() => addTask.mutate()} disabled={!taskTitle}>
+                    Add task
+                  </Button>
+                </div>
+              )}
               <ul className="mt-3 space-y-2">
                 {tasks.map((t) => {
                   const owner = crew.find((c) => c.id === t.crew_member_id);
@@ -514,36 +551,13 @@ const BusinessOrderDetailPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border-0 shadow-card">
-            <CardContent className="p-5">
-              <h2 className="mb-2 font-display text-lg font-bold">Quick actions</h2>
-              <div className="space-y-2">
-                <Button className="w-full" onClick={() => setStatus.mutate("ready")} disabled={setStatus.isPending}>
-                  <CheckCircle2 className="h-4 w-4" /> Mark ready for pickup
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onClick={() => setStatus.mutate("out_for_delivery")}
-                  disabled={setStatus.isPending}
-                >
-                  Mark out for delivery
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onClick={() => setStatus.mutate("ready_for_review")}
-                  disabled={setStatus.isPending}
-                >
-                  Send for customer confirmation
-                </Button>
-                <p className="pt-1 text-[11px] text-muted-foreground">
-                  The customer marks the order completed and triggers the payout.
-                </p>
+          {!isLocked && (
+            <Card className="rounded-3xl border-0 shadow-card">
+              <CardContent className="p-5">
                 <OpenDisputeButton orderId={orderId} fullWidth />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </BusinessLayout>
