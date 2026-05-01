@@ -53,16 +53,36 @@ const ServicesManagerPage = () => {
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  const onUploadProductImage = async (file: File) => {
+    if (!business) {
+      toast({ title: "Save your business first", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const url = await uploadBusinessImage(business.id, file, "product");
+      setImageUrl(url);
+    } catch (e) {
+      toast({ title: "Upload failed", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const create = useMutation({
     mutationFn: async () => {
       if (!business) throw new Error("Create your business profile first");
+      if (kind === "product" && !imageUrl) throw new Error("Add a product photo so customers can see it.");
       const { error } = await supabase.from("services").insert({
         business_id: business.id,
         title,
         description: description || null,
         price: Number(price) || 0,
         duration_minutes: kind === "service" && duration ? Number(duration) : null,
+        image_url: kind === "product" ? imageUrl : null,
         is_active: true,
         // kind column added via migration; cast to keep generated types happy
         ...({ kind } as Record<string, unknown>),
@@ -74,6 +94,7 @@ const ServicesManagerPage = () => {
       setPrice("");
       setDuration("");
       setDescription("");
+      setImageUrl("");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
     },
