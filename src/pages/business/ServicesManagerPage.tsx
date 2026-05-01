@@ -213,7 +213,10 @@ const ServicesManagerPage = () => {
                   const itemKind = ((s as unknown as { kind?: string }).kind ?? "service") as CatalogKind;
                   return (
                     <li key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border p-3">
-                      <div className="min-w-0">
+                      {s.image_url ? (
+                        <img src={s.image_url} alt={s.title} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                             {itemKind === "product" ? "Product" : "Service"}
