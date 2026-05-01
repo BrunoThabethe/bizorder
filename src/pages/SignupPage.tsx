@@ -68,8 +68,14 @@ const SignupPage = () => {
       toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Welcome to BizOrder", description: "Account created." });
-    navigate("/");
+    toast({
+      title: "Welcome to BizOrder",
+      description:
+        role === "business"
+          ? "Account created. Let's complete your verification."
+          : "Account created.",
+    });
+    navigate(role === "business" ? "/business/onboarding" : "/");
   };
 
   return (
