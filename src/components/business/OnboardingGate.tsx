@@ -17,13 +17,13 @@ type Props = { children: ReactNode; onSignOut?: () => void | Promise<void> };
 const REQUIRED: DocumentType[] = REQUIRED_DOCUMENT_TYPES;
 
 export const OnboardingGate = ({ children, onSignOut }: Props) => {
-  const { user, role } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   const { data: business, isLoading: loadingBiz } = useQuery({
     queryKey: ["my-business", user?.id],
     queryFn: () => fetchMyBusiness(user!.id),
-    enabled: !!user && role === "business",
+    enabled: !!user,
   });
 
   const businessId = business?.id ?? null;
@@ -38,8 +38,18 @@ export const OnboardingGate = ({ children, onSignOut }: Props) => {
   const onOnboardingRoute = location.pathname.startsWith("/business/onboarding");
   if (onOnboardingRoute) return <>{children}</>;
 
-  if (role !== "business") return <>{children}</>;
-  if (loadingBiz || (businessId && loadingDocs)) return <>{children}</>;
+  if (loading || loadingBiz || (businessId && loadingDocs)) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background px-4 text-foreground">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-sm font-semibold">Checking verification status</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return <>{children}</>;
   if (!business) return <>{children}</>;
 
   const uploadedTypes = new Set(docs.map((d) => d.document_type));
