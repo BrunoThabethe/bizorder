@@ -194,4 +194,6 @@ export const BusinessLayout = ({ children }: Props) => {
       </nav>
     </div>
   );
+
+  return <OnboardingGate onSignOut={onSignOut}>{content}</OnboardingGate>;
 };
