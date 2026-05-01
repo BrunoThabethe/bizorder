@@ -58,10 +58,15 @@ const MAX_BYTES = 10 * 1024 * 1024;
 
 export const uploadVerificationDocument = async (
   businessId: string,
-  userId: string,
+  userId: string | null,
   type: DocumentType,
   file: File,
 ): Promise<OnboardingDocument> => {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) throw new Error("Please stay signed in to upload verification documents.");
+
+  const uploadedBy = userId ?? authData.user.id;
+
   if (!["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(file.type)) {
     throw new Error("Use JPG, PNG, WebP, or PDF files only.");
   }
@@ -91,7 +96,7 @@ export const uploadVerificationDocument = async (
       file_name: file.name,
       mime_type: file.type,
       size_bytes: file.size,
-      uploaded_by: userId,
+      uploaded_by: uploadedBy,
     })
     .select("*")
     .single();
@@ -124,6 +129,21 @@ export const markBusinessOnboarded = async (businessId: string) => {
     .update({ is_onboarded: true })
     .eq("id", businessId);
   if (error) throw error;
+};
+
+export const isBusinessFullyVerified = async (businessId: string) => {
+  const { data: business, error } = await supabase
+    .from("businesses")
+    .select("is_onboarded")
+    .eq("id", businessId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!business?.is_onboarded) return false;
+
+  const docs = await fetchOnboardingDocuments(businessId);
+  return REQUIRED_DOCUMENT_TYPES.every(
+    (type) => docs.find((doc) => doc.document_type === type)?.review_status === "approved",
+  );
 };
 
 export const updateBusinessVerificationFields = async (

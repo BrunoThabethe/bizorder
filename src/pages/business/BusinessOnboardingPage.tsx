@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchMyBusiness } from "@/lib/business/queries";
+import { fetchOrCreateMyBusiness } from "@/lib/business/queries";
 import {
   DOCUMENT_LABELS,
   REQUIRED_DOCUMENT_TYPES,
@@ -44,15 +44,15 @@ const ALL_DOC_TYPES: DocumentType[] = [
 ];
 
 export const BusinessOnboardingPage = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: business, isLoading } = useQuery({
     queryKey: ["my-business", user?.id],
-    queryFn: () => fetchMyBusiness(user!.id),
-    enabled: !!user,
+    queryFn: () => fetchOrCreateMyBusiness(user!),
+    enabled: !authLoading && !!user,
   });
 
   const businessId = business?.id ?? null;
@@ -96,8 +96,8 @@ export const BusinessOnboardingPage = () => {
 
   const uploadMutation = useMutation({
     mutationFn: async (input: { type: DocumentType; file: File }) => {
-      if (!businessId || !user) throw new Error("Sign in first");
-      return uploadVerificationDocument(businessId, user.id, input.type, input.file);
+      if (!businessId || authLoading) throw new Error("Please wait while we confirm your session.");
+      return uploadVerificationDocument(businessId, user?.id ?? null, input.type, input.file);
     },
     onSuccess: () => {
       toast({ title: "Document uploaded" });
@@ -162,7 +162,7 @@ export const BusinessOnboardingPage = () => {
     },
   });
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <div className="grid place-items-center py-20">

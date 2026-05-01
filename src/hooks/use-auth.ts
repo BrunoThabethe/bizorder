@@ -25,9 +25,13 @@ export const useAuth = (): AuthState => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       if (newSession?.user) {
-        setTimeout(() => fetchRole(newSession.user.id), 0);
+        setLoading(true);
+        setTimeout(() => {
+          void fetchRole(newSession.user.id).finally(() => setLoading(false));
+        }, 0);
       } else {
         setRole(null);
+        setLoading(false);
       }
     });
 
