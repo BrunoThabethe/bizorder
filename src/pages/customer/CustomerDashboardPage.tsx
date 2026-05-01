@@ -267,5 +267,42 @@ const EmptyState = ({
   </div>
 );
 
+const ChecklistItem = ({
+  done,
+  icon: Icon,
+  title,
+  text,
+  cta,
+}: {
+  done: boolean;
+  icon: typeof Package;
+  title: string;
+  text: string;
+  cta: { to: string; label: string };
+}) => (
+  <div
+    className={cn(
+      "flex items-start gap-3 rounded-2xl p-4 transition-colors",
+      done ? "bg-foreground/5" : "bg-muted/50",
+    )}
+  >
+    <div
+      className={cn(
+        "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+        done ? "bg-foreground text-background" : "bg-foreground/10 text-foreground",
+      )}
+    >
+      {done ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="font-display text-sm font-bold">{title}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{text}</p>
+      <Button asChild size="sm" variant={done ? "secondary" : "default"} className="mt-3">
+        <Link to={cta.to}>{cta.label}</Link>
+      </Button>
+    </div>
+  </div>
+);
+
 export { CustomerDashboardPage };
 export default CustomerDashboardPage;
