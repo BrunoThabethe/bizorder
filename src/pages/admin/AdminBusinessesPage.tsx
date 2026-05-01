@@ -20,18 +20,8 @@ const AdminBusinessesPage = () => {
   const { user } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["admin", "businesses"], queryFn: fetchAllBusinesses });
 
-  const verifyMutation = useMutation({
-    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
-      await setBusinessVerified(id, value);
-      if (user) {
-        await logAdminAction(user.id, value ? "business.verified" : "business.unverified", "business", id, { value });
-      }
-    },
-    onSuccess: () => {
-      toast({ title: "Verification updated" });
-      queryClient.invalidateQueries({ queryKey: ["admin", "businesses"] });
-    },
-  });
+  // Verification is now handled inline by the VerificationWizard dialog.
+
 
   const publishMutation = useMutation({
     mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
