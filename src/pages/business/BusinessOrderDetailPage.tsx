@@ -249,6 +249,8 @@ const BusinessOrderDetailPage = () => {
     );
   }
 
+  const isLocked = o.status === "completed" || o.status === "cancelled";
+
   return (
     <BusinessLayout>
       <PageHeader
@@ -280,18 +282,44 @@ const BusinessOrderDetailPage = () => {
                 ) : null}
               </div>
 
-              {o.notes ? <p className="rounded-2xl bg-muted p-3 text-sm">{o.notes}</p> : null}
-
-              {o.addresses ? (
-                <div className="rounded-2xl bg-muted p-3 text-sm">
-                  <p className="font-semibold">{o.addresses.recipient}</p>
-                  <p className="text-muted-foreground">
-                    {o.addresses.line1}
-                    {o.addresses.line2 ? `, ${o.addresses.line2}` : ""}, {o.addresses.city}
-                    {o.addresses.postal_code ? ` ${o.addresses.postal_code}` : ""}
-                  </p>
+              {/* Customer & job details — always visible */}
+              <div className="grid gap-3 rounded-2xl bg-muted p-4 text-sm md:grid-cols-2">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Customer</p>
+                  <p className="mt-1 font-semibold">{o.profiles?.full_name ?? "—"}</p>
+                  {o.profiles?.email ? (
+                    <a href={`mailto:${o.profiles.email}`} className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+                      {o.profiles.email}
+                    </a>
+                  ) : null}
                 </div>
-              ) : null}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Requested</p>
+                  <p className="mt-1 font-semibold">{new Date(o.created_at).toLocaleString("en-ZA")}</p>
+                  {o.scheduled_for ? (
+                    <p className="text-xs text-muted-foreground">
+                      Scheduled for {new Date(o.scheduled_for).toLocaleString("en-ZA")}
+                    </p>
+                  ) : null}
+                </div>
+                {o.addresses ? (
+                  <div className="md:col-span-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Service address</p>
+                    <p className="mt-1 font-semibold">{o.addresses.recipient}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {o.addresses.line1}
+                      {o.addresses.line2 ? `, ${o.addresses.line2}` : ""}, {o.addresses.city}
+                      {o.addresses.postal_code ? ` ${o.addresses.postal_code}` : ""}, {o.addresses.country}
+                    </p>
+                  </div>
+                ) : null}
+                {o.notes ? (
+                  <div className="md:col-span-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Customer notes</p>
+                    <p className="mt-1 text-sm">{o.notes}</p>
+                  </div>
+                ) : null}
+              </div>
 
               {o.status === "pending" ? (
                 <div className="grid gap-3 md:grid-cols-2">
