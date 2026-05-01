@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Bell, Compass, Package, Sparkles, Star, Wallet } from "lucide-react";
+import { ArrowRight, Bell, Check, Compass, MapPin, Package, Sparkles, Star, Wallet } from "lucide-react";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { OrderStatusStepper } from "@/components/orders/OrderStatusStepper";
 import {
+  fetchMyAddresses,
   fetchMyOrders,
   fetchMyNotifications,
   fetchPublishedBusinesses,
@@ -45,26 +47,89 @@ const CustomerDashboardPage = () => {
     queryKey: ["browse-businesses"],
     queryFn: fetchPublishedBusinesses,
   });
+  const { data: addresses = [] } = useQuery({
+    queryKey: ["my-addresses", userId],
+    queryFn: () => fetchMyAddresses(userId as string),
+    enabled: !!userId,
+  });
 
   const activeOrders = orders.filter((o) => !["completed", "cancelled"].includes(o.status));
+  const currentOrder = activeOrders[0];
   const totalSpent = orders.reduce((sum, o) => sum + Number(o.total ?? 0), 0);
   const unreadAlerts = notifications.filter((n) => !n.read_at).length;
   const firstName = ((user?.user_metadata?.full_name as string | undefined) ?? "there").split(" ")[0];
+
+  const hasAddress = addresses.length > 0;
+  const hasFirstOrder = orders.length > 0;
+  const onboardingDone = hasAddress && hasFirstOrder;
 
   return (
     <CustomerLayout>
       <PageHeader
         eyebrow={greeting}
         title={`Hi ${firstName} 👋`}
-        description="Track your orders, message providers, and discover new businesses around you."
+        description="Your orders, providers and updates — all in one place."
         action={
           <Button asChild size="lg">
             <Link to="/customer/browse">
-              <Compass className="h-4 w-4" /> Browse businesses
+              <Compass className="h-4 w-4" /> Start an order
             </Link>
           </Button>
         }
       />
+
+      {/* Onboarding checklist — only shows until both items done */}
+      {!onboardingDone && (
+        <section className="mb-4 rounded-3xl bg-card p-5 shadow-card">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-base font-bold">Get set up in 2 steps</h2>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {[hasAddress, hasFirstOrder].filter(Boolean).length}/2 done
+            </span>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <ChecklistItem
+              done={hasAddress}
+              icon={MapPin}
+              title="Add a delivery address"
+              text="So providers know where to go."
+              cta={{ to: "/customer/addresses", label: hasAddress ? "Manage" : "Add address" }}
+            />
+            <ChecklistItem
+              done={hasFirstOrder}
+              icon={Package}
+              title="Place your first order"
+              text="Browse trusted providers near you."
+              cta={{ to: "/customer/browse", label: hasFirstOrder ? "Browse more" : "Browse providers" }}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Active order tracker */}
+      {currentOrder && (
+        <section className="mb-4 rounded-3xl bg-card p-5 shadow-card">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Active order
+              </p>
+              <p className="mt-1 truncate font-display text-lg font-bold">
+                {currentOrder.businesses?.name ?? "Provider"} ·{" "}
+                <span className="text-muted-foreground">{currentOrder.services?.title ?? "Order"}</span>
+              </p>
+            </div>
+            <Button asChild size="sm">
+              <Link to={`/customer/orders/${currentOrder.id}`}>
+                Open <ArrowRight className="h-3 w-3" />
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-4">
+            <OrderStatusStepper status={currentOrder.status as OrderStatus} />
+          </div>
+        </section>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className={statCard}>
@@ -199,6 +264,43 @@ const EmptyState = ({
         <Link to={cta.to}>{cta.label}</Link>
       </Button>
     ) : null}
+  </div>
+);
+
+const ChecklistItem = ({
+  done,
+  icon: Icon,
+  title,
+  text,
+  cta,
+}: {
+  done: boolean;
+  icon: typeof Package;
+  title: string;
+  text: string;
+  cta: { to: string; label: string };
+}) => (
+  <div
+    className={cn(
+      "flex items-start gap-3 rounded-2xl p-4 transition-colors",
+      done ? "bg-foreground/5" : "bg-muted/50",
+    )}
+  >
+    <div
+      className={cn(
+        "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+        done ? "bg-foreground text-background" : "bg-foreground/10 text-foreground",
+      )}
+    >
+      {done ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="font-display text-sm font-bold">{title}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{text}</p>
+      <Button asChild size="sm" variant={done ? "secondary" : "default"} className="mt-3">
+        <Link to={cta.to}>{cta.label}</Link>
+      </Button>
+    </div>
   </div>
 );
 

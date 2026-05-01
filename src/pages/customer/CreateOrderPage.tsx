@@ -1,14 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Wallet } from "lucide-react";
+import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -46,7 +45,6 @@ const CreateOrderPage = () => {
   const [addressId, setAddressId] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"escrow" | "cash">("escrow");
   const [submitting, setSubmitting] = useState(false);
 
   const { data: business } = useQuery({
@@ -110,7 +108,7 @@ const CreateOrderPage = () => {
       order_id: order.id,
       actor_id: user.id,
       type: "created",
-      message: `Order placed (${paymentMethod === "escrow" ? "Escrow payment" : "Pay on delivery"})`,
+      message: "Order placed — pay on completion",
     });
 
     setSubmitting(false);
@@ -237,13 +235,17 @@ const CreateOrderPage = () => {
 
           <section className="rounded-3xl bg-card p-5 shadow-card">
             <h2 className="font-display text-base font-bold">Payment</h2>
-            <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)} className="mt-3 grid gap-2">
-              <PaymentOption value="escrow" title="Escrow payment" text="Held safely until you approve completion." />
-              <PaymentOption value="cash" title="Pay on delivery" text="Pay the provider directly when work is done." />
-            </RadioGroup>
-            <p className="mt-3 flex items-start gap-2 rounded-2xl bg-muted/40 p-3 text-xs text-muted-foreground">
-              <Wallet className="mt-0.5 h-3 w-3 shrink-0" /> Escrow integration coming soon — for now, the order is recorded and the provider will confirm payment offline.
-            </p>
+            <div className="mt-3 flex items-start gap-3 rounded-2xl bg-muted/50 p-4">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-foreground text-background">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-display text-sm font-bold">Pay on completion</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  No money moves now. You'll pay your provider once you've approved the work — secure online payments are coming soon.
+                </p>
+              </div>
+            </div>
           </section>
         </div>
 
@@ -271,19 +273,6 @@ const CreateOrderPage = () => {
     </CustomerLayout>
   );
 };
-
-const PaymentOption = ({ value, title, text }: { value: string; title: string; text: string }) => (
-  <label
-    className="flex cursor-pointer items-start gap-3 rounded-2xl bg-muted/50 p-3 transition-colors hover:bg-muted"
-    htmlFor={`pay-${value}`}
-  >
-    <RadioGroupItem id={`pay-${value}`} value={value} className="mt-1" />
-    <div>
-      <p className="font-display text-sm font-bold">{title}</p>
-      <p className="text-xs text-muted-foreground">{text}</p>
-    </div>
-  </label>
-);
 
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex items-center justify-between gap-3">
