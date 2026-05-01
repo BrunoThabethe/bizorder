@@ -160,6 +160,39 @@ const ServicesManagerPage = () => {
               <Label htmlFor="desc">Description</Label>
               <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={600} />
             </div>
+            {kind === "product" && (
+              <div className="space-y-2">
+                <Label>Product photo</Label>
+                {imageUrl ? (
+                  <div className="relative h-40 overflow-hidden rounded-2xl bg-muted">
+                    <img src={imageUrl} alt="Product preview" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow-card hover:bg-background"
+                      aria-label="Remove photo"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 text-xs text-muted-foreground hover:bg-muted/50">
+                    {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
+                    <span>{uploading ? "Uploading…" : "Click to upload (JPG, PNG, WebP · max 5 MB)"}</span>
+                    <input
+                      type="file"
+                      accept={businessImageAccept}
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) onUploadProductImage(f);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            )}
             <Button className="w-full" onClick={() => create.mutate()} disabled={!title || !price || create.isPending}>
               {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {kind === "product" ? " Add product" : " Add service"}
