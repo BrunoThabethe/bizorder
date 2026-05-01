@@ -45,7 +45,6 @@ const CreateOrderPage = () => {
   const [addressId, setAddressId] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"escrow" | "cash">("escrow");
   const [submitting, setSubmitting] = useState(false);
 
   const { data: business } = useQuery({
