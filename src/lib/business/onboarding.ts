@@ -131,6 +131,21 @@ export const markBusinessOnboarded = async (businessId: string) => {
   if (error) throw error;
 };
 
+export const isBusinessFullyVerified = async (businessId: string) => {
+  const { data: business, error } = await supabase
+    .from("businesses")
+    .select("is_onboarded")
+    .eq("id", businessId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!business?.is_onboarded) return false;
+
+  const docs = await fetchOnboardingDocuments(businessId);
+  return REQUIRED_DOCUMENT_TYPES.every(
+    (type) => docs.find((doc) => doc.document_type === type)?.review_status === "approved",
+  );
+};
+
 export const updateBusinessVerificationFields = async (
   businessId: string,
   patch: { trading_address?: string | null; registration_number?: string | null; website_url?: string | null },
