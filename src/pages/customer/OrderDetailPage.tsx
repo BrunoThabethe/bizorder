@@ -40,6 +40,7 @@ const OrderDetailPage = () => {
   const [message, setMessage] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [lightboxPath, setLightboxPath] = useState<string | null>(null);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", orderId],
