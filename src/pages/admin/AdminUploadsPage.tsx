@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { ImageLightbox } from "@/components/admin/ImageLightbox";
 import { SignedImage } from "@/components/orders/SignedImage";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchProgressLogs } from "@/lib/admin/queries";
@@ -19,13 +21,14 @@ type Log = {
 
 const AdminUploadsPage = () => {
   const { data, isLoading } = useQuery({ queryKey: ["admin", "uploads"], queryFn: fetchProgressLogs });
+  const [previewPath, setPreviewPath] = useState<string | null>(null);
 
   return (
     <AdminLayout>
       <div className="space-y-5">
         <div>
           <h1 className="font-display text-3xl font-bold">Uploads & proof logs</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Recent media and progress notes attached to orders.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Recent media and progress notes attached to orders. Click a photo to zoom in.</p>
         </div>
 
         {isLoading ? (
@@ -58,13 +61,19 @@ const AdminUploadsPage = () => {
                   {log.media_urls.length > 0 && (
                     <div className="grid grid-cols-3 gap-2">
                       {log.media_urls.map((url) => (
-                        <a key={url} href={url} target="_blank" rel="noreferrer" className="block">
+                        <button
+                          key={url}
+                          type="button"
+                          onClick={() => setPreviewPath(url)}
+                          className="block overflow-hidden rounded-xl transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-foreground"
+                          aria-label="View proof photo"
+                        >
                           <SignedImage
                             path={url}
                             alt="Proof"
-                            className="aspect-square w-full rounded-xl object-cover"
+                            className="aspect-square w-full object-cover"
                           />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -74,6 +83,7 @@ const AdminUploadsPage = () => {
           </div>
         )}
       </div>
+      <ImageLightbox path={previewPath} onClose={() => setPreviewPath(null)} />
     </AdminLayout>
   );
 };
