@@ -7,6 +7,7 @@ import {
   Inbox,
   LogOut,
   Menu,
+  MessageSquare,
   Search,
   Settings,
   Star,
@@ -28,6 +29,7 @@ type Props = { children: ReactNode };
 const navItems = [
   { to: "/business", label: "Dashboard", icon: Home, end: true },
   { to: "/business/orders", label: "Orders", icon: Inbox },
+  { to: "/business/messages", label: "Messages", icon: MessageSquare },
   { to: "/business/services", label: "Services", icon: Briefcase },
   { to: "/business/crew", label: "Crew", icon: Users },
   { to: "/business/reviews", label: "Reviews", icon: Star },
