@@ -47,6 +47,7 @@ import CrewNotificationsPage from "./pages/crew/CrewNotificationsPage.tsx";
 import CrewProfilePage from "./pages/crew/CrewProfilePage.tsx";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage.tsx";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage.tsx";
+import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage.tsx";
 import AdminUsersPage from "./pages/admin/AdminUsersPage.tsx";
 import AdminBusinessesPage from "./pages/admin/AdminBusinessesPage.tsx";
 import AdminVerificationPage from "./pages/admin/AdminVerificationPage.tsx";
@@ -120,6 +121,7 @@ const App = () => (
             {/* Admin portal */}
             <Route path="/admin" element={<RoleGuard allow={["admin"]}><AdminDashboardPage /></RoleGuard>} />
             <Route path="/admin/orders" element={<RoleGuard allow={["admin"]}><AdminOrdersPage /></RoleGuard>} />
+            <Route path="/admin/orders/:orderId" element={<RoleGuard allow={["admin"]}><AdminOrderDetailPage /></RoleGuard>} />
             <Route path="/admin/users" element={<RoleGuard allow={["admin"]}><AdminUsersPage /></RoleGuard>} />
             <Route path="/admin/businesses" element={<RoleGuard allow={["admin"]}><AdminBusinessesPage /></RoleGuard>} />
             <Route path="/admin/verification" element={<RoleGuard allow={["admin"]}><AdminVerificationPage /></RoleGuard>} />
