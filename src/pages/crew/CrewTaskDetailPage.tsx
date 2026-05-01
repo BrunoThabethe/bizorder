@@ -103,14 +103,13 @@ const CrewTaskDetailPage = () => {
     try {
       const paths: string[] = [];
       for (const f of files) paths.push(await uploadOrderMedia(t.order_id, f));
-      const { error } = await sb.from("order_progress").insert({
-        order_id: t.order_id,
-        business_id: t.business_id,
-        task_id: t.id,
-        author_id: user.id,
-        note: note || null,
-        media_urls: paths,
-        stage: "in_progress",
+      const { error } = await sb.rpc("post_order_progress_update", {
+        _order_id: t.order_id,
+        _business_id: t.business_id,
+        _task_id: t.id,
+        _note: note || null,
+        _media_urls: paths,
+        _stage: "in_progress",
       });
       if (error) throw error;
       setNote("");

@@ -130,34 +130,17 @@ const BusinessOrderDetailPage = () => {
       setUploading(true);
       const paths: string[] = [];
       for (const f of files) paths.push(await uploadOrderMedia(orderId, f));
-      const { error } = await sb.from("order_progress").insert({
-        order_id: orderId,
-        business_id: businessId,
-        author_id: user.id,
-        note: note || null,
-        media_urls: paths,
-        stage,
+      // Use the server-side RPC so RLS, timeline mirroring and customer
+      // notification all happen atomically with the proper privileges.
+      const { error } = await sb.rpc("post_order_progress_update", {
+        _order_id: orderId,
+        _business_id: businessId,
+        _task_id: null,
+        _note: note || null,
+        _media_urls: paths,
+        _stage: stage,
       });
       if (error) throw error;
-
-      // Mirror the update on the order timeline so the customer sees it in Status tab.
-      await supabase.from("order_events").insert({
-        order_id: orderId,
-        actor_id: user.id,
-        type: "progress_update",
-        message: note || (paths.length ? `${paths.length} photo${paths.length > 1 ? "s" : ""} added` : "Update posted"),
-      });
-
-      // Notify the customer so they get a real-time alert in their portal.
-      if (o?.profiles) {
-        await supabase.from("notifications").insert({
-          user_id: (order as { customer_id: string }).customer_id,
-          type: "progress_update",
-          title: "New update on your order",
-          body: note ? note.slice(0, 140) : "Your provider posted new photos.",
-          link: `/customer/orders/${orderId}`,
-        });
-      }
     },
     onSuccess: () => {
       setNote("");
