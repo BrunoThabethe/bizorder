@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import type { User } from "@supabase/supabase-js";
 
 // Tables added in latest migration are not yet in the generated types.
 // Use this typed accessor to interact with them safely.
@@ -97,6 +98,14 @@ export const STATUS_TONE: Record<OrderStatus, string> = {
 export const formatPrice = (value: number, currency = "ZAR") =>
   new Intl.NumberFormat("en-ZA", { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
 
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 52);
+
 export const fetchMyBusiness = async (userId: string) => {
   const { data, error } = await supabase
     .from("businesses")
@@ -107,6 +116,32 @@ export const fetchMyBusiness = async (userId: string) => {
     .maybeSingle();
   if (error) throw error;
   return data as Business | null;
+};
+
+export const fetchOrCreateMyBusiness = async (user: User) => {
+  const existing = await fetchMyBusiness(user.id);
+  if (existing) return existing;
+
+  const metadata = user.user_metadata;
+  const businessName = typeof metadata.business_name === "string" ? metadata.business_name : null;
+  const fullName = typeof metadata.full_name === "string" ? metadata.full_name : null;
+  const phone = typeof metadata.phone === "string" ? metadata.phone : null;
+  const name = businessName || fullName || user.email?.split("@")[0] || "New business";
+  const slug = `${slugify(name) || "business"}-${user.id.slice(0, 8)}`;
+
+  const { data, error } = await supabase
+    .from("businesses")
+    .insert({
+      owner_id: user.id,
+      name,
+      slug,
+      email: user.email ?? null,
+      phone,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as Business;
 };
 
 export const fetchBusinessOrders = async (businessId: string) => {
