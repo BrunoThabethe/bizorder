@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Bell, Compass, Package, Sparkles, Star, Wallet } from "lucide-react";
+import { ArrowRight, Bell, Check, Compass, MapPin, Package, Sparkles, Star, Wallet } from "lucide-react";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { OrderStatusStepper } from "@/components/orders/OrderStatusStepper";
 import {
+  fetchMyAddresses,
   fetchMyOrders,
   fetchMyNotifications,
   fetchPublishedBusinesses,
