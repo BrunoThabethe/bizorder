@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchMyBusiness } from "@/lib/business/queries";
+import { isBusinessFullyVerified } from "@/lib/business/onboarding";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email").max(255),
@@ -33,9 +35,14 @@ const testAccounts: {
   { role: "Admin", email: "admin@test.bizorder", signupRole: "customer", finalRole: "admin", fullName: "Test Admin", color: "bg-foreground/15" },
 ];
 
-const roleHomeFor = (role: string | null | undefined) => {
+const roleHomeFor = async (role: string | null | undefined, userId: string) => {
   if (role === "admin") return "/admin";
-  if (role === "business") return "/business";
+  if (role === "business") {
+    const business = await fetchMyBusiness(userId);
+    if (!business) return "/business/onboarding";
+    const verified = await isBusinessFullyVerified(business.id);
+    return verified ? "/business" : "/business/onboarding";
+  }
   if (role === "crew") return "/crew";
   return "/customer";
 };
@@ -79,7 +86,8 @@ const LoginPage = () => {
     const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });
     setLoading(false);
     toast({ title: "Welcome back", description: "You're signed in." });
-    navigate(roleHomeFor(roleData as string | null));
+    const nextRoute = await roleHomeFor(roleData as string | null, data.user.id);
+    navigate(nextRoute);
   };
 
   const fillTestAccount = (testEmail: string) => {
