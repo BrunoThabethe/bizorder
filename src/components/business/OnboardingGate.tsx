@@ -12,7 +12,7 @@ import {
 } from "@/lib/business/onboarding";
 import { Button } from "@/components/ui/button";
 
-type Props = { children: ReactNode };
+type Props = { children: ReactNode; onSignOut?: () => void | Promise<void> };
 
 const REQUIRED: DocumentType[] = REQUIRED_DOCUMENT_TYPES;
 
