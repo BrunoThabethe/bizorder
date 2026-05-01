@@ -551,36 +551,13 @@ const BusinessOrderDetailPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border-0 shadow-card">
-            <CardContent className="p-5">
-              <h2 className="mb-2 font-display text-lg font-bold">Quick actions</h2>
-              <div className="space-y-2">
-                <Button className="w-full" onClick={() => setStatus.mutate("ready")} disabled={setStatus.isPending}>
-                  <CheckCircle2 className="h-4 w-4" /> Mark ready for pickup
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onClick={() => setStatus.mutate("out_for_delivery")}
-                  disabled={setStatus.isPending}
-                >
-                  Mark out for delivery
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="secondary"
-                  onClick={() => setStatus.mutate("ready_for_review")}
-                  disabled={setStatus.isPending}
-                >
-                  Send for customer confirmation
-                </Button>
-                <p className="pt-1 text-[11px] text-muted-foreground">
-                  The customer marks the order completed and triggers the payout.
-                </p>
+          {!isLocked && (
+            <Card className="rounded-3xl border-0 shadow-card">
+              <CardContent className="p-5">
                 <OpenDisputeButton orderId={orderId} fullWidth />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </BusinessLayout>
