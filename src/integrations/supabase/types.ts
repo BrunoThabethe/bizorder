@@ -188,6 +188,69 @@ export type Database = {
         }
         Relationships: []
       }
+      business_hours: {
+        Row: {
+          business_id: string
+          closes_at: string
+          created_at: string
+          day_of_week: number
+          id: string
+          is_open: boolean
+          opens_at: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          closes_at: string
+          created_at?: string
+          day_of_week: number
+          id?: string
+          is_open?: boolean
+          opens_at: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          closes_at?: string
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          is_open?: boolean
+          opens_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      business_settings: {
+        Row: {
+          availability: string
+          away_until: string | null
+          business_id: string
+          cover_url: string | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          availability?: string
+          away_until?: string | null
+          business_id: string
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          availability?: string
+          away_until?: string | null
+          business_id?: string
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       businesses: {
         Row: {
           address: string | null
@@ -664,6 +727,54 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_change_requests: {
+        Row: {
+          business_id: string
+          created_at: string
+          current_value: string | null
+          decision_reason: string | null
+          field: string
+          id: string
+          reason: string | null
+          requested_value: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_by: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          current_value?: string | null
+          decision_reason?: string | null
+          field: string
+          id?: string
+          reason?: string | null
+          requested_value: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          current_value?: string | null
+          decision_reason?: string | null
+          field?: string
+          id?: string
+          reason?: string | null
+          requested_value?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -893,6 +1004,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_resolve_change_request: {
+        Args: {
+          _approve: boolean
+          _decision_reason?: string
+          _request_id: string
+        }
+        Returns: undefined
+      }
       crew_member_id_for: {
         Args: { _business_id: string; _user_id: string }
         Returns: string

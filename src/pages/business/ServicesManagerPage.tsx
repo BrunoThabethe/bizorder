@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Image as ImageIcon, Loader2, Plus, Trash2, X } from "lucide-react";
 import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,14 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchBusinessServices, fetchMyBusiness, formatPrice, type Service } from "@/lib/business/queries";
+import {
+  businessImageAccept,
+  fetchBusinessServices,
+  fetchMyBusiness,
+  formatPrice,
+  uploadBusinessImage,
+  type Service,
+} from "@/lib/business/queries";
 
 type CatalogKind = "service" | "product";
 
@@ -46,16 +53,36 @@ const ServicesManagerPage = () => {
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  const onUploadProductImage = async (file: File) => {
+    if (!business) {
+      toast({ title: "Save your business first", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const url = await uploadBusinessImage(business.id, file, "product");
+      setImageUrl(url);
+    } catch (e) {
+      toast({ title: "Upload failed", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const create = useMutation({
     mutationFn: async () => {
       if (!business) throw new Error("Create your business profile first");
+      if (kind === "product" && !imageUrl) throw new Error("Add a product photo so customers can see it.");
       const { error } = await supabase.from("services").insert({
         business_id: business.id,
         title,
         description: description || null,
         price: Number(price) || 0,
         duration_minutes: kind === "service" && duration ? Number(duration) : null,
+        image_url: kind === "product" ? imageUrl : null,
         is_active: true,
         // kind column added via migration; cast to keep generated types happy
         ...({ kind } as Record<string, unknown>),
@@ -67,6 +94,7 @@ const ServicesManagerPage = () => {
       setPrice("");
       setDuration("");
       setDescription("");
+      setImageUrl("");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
     },
@@ -132,6 +160,39 @@ const ServicesManagerPage = () => {
               <Label htmlFor="desc">Description</Label>
               <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={600} />
             </div>
+            {kind === "product" && (
+              <div className="space-y-2">
+                <Label>Product photo</Label>
+                {imageUrl ? (
+                  <div className="relative h-40 overflow-hidden rounded-2xl bg-muted">
+                    <img src={imageUrl} alt="Product preview" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow-card hover:bg-background"
+                      aria-label="Remove photo"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 text-xs text-muted-foreground hover:bg-muted/50">
+                    {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
+                    <span>{uploading ? "Uploading…" : "Click to upload (JPG, PNG, WebP · max 5 MB)"}</span>
+                    <input
+                      type="file"
+                      accept={businessImageAccept}
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) onUploadProductImage(f);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            )}
             <Button className="w-full" onClick={() => create.mutate()} disabled={!title || !price || create.isPending}>
               {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {kind === "product" ? " Add product" : " Add service"}
@@ -152,7 +213,10 @@ const ServicesManagerPage = () => {
                   const itemKind = ((s as unknown as { kind?: string }).kind ?? "service") as CatalogKind;
                   return (
                     <li key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border p-3">
-                      <div className="min-w-0">
+                      {s.image_url ? (
+                        <img src={s.image_url} alt={s.title} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                             {itemKind === "product" ? "Product" : "Service"}
