@@ -129,6 +129,12 @@ const AdminBusinessesPage = () => {
           </CardContent>
         </Card>
       </div>
+      <VerificationWizard
+        businessId={verifyTarget?.id ?? null}
+        businessName={verifyTarget?.name ?? ""}
+        isVerified={verifyTarget?.isVerified ?? false}
+        onClose={() => setVerifyTarget(null)}
+      />
     </AdminLayout>
   );
 };
