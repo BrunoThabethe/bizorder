@@ -39,6 +39,7 @@ import BusinessReviewsPage from "./pages/business/BusinessReviewsPage.tsx";
 import PayoutsPage from "./pages/business/PayoutsPage.tsx";
 import BusinessNotificationsPage from "./pages/business/BusinessNotificationsPage.tsx";
 import CrewManagementPage from "./pages/business/CrewManagementPage.tsx";
+import BusinessMessagesPage from "./pages/business/BusinessMessagesPage.tsx";
 import CrewDashboardPage from "./pages/crew/CrewDashboardPage.tsx";
 import CrewTasksPage from "./pages/crew/CrewTasksPage.tsx";
 import CrewTaskDetailPage from "./pages/crew/CrewTaskDetailPage.tsx";
@@ -106,6 +107,7 @@ const App = () => (
             <Route path="/business/payouts" element={<RoleGuard allow={["business"]}><PayoutsPage /></RoleGuard>} />
             <Route path="/business/notifications" element={<RoleGuard allow={["business"]}><BusinessNotificationsPage /></RoleGuard>} />
             <Route path="/business/crew" element={<RoleGuard allow={["business"]}><CrewManagementPage /></RoleGuard>} />
+            <Route path="/business/messages" element={<RoleGuard allow={["business"]}><BusinessMessagesPage /></RoleGuard>} />
 
             {/* Crew sub-portal */}
             <Route path="/crew" element={<RoleGuard allow={["crew"]}><CrewDashboardPage /></RoleGuard>} />

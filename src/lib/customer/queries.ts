@@ -118,6 +118,7 @@ export const fetchOrderMessages = async (orderId: string) => {
     .eq("order_id", orderId)
     .order("created_at");
   if (error) throw error;
+  return (data ?? []) as Message[];
 };
 
 export const fetchOrderDisputes = async (orderId: string) => {

@@ -125,7 +125,8 @@ const BusinessOrderDetailPage = () => {
 
   const addProgress = useMutation({
     mutationFn: async () => {
-      if (!user) return;
+      if (!user) throw new Error("You must be signed in.");
+      if (!businessId) throw new Error("Order is still loading — try again in a moment.");
       setUploading(true);
       const paths: string[] = [];
       for (const f of files) paths.push(await uploadOrderMedia(orderId, f));
@@ -138,13 +139,33 @@ const BusinessOrderDetailPage = () => {
         stage,
       });
       if (error) throw error;
+
+      // Mirror the update on the order timeline so the customer sees it in Status tab.
+      await supabase.from("order_events").insert({
+        order_id: orderId,
+        actor_id: user.id,
+        type: "progress_update",
+        message: note || (paths.length ? `${paths.length} photo${paths.length > 1 ? "s" : ""} added` : "Update posted"),
+      });
+
+      // Notify the customer so they get a real-time alert in their portal.
+      if (o?.profiles) {
+        await supabase.from("notifications").insert({
+          user_id: (order as { customer_id: string }).customer_id,
+          type: "progress_update",
+          title: "New update on your order",
+          body: note ? note.slice(0, 140) : "Your provider posted new photos.",
+          link: `/customer/orders/${orderId}`,
+        });
+      }
     },
     onSuccess: () => {
       setNote("");
       setFiles([]);
       setUploading(false);
       qc.invalidateQueries({ queryKey: ["order-progress", orderId] });
-      toast({ title: "Progress posted" });
+      qc.invalidateQueries({ queryKey: ["business-order", orderId] });
+      toast({ title: "Update posted", description: "The customer has been notified." });
     },
     onError: (e: Error) => {
       setUploading(false);
