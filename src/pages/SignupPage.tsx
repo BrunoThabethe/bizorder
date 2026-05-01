@@ -128,6 +128,21 @@ const SignupPage = () => {
             })}
           </div>
 
+          {role === "business" && (
+            <div className="mt-5 rounded-xl bg-foreground/5 p-4 text-sm">
+              <p className="font-display font-bold">What you'll need next</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                After signup we'll ask you to upload these to verify your business:
+              </p>
+              <ul className="mt-2 grid gap-1 text-xs text-foreground/90">
+                <li>• Owner ID (SA ID or passport)</li>
+                <li>• Proof of residence (utility bill or bank letter)</li>
+                <li>• Business address and proof of operations (premises photo, signage, or invoice)</li>
+                <li>• CIPC registration number and website (optional)</li>
+              </ul>
+            </div>
+          )}
+
           <form onSubmit={onSubmit} className="mt-7 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
