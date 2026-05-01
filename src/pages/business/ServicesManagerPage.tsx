@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Image as ImageIcon, Loader2, Plus, Trash2, X } from "lucide-react";
 import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,14 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchBusinessServices, fetchMyBusiness, formatPrice, type Service } from "@/lib/business/queries";
+import {
+  businessImageAccept,
+  fetchBusinessServices,
+  fetchMyBusiness,
+  formatPrice,
+  uploadBusinessImage,
+  type Service,
+} from "@/lib/business/queries";
 
 type CatalogKind = "service" | "product";
 
