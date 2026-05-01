@@ -1,35 +1,27 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, ShieldCheck, ShieldOff } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { VerificationWizard } from "@/components/admin/VerificationWizard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fetchAllBusinesses, logAdminAction, setBusinessPublished, setBusinessVerified } from "@/lib/admin/queries";
+import { fetchAllBusinesses, logAdminAction, setBusinessPublished } from "@/lib/admin/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminBusinessesPage = () => {
   const [q, setQ] = useState("");
+  const [verifyTarget, setVerifyTarget] = useState<{ id: string; name: string; isVerified: boolean } | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["admin", "businesses"], queryFn: fetchAllBusinesses });
 
-  const verifyMutation = useMutation({
-    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
-      await setBusinessVerified(id, value);
-      if (user) {
-        await logAdminAction(user.id, value ? "business.verified" : "business.unverified", "business", id, { value });
-      }
-    },
-    onSuccess: () => {
-      toast({ title: "Verification updated" });
-      queryClient.invalidateQueries({ queryKey: ["admin", "businesses"] });
-    },
-  });
+  // Verification is now handled inline by the VerificationWizard dialog.
+
 
   const publishMutation = useMutation({
     mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
@@ -115,10 +107,10 @@ const AdminBusinessesPage = () => {
                           <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => verifyMutation.mutate({ id: b.id, value: !b.is_verified })}
+                            onClick={() => setVerifyTarget({ id: b.id, name: b.name, isVerified: b.is_verified })}
                           >
-                            {b.is_verified ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-                            {b.is_verified ? "Unverify" : "Verify"}
+                            <ShieldCheck className="h-4 w-4" />
+                            {b.is_verified ? "Review" : "Verify"}
                           </Button>
                           <Button
                             size="sm"
@@ -137,6 +129,12 @@ const AdminBusinessesPage = () => {
           </CardContent>
         </Card>
       </div>
+      <VerificationWizard
+        businessId={verifyTarget?.id ?? null}
+        businessName={verifyTarget?.name ?? ""}
+        isVerified={verifyTarget?.isVerified ?? false}
+        onClose={() => setVerifyTarget(null)}
+      />
     </AdminLayout>
   );
 };
