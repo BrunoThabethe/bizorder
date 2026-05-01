@@ -394,68 +394,69 @@ const BusinessOrderDetailPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border-0 shadow-card">
-            <CardContent className="space-y-4 p-5">
-              <h2 className="font-display text-lg font-bold">Post a progress update</h2>
-              <Textarea
-                placeholder="Tell the customer what just happened…"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                maxLength={1000}
-              />
-              <div className="grid gap-3 md:grid-cols-[1fr_220px]">
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-3 text-sm font-semibold hover:bg-muted">
-                  <UploadCloud className="h-4 w-4" /> Attach proof photos
-                  <input
-                    type="file"
-                    multiple
-                    accept={proofPhotoAccept}
-                    className="sr-only"
-                    onChange={(e) => {
-                      const selected = Array.from(e.target.files ?? []);
-                      const photos = selected.filter(isProofPhoto).slice(0, 6);
-                      setFiles(photos);
-                      if (selected.length !== photos.length) {
-                        toast({ title: "Only photos can be used as proof", description: "Upload JPG, PNG, or WebP images only.", variant: "destructive" });
-                      }
-                    }}
-                  />
-                </label>
-                <Select value={stage} onValueChange={setStage}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Stage" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="accepted">Accepted</SelectItem>
-                    <SelectItem value="in_progress">In progress</SelectItem>
-                    <SelectItem value="ready">Ready for pickup</SelectItem>
-                    <SelectItem value="out_for_delivery">Out for delivery</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {filePreviews.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {filePreviews.map((f, i) => (
-                    <div key={i} className="relative h-20 w-20 overflow-hidden rounded-xl bg-muted">
-                      <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
-                      <button
-                        onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-foreground text-background"
-                        aria-label="Remove"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
+          {!isLocked && (
+            <Card className="rounded-3xl border-0 shadow-card">
+              <CardContent className="space-y-4 p-5">
+                <h2 className="font-display text-lg font-bold">Post a progress update</h2>
+                <Textarea
+                  placeholder="Tell the customer what just happened…"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={1000}
+                />
+                <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-3 text-sm font-semibold hover:bg-muted">
+                    <UploadCloud className="h-4 w-4" /> Attach proof photos
+                    <input
+                      type="file"
+                      multiple
+                      accept={proofPhotoAccept}
+                      className="sr-only"
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.files ?? []);
+                        const photos = selected.filter(isProofPhoto).slice(0, 6);
+                        setFiles(photos);
+                        if (selected.length !== photos.length) {
+                          toast({ title: "Only photos can be used as proof", description: "Upload JPG, PNG, or WebP images only.", variant: "destructive" });
+                        }
+                      }}
+                    />
+                  </label>
+                  <Select value={stage} onValueChange={setStage}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="accepted">Accepted</SelectItem>
+                      <SelectItem value="in_progress">In progress</SelectItem>
+                      <SelectItem value="ready">Ready for pickup</SelectItem>
+                      <SelectItem value="out_for_delivery">Out for delivery</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-              <Button onClick={() => addProgress.mutate()} disabled={uploading || (!note && files.length === 0)}>
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Post update
-              </Button>
-            </CardContent>
-          </Card>
-
+                {filePreviews.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {filePreviews.map((f, i) => (
+                      <div key={i} className="relative h-20 w-20 overflow-hidden rounded-xl bg-muted">
+                        <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
+                        <button
+                          onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                          className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-foreground text-background"
+                          aria-label="Remove"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Button onClick={() => addProgress.mutate()} disabled={uploading || (!note && files.length === 0)}>
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Post update
+                </Button>
+              </CardContent>
+            </Card>
+          )}
           <Card className="rounded-3xl border-0 shadow-card">
             <CardContent className="space-y-3 p-5">
               <h2 className="font-display text-lg font-bold">Progress timeline</h2>
