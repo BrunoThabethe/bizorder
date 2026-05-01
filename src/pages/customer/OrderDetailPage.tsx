@@ -377,9 +377,15 @@ const OrderDetailPage = () => {
                     {p.media_urls.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {p.media_urls.map((u) => (
-                          <div key={u} className="block h-24 w-24 overflow-hidden rounded-xl bg-muted">
+                          <button
+                            key={u}
+                            type="button"
+                            onClick={() => setLightboxPath(u)}
+                            className="block h-24 w-24 overflow-hidden rounded-xl bg-muted ring-offset-background transition hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            aria-label="View proof photo full size"
+                          >
                             <SignedImage path={u} alt="Progress proof" className="h-full w-full object-cover" />
-                          </div>
+                          </button>
                         ))}
                       </div>
                     )}
