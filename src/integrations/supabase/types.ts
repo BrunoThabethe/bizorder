@@ -921,6 +921,17 @@ export type Database = {
         Args: { _details: string; _order_id: string; _reason: string }
         Returns: string
       }
+      post_order_progress_update: {
+        Args: {
+          _business_id: string
+          _media_urls?: string[]
+          _note?: string
+          _order_id: string
+          _stage?: string
+          _task_id?: string
+        }
+        Returns: string
+      }
       promote_test_crew: { Args: never; Returns: undefined }
     }
     Enums: {
