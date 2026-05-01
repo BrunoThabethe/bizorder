@@ -16,7 +16,7 @@ type Props = { children: ReactNode; onSignOut?: () => void | Promise<void> };
 
 const REQUIRED: DocumentType[] = REQUIRED_DOCUMENT_TYPES;
 
-export const OnboardingGate = ({ children }: Props) => {
+export const OnboardingGate = ({ children, onSignOut }: Props) => {
   const { user, role } = useAuth();
   const location = useLocation();
 
