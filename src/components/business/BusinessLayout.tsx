@@ -63,7 +63,7 @@ export const BusinessLayout = ({ children }: Props) => {
     navigate("/login");
   };
 
-  return (
+  const content = (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-[1600px] gap-4 p-3 md:p-5">
         <aside className="hidden w-16 shrink-0 flex-col items-center gap-2 rounded-3xl bg-card py-5 shadow-card md:flex">
@@ -131,7 +131,7 @@ export const BusinessLayout = ({ children }: Props) => {
           </header>
 
           <main className="flex-1 pb-24 md:pb-0">
-            <OnboardingGate>{children}</OnboardingGate>
+            {children}
           </main>
         </div>
       </div>
@@ -194,4 +194,6 @@ export const BusinessLayout = ({ children }: Props) => {
       </nav>
     </div>
   );
+
+  return <OnboardingGate onSignOut={onSignOut}>{content}</OnboardingGate>;
 };
