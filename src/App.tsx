@@ -59,6 +59,7 @@ import AdminCampaignsPage from "./pages/admin/AdminCampaignsPage.tsx";
 import AdminNewsletterPage from "./pages/admin/AdminNewsletterPage.tsx";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage.tsx";
 import AdminAuditPage from "./pages/admin/AdminAuditPage.tsx";
+import AdminProfileChangeRequestsPage from "./pages/admin/AdminProfileChangeRequestsPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,7 @@ const App = () => (
             <Route path="/admin/users" element={<RoleGuard allow={["admin"]}><AdminUsersPage /></RoleGuard>} />
             <Route path="/admin/businesses" element={<RoleGuard allow={["admin"]}><AdminBusinessesPage /></RoleGuard>} />
             <Route path="/admin/verification" element={<RoleGuard allow={["admin"]}><AdminVerificationPage /></RoleGuard>} />
+            <Route path="/admin/change-requests" element={<RoleGuard allow={["admin"]}><AdminProfileChangeRequestsPage /></RoleGuard>} />
             <Route path="/admin/disputes" element={<RoleGuard allow={["admin"]}><AdminDisputesPage /></RoleGuard>} />
             <Route path="/admin/payouts" element={<RoleGuard allow={["admin"]}><AdminPayoutsPage /></RoleGuard>} />
             <Route path="/admin/uploads" element={<RoleGuard allow={["admin"]}><AdminUploadsPage /></RoleGuard>} />
