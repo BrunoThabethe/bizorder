@@ -117,11 +117,18 @@ export const OnboardingGate = ({ children, onSignOut }: Props) => {
             <p className="text-xs text-muted-foreground">
               You can sign out, but this step will be required again next time you sign in.
             </p>
-            <Button asChild size="lg">
-              <Link to="/business/onboarding">
-                {submittedPendingReview ? "View submission" : "Continue verification"}
-              </Link>
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {onSignOut && (
+                <Button variant="secondary" size="lg" onClick={() => void onSignOut()}>
+                  Sign out
+                </Button>
+              )}
+              <Button asChild size="lg">
+                <Link to="/business/onboarding">
+                  {submittedPendingReview ? "View submission" : "Continue verification"}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
