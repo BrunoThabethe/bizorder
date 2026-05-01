@@ -361,6 +361,8 @@ export const reviewOnboardingDocument = async (
     .eq("id", documentId);
   if (error) throw error;
 };
+
+// ============= Disputes =============
 export const fetchAllDisputes = async () => {
   const { data, error } = await sb.from("disputes").select("*").order("created_at", { ascending: false });
   if (error) throw error;
