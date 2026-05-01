@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchMyBusiness } from "@/lib/business/queries";
+import { fetchOrCreateMyBusiness } from "@/lib/business/queries";
 import {
   DOCUMENT_LABELS,
   REQUIRED_DOCUMENT_TYPES,
@@ -51,7 +51,7 @@ export const BusinessOnboardingPage = () => {
 
   const { data: business, isLoading } = useQuery({
     queryKey: ["my-business", user?.id],
-    queryFn: () => fetchMyBusiness(user!.id),
+    queryFn: () => fetchOrCreateMyBusiness(user!),
     enabled: !authLoading && !!user,
   });
 
