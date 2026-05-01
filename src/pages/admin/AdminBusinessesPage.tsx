@@ -107,10 +107,10 @@ const AdminBusinessesPage = () => {
                           <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => verifyMutation.mutate({ id: b.id, value: !b.is_verified })}
+                            onClick={() => setVerifyTarget({ id: b.id, name: b.name, isVerified: b.is_verified })}
                           >
-                            {b.is_verified ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-                            {b.is_verified ? "Unverify" : "Verify"}
+                            <ShieldCheck className="h-4 w-4" />
+                            {b.is_verified ? "Review" : "Verify"}
                           </Button>
                           <Button
                             size="sm"
