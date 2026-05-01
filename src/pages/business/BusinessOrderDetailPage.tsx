@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, Loader2, Send, UploadCloud, X } from "lucide-react";
+import { ArrowLeft, Loader2, Send, UploadCloud, X } from "lucide-react";
 import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
