@@ -108,7 +108,7 @@ const CreateOrderPage = () => {
       order_id: order.id,
       actor_id: user.id,
       type: "created",
-      message: `Order placed (${paymentMethod === "escrow" ? "Escrow payment" : "Pay on delivery"})`,
+      message: "Order placed — pay on completion",
     });
 
     setSubmitting(false);
