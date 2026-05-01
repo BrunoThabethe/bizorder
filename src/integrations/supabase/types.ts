@@ -221,6 +221,57 @@ export type Database = {
         }
         Relationships: []
       }
+      business_onboarding_documents: {
+        Row: {
+          business_id: string
+          created_at: string
+          document_type: string
+          file_name: string | null
+          id: string
+          mime_type: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          document_type: string
+          file_name?: string | null
+          id?: string
+          mime_type?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          document_type?: string
+          file_name?: string | null
+          id?: string
+          mime_type?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       business_settings: {
         Row: {
           availability: string
@@ -298,6 +349,7 @@ export type Database = {
           description: string | null
           email: string | null
           id: string
+          is_onboarded: boolean
           is_published: boolean
           is_verified: boolean
           logo_url: string | null
@@ -306,9 +358,12 @@ export type Database = {
           phone: string | null
           rating_avg: number
           rating_count: number
+          registration_number: string | null
           slug: string
           tagline: string | null
+          trading_address: string | null
           updated_at: string
+          website_url: string | null
         }
         Insert: {
           address?: string | null
@@ -320,6 +375,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           id?: string
+          is_onboarded?: boolean
           is_published?: boolean
           is_verified?: boolean
           logo_url?: string | null
@@ -328,9 +384,12 @@ export type Database = {
           phone?: string | null
           rating_avg?: number
           rating_count?: number
+          registration_number?: string | null
           slug: string
           tagline?: string | null
+          trading_address?: string | null
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
           address?: string | null
@@ -342,6 +401,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           id?: string
+          is_onboarded?: boolean
           is_published?: boolean
           is_verified?: boolean
           logo_url?: string | null
@@ -350,9 +410,12 @@ export type Database = {
           phone?: string | null
           rating_avg?: number
           rating_count?: number
+          registration_number?: string | null
           slug?: string
           tagline?: string | null
+          trading_address?: string | null
           updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }

@@ -277,6 +277,91 @@ export const reviewVerification = async (
   if (error) throw error;
 };
 
+// ============= Onboarding documents =============
+export type AdminOnboardingSubmission = {
+  business: Business;
+  documents: Array<{
+    id: string;
+    document_type: "owner_id" | "proof_of_residence" | "proof_of_operations" | "cipc_registration";
+    storage_path: string;
+    file_name: string | null;
+    mime_type: string | null;
+    review_status: "pending" | "approved" | "rejected";
+    created_at: string;
+    signed_url: string | null;
+  }>;
+};
+
+export const fetchAdminOnboardingSubmissions = async (): Promise<AdminOnboardingSubmission[]> => {
+  const { data: businesses, error } = await sb
+    .from("businesses")
+    .select("*")
+    .eq("is_onboarded", true)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  const list = (businesses ?? []) as Business[];
+  if (list.length === 0) return [];
+
+  const ids = list.map((b) => b.id);
+  const { data: docs, error: docErr } = await sb
+    .from("business_onboarding_documents")
+    .select("*")
+    .in("business_id", ids)
+    .order("created_at", { ascending: false });
+  if (docErr) throw docErr;
+
+  const allPaths = (docs ?? []).map((d: { storage_path: string }) => d.storage_path);
+  let signedByPath: Record<string, string> = {};
+  if (allPaths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("verification-docs")
+      .createSignedUrls(allPaths, 600);
+    signedByPath = Object.fromEntries(
+      (signed ?? []).map((s) => [s.path ?? "", s.signedUrl]).filter(([p]) => !!p),
+    );
+  }
+
+  return list.map((b) => ({
+    business: b,
+    documents: (docs ?? [])
+      .filter((d: { business_id: string }) => d.business_id === b.id)
+      .map((d: {
+        id: string;
+        document_type: AdminOnboardingSubmission["documents"][number]["document_type"];
+        storage_path: string;
+        file_name: string | null;
+        mime_type: string | null;
+        review_status: AdminOnboardingSubmission["documents"][number]["review_status"];
+        created_at: string;
+      }) => ({
+        id: d.id,
+        document_type: d.document_type,
+        storage_path: d.storage_path,
+        file_name: d.file_name,
+        mime_type: d.mime_type,
+        review_status: d.review_status,
+        created_at: d.created_at,
+        signed_url: signedByPath[d.storage_path] ?? null,
+      })),
+  }));
+};
+
+export const reviewOnboardingDocument = async (
+  documentId: string,
+  status: "approved" | "rejected",
+  notes: string | null,
+) => {
+  const { error } = await sb
+    .from("business_onboarding_documents")
+    .update({
+      review_status: status,
+      reviewer_notes: notes,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", documentId);
+  if (error) throw error;
+};
+
 // ============= Disputes =============
 export const fetchAllDisputes = async () => {
   const { data, error } = await sb.from("disputes").select("*").order("created_at", { ascending: false });

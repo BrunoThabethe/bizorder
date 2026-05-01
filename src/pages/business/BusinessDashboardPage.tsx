@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { ArrowRight, Inbox, Star, Wallet } from "lucide-react";
+import { ArrowRight, Inbox, ShieldAlert, Star, Wallet } from "lucide-react";
 import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,6 +65,27 @@ const BusinessDashboardPage = () => {
           </Button>
         }
       />
+
+      {business && !business.is_onboarded && (
+        <Card className="mb-4 rounded-3xl border-0 bg-foreground text-background shadow-card-lift">
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="mt-0.5 h-5 w-5" />
+              <div>
+                <p className="font-display font-bold">Complete your verification</p>
+                <p className="text-sm text-background/80">
+                  Upload your owner ID, proof of residence, address, and proof of operations to start taking orders.
+                </p>
+              </div>
+            </div>
+            <Button asChild variant="secondary" className="shrink-0">
+              <Link to="/business/onboarding">
+                Continue onboarding <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <KpiCard label="New orders" value={String(newOrders)} icon={<Inbox className="h-4 w-4" />} />
