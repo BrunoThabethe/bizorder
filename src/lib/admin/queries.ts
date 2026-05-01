@@ -421,6 +421,136 @@ export const upsertSystemSetting = async (
   }
 };
 
+// ============= Admin order detail =============
+export type AdminOrderEvent = {
+  id: string;
+  order_id: string;
+  actor_id: string | null;
+  type: string;
+  message: string | null;
+  created_at: string;
+};
+
+export type AdminOrderProgress = {
+  id: string;
+  order_id: string;
+  business_id: string;
+  task_id: string | null;
+  author_id: string;
+  note: string | null;
+  media_urls: string[];
+  stage: string | null;
+  created_at: string;
+};
+
+export type AdminOrderMessage = {
+  id: string;
+  order_id: string;
+  sender_id: string;
+  body: string;
+  attachment_url: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type AdminOrderTask = {
+  id: string;
+  order_id: string;
+  business_id: string;
+  crew_member_id: string | null;
+  title: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export const fetchAdminOrderDetail = async (orderId: string) => {
+  const { data: order, error } = await supabase
+    .from("orders")
+    .select("*, services(title, description), addresses(*), businesses(id, name, slug, owner_id, phone, email)")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!order) return null;
+
+  const [
+    { data: customer },
+    { data: events },
+    { data: progress },
+    { data: messages },
+    { data: tasks },
+    { data: dispute },
+  ] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email, avatar_url").eq("id", order.customer_id).maybeSingle(),
+    sb.from("order_events").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
+    sb.from("order_progress").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
+    sb.from("messages").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
+    sb.from("order_tasks").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
+    sb.from("disputes").select("*").eq("order_id", orderId).maybeSingle(),
+  ]);
+
+  // Resolve actor profiles for events, progress and messages.
+  const actorIds = new Set<string>();
+  (events ?? []).forEach((e: AdminOrderEvent) => e.actor_id && actorIds.add(e.actor_id));
+  (progress ?? []).forEach((p: AdminOrderProgress) => p.author_id && actorIds.add(p.author_id));
+  (messages ?? []).forEach((m: AdminOrderMessage) => m.sender_id && actorIds.add(m.sender_id));
+  if ((order as { businesses?: { owner_id?: string } }).businesses?.owner_id) {
+    actorIds.add((order as { businesses: { owner_id: string } }).businesses.owner_id);
+  }
+
+  let actors: Record<string, { full_name: string | null; email: string; avatar_url: string | null }> = {};
+  if (actorIds.size) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, avatar_url")
+      .in("id", Array.from(actorIds));
+    actors = Object.fromEntries(
+      (profs ?? []).map((p) => [p.id, { full_name: p.full_name, email: p.email, avatar_url: p.avatar_url }]),
+    );
+  }
+
+  return {
+    order,
+    customer: customer ?? null,
+    events: (events ?? []) as AdminOrderEvent[],
+    progress: (progress ?? []) as AdminOrderProgress[],
+    messages: (messages ?? []) as AdminOrderMessage[],
+    tasks: (tasks ?? []) as AdminOrderTask[],
+    dispute: (dispute ?? null) as Dispute | null,
+    actors,
+  };
+};
+
+// ============= Trend data for charts =============
+export const fetchAdminTrends = async () => {
+  const since = new Date();
+  since.setDate(since.getDate() - 29);
+  since.setHours(0, 0, 0, 0);
+
+  const { data: orders } = await supabase
+    .from("orders")
+    .select("status, total, created_at")
+    .gte("created_at", since.toISOString());
+
+  const days: { date: string; label: string; orders: number; gmv: number }[] = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(since);
+    d.setDate(since.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    const label = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+    days.push({ date: key, label, orders: 0, gmv: 0 });
+  }
+  const map = new Map(days.map((d) => [d.date, d]));
+  (orders ?? []).forEach((o) => {
+    const key = o.created_at.slice(0, 10);
+    const day = map.get(key);
+    if (!day) return;
+    day.orders += 1;
+    if (o.status === "completed") day.gmv += Number(o.total ?? 0);
+  });
+  return days;
+};
+
 // ============= Audit Logs =============
 export const fetchAuditLogs = async () => {
   const { data, error } = await sb

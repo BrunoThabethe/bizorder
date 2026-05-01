@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -20,6 +21,7 @@ const STATUS_TONE: Record<string, string> = {
 const AdminOrdersPage = () => {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("all");
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["admin", "orders"], queryFn: fetchAllOrders });
 
   const filtered = useMemo(() => {
@@ -88,7 +90,11 @@ const AdminOrdersPage = () => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const oa = o as any;
                     return (
-                      <TableRow key={o.id}>
+                      <TableRow
+                        key={o.id}
+                        onClick={() => navigate(`/admin/orders/${o.id}`)}
+                        className="cursor-pointer transition-colors hover:bg-muted/60"
+                      >
                         <TableCell className="font-mono text-xs">{o.id.slice(0, 8)}…</TableCell>
                         <TableCell>
                           <p className="text-sm font-semibold">{oa.profiles?.full_name ?? "—"}</p>
