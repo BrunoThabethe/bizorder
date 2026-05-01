@@ -251,6 +251,42 @@ export type Database = {
         }
         Relationships: []
       }
+      business_verification_checks: {
+        Row: {
+          business_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          is_completed: boolean
+          notes: string | null
+          step: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          step: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          step?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       businesses: {
         Row: {
           address: string | null
@@ -1004,6 +1040,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_resolve_change_request: {
         Args: {
           _approve: boolean
@@ -1056,6 +1093,15 @@ export type Database = {
       }
       promote_test_admin: { Args: never; Returns: undefined }
       promote_test_crew: { Args: never; Returns: undefined }
+      set_verification_check: {
+        Args: {
+          _business_id: string
+          _completed: boolean
+          _notes?: string
+          _step: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "customer" | "business" | "admin" | "crew"
