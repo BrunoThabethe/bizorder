@@ -274,19 +274,6 @@ const CreateOrderPage = () => {
   );
 };
 
-const PaymentOption = ({ value, title, text }: { value: string; title: string; text: string }) => (
-  <label
-    className="flex cursor-pointer items-start gap-3 rounded-2xl bg-muted/50 p-3 transition-colors hover:bg-muted"
-    htmlFor={`pay-${value}`}
-  >
-    <RadioGroupItem id={`pay-${value}`} value={value} className="mt-1" />
-    <div>
-      <p className="font-display text-sm font-bold">{title}</p>
-      <p className="text-xs text-muted-foreground">{text}</p>
-    </div>
-  </label>
-);
-
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex items-center justify-between gap-3">
     <dt className="text-xs uppercase tracking-wider text-muted-foreground">{label}</dt>
