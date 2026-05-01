@@ -579,3 +579,107 @@ export const logAdminAction = async (
     severity,
   });
 };
+
+// ============= User detail & deletion =============
+export type AdminUserDetail = {
+  profile: Profile;
+  roles: AppRole[];
+  addresses: Array<{ id: string; label: string; recipient: string; line1: string; line2: string | null; city: string; postal_code: string | null; country: string; phone: string | null; is_default: boolean }>;
+  ownedBusinesses: Array<{ id: string; name: string; slug: string; is_published: boolean; is_verified: boolean }>;
+  orderCount: number;
+  lastSignInAt: string | null;
+};
+
+export const fetchUserDetail = async (userId: string): Promise<AdminUserDetail | null> => {
+  const [{ data: profile }, { data: roleRows }, { data: addresses }, { data: businesses }, { count: orderCount }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", userId),
+    supabase.from("addresses").select("*").eq("user_id", userId),
+    supabase.from("businesses").select("id, name, slug, is_published, is_verified").eq("owner_id", userId),
+    supabase.from("orders").select("*", { count: "exact", head: true }).eq("customer_id", userId),
+  ]);
+  if (!profile) return null;
+  return {
+    profile: profile as Profile,
+    roles: ((roleRows ?? []) as Array<{ role: AppRole }>).map((r) => r.role),
+    addresses: (addresses ?? []) as AdminUserDetail["addresses"],
+    ownedBusinesses: (businesses ?? []) as AdminUserDetail["ownedBusinesses"],
+    orderCount: orderCount ?? 0,
+    lastSignInAt: null,
+  };
+};
+
+export const adminDeleteUser = async (userId: string) => {
+  const { error } = await sb.rpc("admin_delete_user", { _user_id: userId });
+  if (error) throw error;
+};
+
+// ============= Verification checks =============
+export type VerificationStep =
+  | "operating_proof"
+  | "identity_check"
+  | "address_check"
+  | "references_check"
+  | "online_presence";
+
+export type VerificationCheck = {
+  id: string;
+  business_id: string;
+  step: VerificationStep;
+  is_completed: boolean;
+  notes: string | null;
+  completed_by: string | null;
+  completed_at: string | null;
+};
+
+export const VERIFICATION_STEPS: Array<{ key: VerificationStep; title: string; description: string }> = [
+  {
+    key: "operating_proof",
+    title: "Proof of operation",
+    description: "Photos of the workspace, vehicle branding, signage, tools or product samples that prove the business is actively trading.",
+  },
+  {
+    key: "identity_check",
+    title: "Owner ID check",
+    description: "South African ID, passport or driver's licence of the owner. Match the name to the profile.",
+  },
+  {
+    key: "address_check",
+    title: "Trading address",
+    description: "Recent utility bill, lease, municipal letter or a geo-tagged photo of the trading location (within the last 3 months).",
+  },
+  {
+    key: "references_check",
+    title: "Customer references",
+    description: "Two contactable referees (name + phone) who have used the business in the last 6 months. Call to confirm.",
+  },
+  {
+    key: "online_presence",
+    title: "Online & social presence",
+    description: "Active WhatsApp Business, Facebook page, Instagram or Google listing with at least 3 months of activity.",
+  },
+];
+
+export const fetchVerificationChecks = async (businessId: string) => {
+  const { data, error } = await sb
+    .from("business_verification_checks")
+    .select("*")
+    .eq("business_id", businessId);
+  if (error) throw error;
+  return (data ?? []) as VerificationCheck[];
+};
+
+export const setVerificationCheck = async (
+  businessId: string,
+  step: VerificationStep,
+  isCompleted: boolean,
+  notes: string | null = null,
+) => {
+  const { error } = await sb.rpc("set_verification_check", {
+    _business_id: businessId,
+    _step: step,
+    _completed: isCompleted,
+    _notes: notes,
+  });
+  if (error) throw error;
+};
