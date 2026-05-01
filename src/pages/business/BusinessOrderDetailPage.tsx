@@ -321,7 +321,13 @@ const BusinessOrderDetailPage = () => {
                 ) : null}
               </div>
 
-              {o.status === "pending" ? (
+              {isLocked ? (
+                <div className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
+                  {o.status === "completed"
+                    ? "This order is complete. Photos and timeline are saved as a permanent record — no further changes can be made."
+                    : "This order was cancelled. The record is locked."}
+                </div>
+              ) : o.status === "pending" ? (
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-2xl border border-border p-3">
                     <Label htmlFor="eta">Estimated completion</Label>
