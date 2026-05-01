@@ -41,6 +41,7 @@ const ServicesManagerPage = () => {
     enabled: !!business?.id,
   });
 
+  const [kind, setKind] = useState<CatalogKind>("service");
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("");
@@ -54,8 +55,10 @@ const ServicesManagerPage = () => {
         title,
         description: description || null,
         price: Number(price) || 0,
-        duration_minutes: duration ? Number(duration) : null,
+        duration_minutes: kind === "service" && duration ? Number(duration) : null,
         is_active: true,
+        // kind column added via migration; cast to keep generated types happy
+        ...({ kind } as Record<string, unknown>),
       });
       if (error) throw error;
     },
@@ -65,7 +68,7 @@ const ServicesManagerPage = () => {
       setDuration("");
       setDescription("");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
-      toast({ title: "Service added" });
+      toast({ title: kind === "product" ? "Product added" : "Service added" });
     },
     onError: (e: Error) => toast({ title: "Could not add", description: e.message, variant: "destructive" }),
   });
