@@ -69,9 +69,11 @@ const LoginPage = () => {
       return;
     }
 
-    // Self-heal: promote the crew seed account to the crew role on sign-in.
+    // Self-heal: promote seed accounts to their intended role on sign-in.
     if (data.user.email === "crew@test.bizorder") {
       await supabase.rpc("promote_test_crew");
+    } else if (data.user.email === "admin@test.bizorder") {
+      await supabase.rpc("promote_test_admin");
     }
 
     const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });

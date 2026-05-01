@@ -1054,6 +1054,7 @@ export type Database = {
         }
         Returns: string
       }
+      promote_test_admin: { Args: never; Returns: undefined }
       promote_test_crew: { Args: never; Returns: undefined }
     }
     Enums: {
