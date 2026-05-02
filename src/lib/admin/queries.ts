@@ -240,7 +240,10 @@ export const fetchAllBusinesses = async () => {
 };
 
 export const setBusinessVerified = async (businessId: string, isVerified: boolean) => {
-  const { error } = await supabase.from("businesses").update({ is_verified: isVerified }).eq("id", businessId);
+  const { error } = await sb.rpc("admin_finalize_business_verification", {
+    _business_id: businessId,
+    _verify: isVerified,
+  });
   if (error) throw error;
 };
 

@@ -72,7 +72,8 @@ export const uploadVerificationDocument = async (
   }
   if (file.size > MAX_BYTES) throw new Error("File must be smaller than 10 MB.");
 
-  const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
+  const extRaw = (file.name.split(".").pop() ?? "bin").toLowerCase();
+  const ext = ["jpg", "jpeg", "png", "webp", "pdf"].includes(extRaw) ? extRaw : "bin";
   const path = `${businessId}/${type}-${crypto.randomUUID()}.${ext}`;
 
   const { error: upErr } = await supabase.storage
@@ -80,27 +81,23 @@ export const uploadVerificationDocument = async (
     .upload(path, file, { contentType: file.type, upsert: false });
   if (upErr) throw upErr;
 
-  // Replace any prior doc of same type for this business (keep history minimal)
-  await sb
-    .from("business_onboarding_documents")
-    .delete()
-    .eq("business_id", businessId)
-    .eq("document_type", type);
-
-  const { data, error } = await sb
-    .from("business_onboarding_documents")
-    .insert({
-      business_id: businessId,
-      document_type: type,
-      storage_path: path,
-      file_name: file.name,
-      mime_type: file.type,
-      size_bytes: file.size,
-      uploaded_by: uploadedBy,
-    })
-    .select("*")
-    .single();
-  if (error) throw error;
+  // Save the document record via a SECURITY DEFINER function so RLS can't
+  // block well-formed submissions for the user's own business.
+  const { data, error } = await sb.rpc("save_business_onboarding_document", {
+    _business_id: businessId,
+    _document_type: type,
+    _storage_path: path,
+    _file_name: file.name,
+    _mime_type: file.type,
+    _size_bytes: file.size,
+  });
+  if (error) {
+    // Best-effort: clean up the orphaned object so we don't leave junk.
+    await supabase.storage.from("verification-docs").remove([path]).catch(() => undefined);
+    throw error;
+  }
+  // Suppress unused warning for uploadedBy — kept for API compatibility.
+  void uploadedBy;
   return data as OnboardingDocument;
 };
 
