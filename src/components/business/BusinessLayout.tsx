@@ -24,7 +24,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { OnboardingGate } from "@/components/business/OnboardingGate";
-import { BusinessWalkthrough } from "@/components/business/BusinessWalkthrough";
 
 type Props = { children: ReactNode };
 
@@ -196,10 +195,5 @@ export const BusinessLayout = ({ children }: Props) => {
     </div>
   );
 
-  return (
-    <OnboardingGate onSignOut={onSignOut}>
-      {content}
-      {user && <BusinessWalkthrough ownerId={user.id} />}
-    </OnboardingGate>
-  );
+  return <OnboardingGate onSignOut={onSignOut}>{content}</OnboardingGate>;
 };

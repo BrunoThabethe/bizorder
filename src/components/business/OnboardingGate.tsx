@@ -11,6 +11,7 @@ import {
   type DocumentType,
 } from "@/lib/business/onboarding";
 import { Button } from "@/components/ui/button";
+import { BusinessWalkthrough } from "@/components/business/BusinessWalkthrough";
 
 type Props = { children: ReactNode; onSignOut?: () => void | Promise<void> };
 
@@ -62,8 +63,15 @@ export const OnboardingGate = ({ children, onSignOut }: Props) => {
     allUploaded && requiredDocs.length >= REQUIRED.length &&
     REQUIRED.every((t) => requiredDocs.find((d) => d.document_type === t)?.review_status === "approved");
 
-  const isFullyVerified = business.is_onboarded && allApproved;
-  if (isFullyVerified) return <>{children}</>;
+  const isFullyVerified = business.is_onboarded && allApproved && business.is_verified === true;
+  if (isFullyVerified) {
+    return (
+      <>
+        {children}
+        <BusinessWalkthrough ownerId={user.id} />
+      </>
+    );
+  }
 
   const submittedPendingReview = business.is_onboarded && allUploaded && !allApproved;
 
