@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Briefcase, CheckCircle2, Inbox, MessageSquare, Sparkles, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const STORAGE_KEY = "bizorder.business.walkthrough.v1";
+const STORAGE_KEY = "bizorder.business.walkthrough.v2";
 
 const STEPS = [
   {
