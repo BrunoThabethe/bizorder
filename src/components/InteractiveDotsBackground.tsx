@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Snow-leopard rosette background. Each "dot" is actually a leopard
- * rosette: a ring of small petals around a darker center. Black & white
- * theme; pointer + scroll still drive the interaction.
+ * Authentic snow-leopard rosette background. Each rosette is a broken,
+ * irregular ring of black "petal" shards around a slightly darker grey
+ * center — matching real snow-leopard print. Light theme: black on grey.
+ * Dark theme: inverted (light shards on near-black). Pointer + scroll
+ * still drive subtle motion.
  */
 export const InteractiveDotsBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -20,35 +22,60 @@ export const InteractiveDotsBackground = () => {
     let width = 0;
     let height = 0;
 
+    type Shard = {
+      angle: number;       // position around the ring
+      radius: number;      // distance from rosette center
+      size: number;        // shard radius (px)
+      stretch: number;     // elongation along the ring
+      tilt: number;        // small rotation jitter
+    };
     type Rosette = {
       bx: number;
       by: number;
       base: number;
       ringRadius: number;
-      petalRadius: number;
-      petals: { angle: number; jitter: number }[];
+      shards: Shard[];
+      coreSize: number;
       rotation: number;
+      hasCore: boolean;
     };
     let rosettes: Rosette[] = [];
 
-    const SPACING = 56;
+    // Tighter spacing → denser print, like the reference image
+    const SPACING = 78;
 
     const buildRosette = (bx: number, by: number): Rosette => {
-      const ringRadius = 7 + Math.random() * 2.5;
-      const petalRadius = 1.1 + Math.random() * 0.5;
-      const count = 5 + Math.floor(Math.random() * 3); // 5–7 petals
-      const petals = Array.from({ length: count }, (_, i) => ({
-        angle: (i / count) * Math.PI * 2,
-        jitter: (Math.random() - 0.5) * 0.6,
-      }));
+      const ringRadius = 12 + Math.random() * 6; // bigger rosettes
+      // 4–7 shards, with a gap (broken ring) like real leopard print
+      const count = 4 + Math.floor(Math.random() * 4);
+      // Pick a random "gap" angle so the ring isn't closed
+      const gapStart = Math.random() * Math.PI * 2;
+      const gapWidth = 0.6 + Math.random() * 0.9;
+
+      const shards: Shard[] = [];
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
+        // Skip shards that fall in the gap
+        const da = ((a - gapStart) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+        if (da < gapWidth) continue;
+        shards.push({
+          angle: a,
+          radius: ringRadius * (0.85 + Math.random() * 0.3),
+          size: 3.2 + Math.random() * 2.4,
+          stretch: 1.4 + Math.random() * 1.1,
+          tilt: (Math.random() - 0.5) * 0.6,
+        });
+      }
+
       return {
         bx,
         by,
-        base: 0.55 + Math.random() * 0.25,
+        base: 0.78 + Math.random() * 0.18,
         ringRadius,
-        petalRadius,
-        petals,
+        shards,
+        coreSize: 2 + Math.random() * 2.2,
         rotation: Math.random() * Math.PI * 2,
+        hasCore: Math.random() < 0.78,
       };
     };
 
@@ -66,10 +93,10 @@ export const InteractiveDotsBackground = () => {
       const rows = Math.ceil(height / SPACING) + 2;
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
-          // Stagger every other row for a more organic spread
+          // Stagger every other row + heavy jitter for organic spread
           const offset = j % 2 === 0 ? 0 : SPACING / 2;
-          const bx = i * SPACING + offset + (Math.random() - 0.5) * 10;
-          const by = j * SPACING + (Math.random() - 0.5) * 10;
+          const bx = i * SPACING + offset + (Math.random() - 0.5) * 22;
+          const by = j * SPACING + (Math.random() - 0.5) * 22;
           rosettes.push(buildRosette(bx, by));
         }
       }
@@ -109,12 +136,13 @@ export const InteractiveDotsBackground = () => {
     window.addEventListener("resize", onResize);
 
     let raf = 0;
-    const RADIUS = 180;
+    const RADIUS = 200;
     const RADIUS_SQ = RADIUS * RADIUS;
 
     const tick = () => {
       ctx.clearRect(0, 0, width, height);
 
+      // Use --foreground so light theme paints dark shards, dark theme paints light shards.
       const fgVar = getComputedStyle(document.documentElement)
         .getPropertyValue("--foreground")
         .trim() || "0 0% 8%";
@@ -139,9 +167,9 @@ export const InteractiveDotsBackground = () => {
           if (distSq < RADIUS_SQ) {
             const dist = Math.sqrt(distSq);
             const force = 1 - dist / RADIUS;
-            alpha = Math.min(1, r.base + force * 0.55);
-            scale = 1 + force * 0.45;
-            const push = force * 14;
+            alpha = Math.min(1, r.base + force * 0.25);
+            scale = 1 + force * 0.35;
+            const push = force * 12;
             const nx = dist === 0 ? 0 : ox / dist;
             const ny = dist === 0 ? 0 : oy / dist;
             cx = r.bx + nx * push;
@@ -150,30 +178,35 @@ export const InteractiveDotsBackground = () => {
         }
 
         if (isTouch && scrollPulse > 0.02) {
-          alpha = Math.min(1, alpha + scrollPulse * 0.35);
-          scale = 1 + scrollPulse * 0.2;
+          alpha = Math.min(1, alpha + scrollPulse * 0.25);
+          scale = 1 + scrollPulse * 0.18;
         }
 
-        const ringR = r.ringRadius * scale;
-        const petalR = r.petalRadius * scale;
-
-        // Draw the ring of petals (the rosette)
-        ctx.fillStyle = `hsla(${fgHsl}, ${alpha})`;
-        for (let p = 0; p < r.petals.length; p++) {
-          const petal = r.petals[p];
-          const a = petal.angle + r.rotation + petal.jitter * 0.15;
-          const px = cx + Math.cos(a) * ringR;
-          const py = cy + Math.sin(a) * ringR;
+        // Soft grey core (the rosette interior)
+        if (r.hasCore) {
+          ctx.fillStyle = `hsla(${fgHsl}, ${alpha * 0.22})`;
           ctx.beginPath();
-          ctx.arc(px, py, petalR, 0, Math.PI * 2);
+          ctx.arc(cx, cy, r.coreSize * scale, 0, Math.PI * 2);
           ctx.fill();
         }
 
-        // Tiny center dot — the leopard rosette's darker core
-        ctx.fillStyle = `hsla(${fgHsl}, ${alpha * 0.75})`;
-        ctx.beginPath();
-        ctx.arc(cx, cy, petalR * 0.7, 0, Math.PI * 2);
-        ctx.fill();
+        // Black/foreground shards forming the broken ring
+        ctx.fillStyle = `hsla(${fgHsl}, ${alpha})`;
+        for (let p = 0; p < r.shards.length; p++) {
+          const s = r.shards[p];
+          const a = s.angle + r.rotation;
+          const px = cx + Math.cos(a) * s.radius * scale;
+          const py = cy + Math.sin(a) * s.radius * scale;
+
+          ctx.save();
+          ctx.translate(px, py);
+          // Orient the shard tangent to the ring + jitter
+          ctx.rotate(a + Math.PI / 2 + s.tilt);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, s.size * scale, s.size * scale * s.stretch, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
       }
 
       raf = requestAnimationFrame(tick);
@@ -193,7 +226,7 @@ export const InteractiveDotsBackground = () => {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-0 h-screen w-screen opacity-70"
+      className="pointer-events-none fixed inset-0 z-0 h-screen w-screen opacity-60"
     />
   );
 };

@@ -51,9 +51,6 @@ export const PixelTree = () => {
 
     const pixels: Pixel[] = [];
 
-    // Trunk path used by the leopard to climb up
-    const trunkPath: { x: number; y: number }[] = [];
-    let restPoint: { x: number; y: number } | null = null;
 
     const buildTree = (): Branch => {
       const root: Branch = {
@@ -95,35 +92,6 @@ export const PixelTree = () => {
     let tree = buildTree();
     let cycleStart = performance.now();
 
-    const captureTrunkPath = (b: Branch, startX: number, startY: number) => {
-      // Walk only the main trunk (first child each level) to give the leopard a clean route
-      const endX = startX + Math.cos(b.angle) * b.length;
-      const endY = startY + Math.sin(b.angle) * b.length;
-      const steps = Math.max(2, Math.floor(b.length));
-      for (let s = 1; s <= steps; s++) {
-        const t = s / steps;
-        trunkPath.push({
-          x: startX + (endX - startX) * t,
-          y: startY + (endY - startY) * t,
-        });
-      }
-      if (b.children.length > 0) {
-        // Pick the most upright child to follow
-        let best = b.children[0];
-        let bestUp = Math.sin(best.angle);
-        for (const c of b.children) {
-          const up = Math.sin(c.angle);
-          if (up < bestUp) {
-            best = c;
-            bestUp = up;
-          }
-        }
-        captureTrunkPath(best, endX, endY);
-      } else {
-        // Leopard rests at the top of the climbed trunk, just below the canopy
-        restPoint = { x: endX, y: endY - 1.5 };
-      }
-    };
 
     const drawBranchPixels = (b: Branch, startX: number, startY: number, now: number) => {
       const reach = b.length * b.progress;
@@ -207,71 +175,6 @@ export const PixelTree = () => {
       }
     };
 
-    // Snow leopard sprite, drawn around (cx, cy) in grid cells.
-    // White body + black rosettes. `facing` flips horizontally.
-    const drawLeopard = (cx: number, cy: number, facing: 1 | -1, sitting: boolean, fg: string) => {
-      const f = facing;
-      // Body shape (relative grid coords). y is downward.
-      const body: { dx: number; dy: number }[] = sitting
-        ? [
-            // crouched/sitting profile
-            { dx: -3, dy: 0 }, { dx: -2, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 0 }, { dx: 1, dy: 0 },
-            { dx: -3, dy: 1 }, { dx: -2, dy: 1 }, { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }, { dx: 2, dy: 1 },
-            { dx: -2, dy: 2 }, { dx: -1, dy: 2 }, { dx: 0, dy: 2 }, { dx: 1, dy: 2 }, { dx: 2, dy: 2 },
-            // head
-            { dx: 2, dy: -1 }, { dx: 3, dy: -1 }, { dx: 2, dy: 0 }, { dx: 3, dy: 0 },
-            // ears
-            { dx: 2, dy: -2 }, { dx: 3, dy: -2 },
-            // tail curling up
-            { dx: -4, dy: 0 }, { dx: -5, dy: -1 }, { dx: -5, dy: -2 }, { dx: -4, dy: -2 },
-            // legs tucked
-            { dx: -2, dy: 3 }, { dx: -1, dy: 3 }, { dx: 1, dy: 3 }, { dx: 2, dy: 3 },
-          ]
-        : [
-            // climbing/stretched profile
-            { dx: -3, dy: 0 }, { dx: -2, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 0 }, { dx: 1, dy: 0 }, { dx: 2, dy: 0 },
-            { dx: -3, dy: 1 }, { dx: -2, dy: 1 }, { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }, { dx: 2, dy: 1 },
-            // head reaching up
-            { dx: 3, dy: -1 }, { dx: 3, dy: 0 }, { dx: 4, dy: 0 },
-            // ears
-            { dx: 3, dy: -2 },
-            // tail trailing
-            { dx: -4, dy: 1 }, { dx: -5, dy: 1 }, { dx: -6, dy: 0 },
-            // limbs gripping
-            { dx: -2, dy: 2 }, { dx: 0, dy: 2 }, { dx: 2, dy: 2 },
-          ];
-
-      // White body fill
-      ctx.fillStyle = `hsl(0 0% 96%)`;
-      for (const p of body) {
-        const x = Math.round(cx + p.dx * f);
-        const y = Math.round(cy + p.dy);
-        ctx.fillRect(x * cell, y * cell, cell, cell);
-      }
-
-      // Black rosettes — single dark pixels scattered on the body
-      const spots: { dx: number; dy: number }[] = sitting
-        ? [
-            { dx: -2, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 2 },
-            { dx: -1, dy: 0 }, { dx: 1, dy: 0 }, { dx: -3, dy: 1 },
-            { dx: 2, dy: 1 }, { dx: -1, dy: 2 },
-          ]
-        : [
-            { dx: -2, dy: 0 }, { dx: 0, dy: 0 }, { dx: 1, dy: 1 },
-            { dx: -1, dy: 1 }, { dx: -3, dy: 1 }, { dx: 2, dy: 0 },
-          ];
-      ctx.fillStyle = `hsl(${fg} / 0.92)`;
-      for (const p of spots) {
-        const x = Math.round(cx + p.dx * f);
-        const y = Math.round(cy + p.dy);
-        ctx.fillRect(x * cell, y * cell, cell, cell);
-      }
-
-      // Eye dot
-      ctx.fillStyle = `hsl(${fg})`;
-      ctx.fillRect(Math.round(cx + 3 * f) * cell, Math.round(cy - 1) * cell, cell, cell);
-    };
-
     let last = performance.now();
     let raf = 0;
 
@@ -294,8 +197,6 @@ export const PixelTree = () => {
       if (cyclePos >= 1) {
         cycleStart = now;
         pixels.length = 0;
-        trunkPath.length = 0;
-        restPoint = null;
         tree = buildTree();
       }
 
@@ -323,28 +224,6 @@ export const PixelTree = () => {
         ctx.fillRect(p.x * cell, p.y * cell, cell, cell);
       }
 
-      // Build trunk path once tree is mostly grown
-      if (cyclePos > 0.5 && trunkPath.length === 0) {
-        captureTrunkPath(tree, tree.x, tree.y);
-      }
-
-      // Leopard climbs after tree, then sits at rest point
-      if (cyclePos > 0.5 && trunkPath.length > 0 && fadeOut > 0) {
-        const climbStart = 0.55;
-        const climbEnd = 0.8;
-        const climbT = Math.max(0, Math.min(1, (cyclePos - climbStart) / (climbEnd - climbStart)));
-        if (climbT < 1) {
-          const idx = Math.floor(climbT * (trunkPath.length - 1));
-          const next = trunkPath[Math.min(idx + 1, trunkPath.length - 1)];
-          const cur = trunkPath[idx];
-          // Face the direction of travel
-          const facing: 1 | -1 = next.x >= cur.x ? 1 : -1;
-          drawLeopard(cur.x, cur.y - 1, facing, false, fg);
-        } else if (restPoint) {
-          drawLeopard(restPoint.x, restPoint.y, 1, true, fg);
-        }
-      }
-
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -358,7 +237,7 @@ export const PixelTree = () => {
   return (
     <div
       className="relative aspect-square w-full max-w-[560px]"
-      aria-label="Animated pixel tree with a snow leopard climbing it"
+      aria-label="Animated pixel tree growing"
       role="img"
     >
       <canvas ref={canvasRef} className="h-full w-full [image-rendering:pixelated]" />
