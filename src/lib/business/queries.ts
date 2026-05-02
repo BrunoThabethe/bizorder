@@ -122,10 +122,12 @@ export const fetchOrCreateMyBusiness = async (user: User) => {
   const existing = await fetchMyBusiness(user.id);
   if (existing) return existing;
 
-  const metadata = user.user_metadata;
-  const businessName = typeof metadata.business_name === "string" ? metadata.business_name : null;
-  const fullName = typeof metadata.full_name === "string" ? metadata.full_name : null;
-  const phone = typeof metadata.phone === "string" ? metadata.phone : null;
+  const metadata = user.user_metadata ?? {};
+  const businessName = typeof metadata.business_name === "string" ? metadata.business_name.trim() : "";
+  const fullName = typeof metadata.full_name === "string" ? metadata.full_name.trim() : "";
+  const phone = typeof metadata.phone === "string" ? metadata.phone.trim() : null;
+  const category = typeof metadata.business_category === "string" ? metadata.business_category.trim() : null;
+  const address = typeof metadata.business_address === "string" ? metadata.business_address.trim() : null;
   const name = businessName || fullName || user.email?.split("@")[0] || "New business";
   const slug = `${slugify(name) || "business"}-${user.id.slice(0, 8)}`;
 
@@ -137,6 +139,9 @@ export const fetchOrCreateMyBusiness = async (user: User) => {
       slug,
       email: user.email ?? null,
       phone,
+      category: category || null,
+      trading_address: address || null,
+      address: address || null,
     })
     .select("*")
     .single();

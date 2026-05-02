@@ -6,17 +6,24 @@ import { SiteLayout } from "@/components/layout/SiteLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 type Role = "customer" | "business";
 
-const signupSchema = z.object({
+const baseSchema = z.object({
   fullName: z.string().trim().min(2, "Tell us your name").max(100),
   email: z.string().trim().email("Enter a valid email").max(255),
   phone: z.string().trim().min(7, "Enter a valid phone").max(20),
   password: z.string().min(8, "At least 8 characters").max(128),
+});
+
+const businessExtras = z.object({
+  businessName: z.string().trim().min(2, "Add your business name").max(120),
+  category: z.string().trim().min(2, "Pick a category, e.g. Bakery").max(60),
+  address: z.string().trim().min(5, "Add your trading address").max(240),
 });
 
 const roleOptions: { id: Role; title: string; text: string; icon: typeof ShoppingBag }[] = [
@@ -39,14 +46,37 @@ const SignupPage = () => {
     const phone = String(form.get("phone") ?? "");
     const password = String(form.get("password") ?? "");
 
-    const parsed = signupSchema.safeParse({ fullName, email, phone, password });
-    if (!parsed.success) {
+    const baseParsed = baseSchema.safeParse({ fullName, email, phone, password });
+    if (!baseParsed.success) {
       toast({
         title: "Check your details",
-        description: parsed.error.issues[0]?.message ?? "Invalid input",
+        description: baseParsed.error.issues[0]?.message ?? "Invalid input",
         variant: "destructive",
       });
       return;
+    }
+
+    let businessName: string | null = null;
+    let category: string | null = null;
+    let address: string | null = null;
+
+    if (role === "business") {
+      const businessParsed = businessExtras.safeParse({
+        businessName: String(form.get("businessName") ?? ""),
+        category: String(form.get("category") ?? ""),
+        address: String(form.get("address") ?? ""),
+      });
+      if (!businessParsed.success) {
+        toast({
+          title: "Finish your business details",
+          description: businessParsed.error.issues[0]?.message ?? "Invalid input",
+          variant: "destructive",
+        });
+        return;
+      }
+      businessName = businessParsed.data.businessName;
+      category = businessParsed.data.category;
+      address = businessParsed.data.address;
     }
 
     setLoading(true);
@@ -57,8 +87,11 @@ const SignupPage = () => {
         emailRedirectTo: `${window.location.origin}/`,
         data: {
           full_name: fullName,
-          business_name: role === "business" ? fullName : null,
+          phone,
           role,
+          business_name: businessName,
+          business_category: category,
+          business_address: address,
         },
       },
     });
@@ -72,7 +105,7 @@ const SignupPage = () => {
       title: "Welcome to BizOrder",
       description:
         role === "business"
-          ? "Account created. Let's complete your verification."
+          ? "Account created. Next step: upload your verification documents."
           : "Account created.",
     });
     navigate(role === "business" ? "/business/onboarding" : "/");
@@ -130,15 +163,15 @@ const SignupPage = () => {
 
           {role === "business" && (
             <div className="mt-5 rounded-xl bg-foreground/5 p-4 text-sm">
-              <p className="font-display font-bold">What you'll need next</p>
+              <p className="font-display font-bold">What happens after signup</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                After signup we'll ask you to upload these to verify your business:
+                Upload these to verify your business and unlock your portal:
               </p>
               <ul className="mt-2 grid gap-1 text-xs text-foreground/90">
                 <li>• Owner ID (SA ID or passport)</li>
                 <li>• Proof of residence (utility bill or bank letter)</li>
-                <li>• Business address and proof of operations (premises photo, signage, or invoice)</li>
-                <li>• CIPC registration number and website (optional)</li>
+                <li>• Proof of operations (premises photo, signage, or invoice)</li>
+                <li>• CIPC registration (optional)</li>
               </ul>
             </div>
           )}
@@ -146,19 +179,45 @@ const SignupPage = () => {
           <form onSubmit={onSubmit} className="mt-7 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full name</Label>
+                <Label htmlFor="fullName">{role === "business" ? "Owner full name" : "Full name"}</Label>
                 <Input id="fullName" name="fullName" placeholder="Sarah Mokoena" required maxLength={100} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">{role === "business" ? "Business phone" : "Phone"}</Label>
                 <Input id="phone" name="phone" type="tel" placeholder="+27 60 000 0000" required maxLength={20} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{role === "business" ? "Business email" : "Email"}</Label>
               <Input id="email" name="email" type="email" placeholder="you@example.com" required maxLength={255} autoComplete="email" />
             </div>
+
+            {role === "business" && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="businessName">Business name</Label>
+                    <Input id="businessName" name="businessName" placeholder="Sarah's Bakery" required maxLength={120} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Type of business</Label>
+                    <Input id="category" name="category" placeholder="Bakery, plumber, hair salon…" required maxLength={60} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Business address</Label>
+                  <Textarea
+                    id="address"
+                    name="address"
+                    placeholder="123 Main Street, Soweto, Johannesburg"
+                    required
+                    maxLength={240}
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
