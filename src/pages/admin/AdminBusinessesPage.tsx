@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { VerificationWizard } from "@/components/admin/VerificationWizard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const AdminBusinessesPage = () => {
   const [q, setQ] = useState("");
-  const [verifyTarget, setVerifyTarget] = useState<{ id: string; name: string; isVerified: boolean } | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -53,7 +52,10 @@ const AdminBusinessesPage = () => {
       <div className="space-y-5">
         <div>
           <h1 className="font-display text-3xl font-bold">Businesses</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage providers, verify identity and control visibility.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Browse providers and control visibility. To verify a business, head to the{" "}
+            <Link to="/admin/verifications" className="font-semibold underline underline-offset-4">verification center</Link>.
+          </p>
         </div>
 
         <Card className="rounded-3xl border-0 shadow-card">
@@ -106,14 +108,6 @@ const AdminBusinessesPage = () => {
                         <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
-                            variant="secondary"
-                            onClick={() => setVerifyTarget({ id: b.id, name: b.name, isVerified: b.is_verified })}
-                          >
-                            <ShieldCheck className="h-4 w-4" />
-                            {b.is_verified ? "Review" : "Verify"}
-                          </Button>
-                          <Button
-                            size="sm"
                             variant={b.is_published ? "outline" : "default"}
                             onClick={() => publishMutation.mutate({ id: b.id, value: !b.is_published })}
                           >
@@ -129,12 +123,6 @@ const AdminBusinessesPage = () => {
           </CardContent>
         </Card>
       </div>
-      <VerificationWizard
-        businessId={verifyTarget?.id ?? null}
-        businessName={verifyTarget?.name ?? ""}
-        isVerified={verifyTarget?.isVerified ?? false}
-        onClose={() => setVerifyTarget(null)}
-      />
     </AdminLayout>
   );
 };
