@@ -92,35 +92,6 @@ export const PixelTree = () => {
     let tree = buildTree();
     let cycleStart = performance.now();
 
-    const captureTrunkPath = (b: Branch, startX: number, startY: number) => {
-      // Walk only the main trunk (first child each level) to give the leopard a clean route
-      const endX = startX + Math.cos(b.angle) * b.length;
-      const endY = startY + Math.sin(b.angle) * b.length;
-      const steps = Math.max(2, Math.floor(b.length));
-      for (let s = 1; s <= steps; s++) {
-        const t = s / steps;
-        trunkPath.push({
-          x: startX + (endX - startX) * t,
-          y: startY + (endY - startY) * t,
-        });
-      }
-      if (b.children.length > 0) {
-        // Pick the most upright child to follow
-        let best = b.children[0];
-        let bestUp = Math.sin(best.angle);
-        for (const c of b.children) {
-          const up = Math.sin(c.angle);
-          if (up < bestUp) {
-            best = c;
-            bestUp = up;
-          }
-        }
-        captureTrunkPath(best, endX, endY);
-      } else {
-        // Leopard rests at the top of the climbed trunk, just below the canopy
-        restPoint = { x: endX, y: endY - 1.5 };
-      }
-    };
 
     const drawBranchPixels = (b: Branch, startX: number, startY: number, now: number) => {
       const reach = b.length * b.progress;
@@ -226,8 +197,6 @@ export const PixelTree = () => {
       if (cyclePos >= 1) {
         cycleStart = now;
         pixels.length = 0;
-        trunkPath.length = 0;
-        restPoint = null;
         tree = buildTree();
       }
 
