@@ -1,52 +1,91 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import leopardPrint from "@/assets/leopard-print.jpg";
 
 /**
  * Snow-leopard print wallpaper. Uses the uploaded reference image as a
- * tiled, fixed background. On dark theme the image is inverted so the
- * print stays readable. Subtle parallax on scroll for life.
+ * tiled, fixed background. Reacts to pointer (hover/touch) and scroll
+ * with subtle parallax. The tile is oversized and offset so seams never
+ * appear inside the viewport.
  */
 export const InteractiveDotsBackground = () => {
-  const [scrollY, setScrollY] = useState(0);
   const [isDark, setIsDark] = useState(false);
+  const layerRef = useRef<HTMLDivElement | null>(null);
+  const target = useRef({ x: 0, y: 0 });
+  const current = useRef({ x: 0, y: 0 });
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", onScroll, { passive: true });
-
     const root = document.documentElement;
     const updateTheme = () => setIsDark(root.classList.contains("dark"));
     updateTheme();
     const obs = new MutationObserver(updateTheme);
     obs.observe(root, { attributes: true, attributeFilter: ["class"] });
 
+    const onScroll = () => {
+      target.current.y = window.scrollY * 0.18;
+    };
+
+    const onPointer = (e: PointerEvent) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      // Subtle pointer parallax: max ~24px shift
+      target.current.x = ((e.clientX - cx) / cx) * 24;
+      target.current.y =
+        window.scrollY * 0.18 + ((e.clientY - cy) / cy) * 24;
+    };
+
+    const tick = () => {
+      // Smoothly interpolate towards the target for buttery motion
+      current.current.x += (target.current.x - current.current.x) * 0.08;
+      current.current.y += (target.current.y - current.current.y) * 0.08;
+      const layer = layerRef.current;
+      if (layer) {
+        layer.style.transform = `translate3d(${-current.current.x}px, ${-current.current.y}px, 0)`;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("pointermove", onPointer, { passive: true });
+    rafRef.current = requestAnimationFrame(tick);
+
     return () => {
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pointermove", onPointer);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       obs.disconnect();
     };
   }, []);
 
-  // Responsive tile size: smaller on mobile, larger on desktop.
-  // The image repeats seamlessly across the viewport.
-  const parallax = scrollY * 0.15;
-
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-0 h-screen w-screen overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
     >
+      {/*
+        Oversized tiling layer: extends 200px beyond every edge so any
+        parallax shift never reveals a hard border. Uses background-repeat
+        for a continuous print without visible seams.
+      */}
       <div
-        className="absolute inset-0 bg-repeat"
+        ref={layerRef}
+        className="absolute"
         style={{
+          top: "-200px",
+          left: "-200px",
+          right: "-200px",
+          bottom: "-200px",
           backgroundImage: `url(${leopardPrint})`,
-          backgroundSize: "clamp(220px, 32vw, 460px)",
-          backgroundPosition: `0px ${-parallax}px`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "clamp(260px, 36vw, 520px)",
+          backgroundPosition: "center center",
           opacity: isDark ? 0.18 : 0.32,
           filter: isDark ? "invert(1) hue-rotate(180deg)" : "none",
+          willChange: "transform",
           transition: "opacity 300ms ease",
         }}
       />
-      {/* Soft fade so content stays readable */}
+      {/* Soft fade so foreground content stays readable */}
       <div
         className="absolute inset-0"
         style={{
