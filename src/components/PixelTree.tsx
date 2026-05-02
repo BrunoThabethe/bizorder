@@ -237,7 +237,7 @@ export const PixelTree = () => {
   return (
     <div
       className="relative aspect-square w-full max-w-[560px]"
-      aria-label="Animated pixel tree with a snow leopard climbing it"
+      aria-label="Animated pixel tree growing"
       role="img"
     >
       <canvas ref={canvasRef} className="h-full w-full [image-rendering:pixelated]" />
