@@ -1116,6 +1116,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_access_verification_object: {
+        Args: { _bucket_id: string; _object_name: string; _user_id: string }
+        Returns: boolean
+      }
       crew_member_id_for: {
         Args: { _business_id: string; _user_id: string }
         Returns: string
