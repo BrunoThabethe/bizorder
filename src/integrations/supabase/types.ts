@@ -1104,6 +1104,10 @@ export type Database = {
     }
     Functions: {
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_finalize_business_verification: {
+        Args: { _business_id: string; _verify: boolean }
+        Returns: undefined
+      }
       admin_resolve_change_request: {
         Args: {
           _approve: boolean
@@ -1156,6 +1160,38 @@ export type Database = {
       }
       promote_test_admin: { Args: never; Returns: undefined }
       promote_test_crew: { Args: never; Returns: undefined }
+      save_business_onboarding_document: {
+        Args: {
+          _business_id: string
+          _document_type: string
+          _file_name?: string
+          _mime_type?: string
+          _size_bytes?: number
+          _storage_path: string
+        }
+        Returns: {
+          business_id: string
+          created_at: string
+          document_type: string
+          file_name: string | null
+          id: string
+          mime_type: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string
+          uploaded_by: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "business_onboarding_documents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_verification_check: {
         Args: {
           _business_id: string
