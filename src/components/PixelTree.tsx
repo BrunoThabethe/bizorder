@@ -51,9 +51,6 @@ export const PixelTree = () => {
 
     const pixels: Pixel[] = [];
 
-    // Trunk path used by the leopard to climb up
-    const trunkPath: { x: number; y: number }[] = [];
-    let restPoint: { x: number; y: number } | null = null;
 
     const buildTree = (): Branch => {
       const root: Branch = {
