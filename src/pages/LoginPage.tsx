@@ -36,7 +36,7 @@ const testAccounts: {
 ];
 
 const roleHomeFor = async (role: string | null | undefined, userId: string) => {
-  if (role === "admin") return "/admin";
+  if (role === "admin") return "/admin/verify";
   if (role === "business") {
     const business = await fetchMyBusiness(userId);
     if (!business) return "/business/onboarding";
