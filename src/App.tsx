@@ -18,10 +18,7 @@ import TermsPage from "./pages/TermsPage.tsx";
 import RefundPage from "./pages/RefundPage.tsx";
 import PlatformRulesPage from "./pages/PlatformRulesPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import VerifyEmailPage from "./pages/VerifyEmailPage.tsx";
-import AdminVerifyPage from "./pages/admin/AdminVerifyPage.tsx";
 import { RoleGuard } from "@/components/customer/RoleGuard";
-import { AdminOtpGate } from "@/components/admin/AdminOtpGate";
 import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage.tsx";
 import BrowseBusinessesPage from "./pages/customer/BrowseBusinessesPage.tsx";
 import BusinessProfilePage from "./pages/customer/BusinessProfilePage.tsx";
@@ -91,10 +88,6 @@ const App = () => (
             <Route path="/rules" element={<PlatformRulesPage />} />
 
             {/* Customer portal */}
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route path="/admin/verify" element={<AdminVerifyPage />} />
-
-            {/* Customer portal */}
             <Route path="/customer" element={<RoleGuard allow={["customer"]}><CustomerDashboardPage /></RoleGuard>} />
             <Route path="/customer/browse" element={<RoleGuard allow={["customer"]}><BrowseBusinessesPage /></RoleGuard>} />
             <Route path="/customer/business/:slug" element={<RoleGuard allow={["customer"]}><BusinessProfilePage /></RoleGuard>} />
@@ -128,22 +121,22 @@ const App = () => (
             <Route path="/crew/profile" element={<RoleGuard allow={["crew"]}><CrewProfilePage /></RoleGuard>} />
 
             {/* Admin portal */}
-            <Route path="/admin" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminDashboardPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/orders" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminOrdersPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/orders/:orderId" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminOrderDetailPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/users" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminUsersPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/businesses" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminBusinessesPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/verification" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminVerificationPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/change-requests" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminProfileChangeRequestsPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/disputes" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminDisputesPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/payouts" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminPayoutsPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/uploads" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminUploadsPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/analytics" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminAnalyticsPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/ai-assistant" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminAiAssistantPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/campaigns" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminCampaignsPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/newsletter" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminNewsletterPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/settings" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminSettingsPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/audit" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminAuditPage /></AdminOtpGate></RoleGuard>} />
+            <Route path="/admin" element={<RoleGuard allow={["admin"]}><AdminDashboardPage /></RoleGuard>} />
+            <Route path="/admin/orders" element={<RoleGuard allow={["admin"]}><AdminOrdersPage /></RoleGuard>} />
+            <Route path="/admin/orders/:orderId" element={<RoleGuard allow={["admin"]}><AdminOrderDetailPage /></RoleGuard>} />
+            <Route path="/admin/users" element={<RoleGuard allow={["admin"]}><AdminUsersPage /></RoleGuard>} />
+            <Route path="/admin/businesses" element={<RoleGuard allow={["admin"]}><AdminBusinessesPage /></RoleGuard>} />
+            <Route path="/admin/verification" element={<RoleGuard allow={["admin"]}><AdminVerificationPage /></RoleGuard>} />
+            <Route path="/admin/change-requests" element={<RoleGuard allow={["admin"]}><AdminProfileChangeRequestsPage /></RoleGuard>} />
+            <Route path="/admin/disputes" element={<RoleGuard allow={["admin"]}><AdminDisputesPage /></RoleGuard>} />
+            <Route path="/admin/payouts" element={<RoleGuard allow={["admin"]}><AdminPayoutsPage /></RoleGuard>} />
+            <Route path="/admin/uploads" element={<RoleGuard allow={["admin"]}><AdminUploadsPage /></RoleGuard>} />
+            <Route path="/admin/analytics" element={<RoleGuard allow={["admin"]}><AdminAnalyticsPage /></RoleGuard>} />
+            <Route path="/admin/ai-assistant" element={<RoleGuard allow={["admin"]}><AdminAiAssistantPage /></RoleGuard>} />
+            <Route path="/admin/campaigns" element={<RoleGuard allow={["admin"]}><AdminCampaignsPage /></RoleGuard>} />
+            <Route path="/admin/newsletter" element={<RoleGuard allow={["admin"]}><AdminNewsletterPage /></RoleGuard>} />
+            <Route path="/admin/settings" element={<RoleGuard allow={["admin"]}><AdminSettingsPage /></RoleGuard>} />
+            <Route path="/admin/audit" element={<RoleGuard allow={["admin"]}><AdminAuditPage /></RoleGuard>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -62,54 +62,6 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_otp_codes: {
-        Row: {
-          attempts: number
-          code_hash: string
-          created_at: string
-          expires_at: string
-          id: string
-          used_at: string | null
-          user_id: string
-        }
-        Insert: {
-          attempts?: number
-          code_hash: string
-          created_at?: string
-          expires_at: string
-          id?: string
-          used_at?: string | null
-          user_id: string
-        }
-        Update: {
-          attempts?: number
-          code_hash?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          used_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      admin_otp_verifications: {
-        Row: {
-          updated_at: string
-          user_id: string
-          verified_at: string
-        }
-        Insert: {
-          updated_at?: string
-          user_id: string
-          verified_at: string
-        }
-        Update: {
-          updated_at?: string
-          user_id?: string
-          verified_at?: string
-        }
-        Relationships: []
-      }
       ai_assistant_settings: {
         Row: {
           created_at: string
@@ -1156,7 +1108,6 @@ export type Database = {
         Args: { _business_id: string; _verify: boolean }
         Returns: undefined
       }
-      admin_issue_otp: { Args: { _user_id: string }; Returns: string }
       admin_resolve_change_request: {
         Args: {
           _approve: boolean
@@ -1164,10 +1115,6 @@ export type Database = {
           _request_id: string
         }
         Returns: undefined
-      }
-      admin_verify_otp: {
-        Args: { _code: string; _user_id: string }
-        Returns: boolean
       }
       can_access_verification_object: {
         Args: { _bucket_id: string; _object_name: string; _user_id: string }

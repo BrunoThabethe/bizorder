@@ -102,10 +102,13 @@ const SignupPage = () => {
       return;
     }
     toast({
-      title: "Check your email",
-      description: "We sent you a 6-digit code to verify your account.",
+      title: "Welcome to BizOrder",
+      description:
+        role === "business"
+          ? "Account created. Next step: upload your verification documents."
+          : "Account created.",
     });
-    navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+    navigate(role === "business" ? "/business/onboarding" : "/");
   };
 
   return (

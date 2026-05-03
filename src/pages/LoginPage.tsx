@@ -29,42 +29,14 @@ const testAccounts: {
   fullName: string;
   color: string;
 }[] = [
-  {
-    role: "Customer",
-    email: "customer@test.bizorder",
-    signupRole: "customer",
-    finalRole: "customer",
-    fullName: "Test Customer",
-    color: "bg-foreground/10",
-  },
-  {
-    role: "Business",
-    email: "provider@test.bizorder",
-    signupRole: "business",
-    finalRole: "business",
-    fullName: "Test Provider",
-    color: "bg-foreground/15",
-  },
-  {
-    role: "Crew",
-    email: "crew@test.bizorder",
-    signupRole: "customer",
-    finalRole: "crew",
-    fullName: "Test Crew",
-    color: "bg-foreground/10",
-  },
-  {
-    role: "Admin",
-    email: "thabethebruno@legendarysolutions.co.za",
-    signupRole: "customer",
-    finalRole: "admin",
-    fullName: "Test Admin",
-    color: "bg-foreground/15",
-  },
+  { role: "Customer", email: "customer@test.bizorder", signupRole: "customer", finalRole: "customer", fullName: "Test Customer", color: "bg-foreground/10" },
+  { role: "Business", email: "provider@test.bizorder", signupRole: "business", finalRole: "business", fullName: "Test Provider", color: "bg-foreground/15" },
+  { role: "Crew", email: "crew@test.bizorder", signupRole: "customer", finalRole: "crew", fullName: "Test Crew", color: "bg-foreground/10" },
+  { role: "Admin", email: "admin@test.bizorder", signupRole: "customer", finalRole: "admin", fullName: "Test Admin", color: "bg-foreground/15" },
 ];
 
 const roleHomeFor = async (role: string | null | undefined, userId: string) => {
-  if (role === "admin") return "/admin/verify";
+  if (role === "admin") return "/admin";
   if (role === "business") {
     const business = await fetchMyBusiness(userId);
     if (!business) return "/business/onboarding";
@@ -107,7 +79,7 @@ const LoginPage = () => {
     // Self-heal: promote seed accounts to their intended role on sign-in.
     if (data.user.email === "crew@test.bizorder") {
       await supabase.rpc("promote_test_crew");
-    } else if (data.user.email === "thabethebruno@legendarysolutions.co.za") {
+    } else if (data.user.email === "admin@test.bizorder") {
       await supabase.rpc("promote_test_admin");
     }
 
@@ -164,7 +136,9 @@ const LoginPage = () => {
             </Link>
 
             <h1 className="mt-6 font-display text-3xl font-bold md:text-4xl">Welcome back</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Sign in to manage your orders, business, or crew.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Sign in to manage your orders, business, or crew.
+            </p>
 
             <form onSubmit={onSubmit} className="mt-7 space-y-4">
               <div className="space-y-2">
@@ -184,10 +158,7 @@ const LoginPage = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs font-semibold text-foreground underline-offset-4 hover:underline"
-                  >
+                  <Link to="/forgot-password" className="text-xs font-semibold text-foreground underline-offset-4 hover:underline">
                     Forgot?
                   </Link>
                 </div>
@@ -215,13 +186,7 @@ const LoginPage = () => {
               </div>
 
               <Button type="submit" size="lg" className="w-full" disabled={loading}>
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    Sign in <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Sign in <ArrowRight className="h-4 w-4" /></>}
               </Button>
             </form>
 
@@ -282,8 +247,7 @@ const LoginPage = () => {
             <div className="mt-6 flex gap-2 rounded-xl bg-foreground/5 p-4 text-xs text-muted-foreground">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
               <p>
-                Password: <span className="font-mono font-semibold text-foreground">Test1234!</span>. Email confirmation
-                may need to be turned off in Supabase Auth for instant sign in.
+                Password: <span className="font-mono font-semibold text-foreground">Test1234!</span>. Email confirmation may need to be turned off in Supabase Auth for instant sign in.
               </p>
             </div>
           </div>
