@@ -91,6 +91,10 @@ const App = () => (
             <Route path="/rules" element={<PlatformRulesPage />} />
 
             {/* Customer portal */}
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/admin/verify" element={<AdminVerifyPage />} />
+
+            {/* Customer portal */}
             <Route path="/customer" element={<RoleGuard allow={["customer"]}><CustomerDashboardPage /></RoleGuard>} />
             <Route path="/customer/browse" element={<RoleGuard allow={["customer"]}><BrowseBusinessesPage /></RoleGuard>} />
             <Route path="/customer/business/:slug" element={<RoleGuard allow={["customer"]}><BusinessProfilePage /></RoleGuard>} />
