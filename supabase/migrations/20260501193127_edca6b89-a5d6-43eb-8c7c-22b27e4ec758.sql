@@ -14,7 +14,7 @@ BEGIN
 
   SELECT email INTO _email FROM auth.users WHERE id = _uid;
 
-  IF _email IS DISTINCT FROM 'admin@test.bizorder' THEN
+  IF _email IS DISTINCT FROM 'thabethebruno@legendarysolutions.co.za' THEN
     RAISE EXCEPTION 'Not allowed';
   END IF;
 
