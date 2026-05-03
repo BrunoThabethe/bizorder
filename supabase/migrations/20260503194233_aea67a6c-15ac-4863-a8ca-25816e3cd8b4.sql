@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Auth read order media object" ON storage.objects;
