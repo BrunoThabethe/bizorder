@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const json = (status: number, body: unknown) =>
@@ -15,36 +15,6 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY")!;
 
-class EmailDeliveryError extends Error {
-  readonly code: string;
-
-  constructor(message: string, code: string) {
-    super(message);
-    this.name = "EmailDeliveryError";
-    this.code = code;
-  }
-}
-
-type AdminOtpBody =
-  | { action: "request" }
-  | { action: "verify"; code: string };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const readBody = async (req: Request): Promise<AdminOtpBody | null> => {
-  const body: unknown = await req.json().catch(() => null);
-  if (!isRecord(body)) return null;
-
-  if (body.action === "request") return { action: "request" };
-  if (body.action === "verify") {
-    const code = typeof body.code === "string" ? body.code.trim() : "";
-    return { action: "verify", code };
-  }
-
-  return null;
-};
-
 async function sendEmail(to: string, code: string) {
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -54,7 +24,7 @@ async function sendEmail(to: string, code: string) {
       accept: "application/json",
     },
     body: JSON.stringify({
-      sender: { name: "BizOrder Security", email: "no-reply@bizorder.app" },
+      sender: { name: "BizOrder Security", email: "thabethebruno@legendarysolutions.co.za" },
       to: [{ email: to }],
       subject: `Your admin sign-in code: ${code}`,
       htmlContent: `
@@ -67,18 +37,7 @@ async function sendEmail(to: string, code: string) {
     }),
   });
   if (!res.ok) {
-    const providerMessage = await res.text();
-    if (res.status === 401 && /unrecognised IP address/i.test(providerMessage)) {
-      throw new EmailDeliveryError(
-        "Brevo is still blocking the server that sends admin codes. Disable API authorised IP restrictions in Brevo security settings; browser application restrictions do not affect Supabase Edge Functions.",
-        "brevo_ip_blocked",
-      );
-    }
-
-    throw new EmailDeliveryError(
-      "The email provider rejected the admin code request. Check the sender, API key, and provider security settings.",
-      "email_provider_rejected",
-    );
+    throw new Error(`Email send failed: ${res.status} ${await res.text()}`);
   }
 }
 
@@ -89,43 +48,41 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) return json(401, { error: "Missing auth" });
 
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const userClient = createClient(
+      SUPABASE_URL,
+      Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        global: { headers: { Authorization: authHeader } },
+      },
+    );
     const { data: userRes } = await userClient.auth.getUser();
     const user = userRes?.user;
     if (!user) return json(401, { error: "Not signed in" });
 
-    const body = await readBody(req);
-    if (!body) return json(400, { ok: false, error: "Invalid request" });
+    const body = await req.json().catch(() => ({}));
+    const action = body?.action as string;
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // Confirm admin role
     const { data: hasAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
     if (!hasAdmin) return json(403, { error: "Not an admin" });
 
-    if (body.action === "request") {
+    if (action === "request") {
       const { data: code, error } = await admin.rpc("admin_issue_otp", { _user_id: user.id });
       if (error || !code) return json(500, { error: error?.message ?? "Could not issue code" });
-      if (!user.email) return json(400, { ok: false, error: "This admin account has no email address" });
-      try {
-        await sendEmail(user.email, code as string);
-      } catch (err) {
-        if (err instanceof EmailDeliveryError) return json(200, { ok: false, code: err.code, error: err.message });
-        throw err;
-      }
+      await sendEmail(user.email!, code as string);
       return json(200, { ok: true });
     }
 
-    if (body.action === "verify") {
-      const codeInput = body.code;
-      if (!/^\d{6}$/.test(codeInput)) return json(200, { ok: false, error: "Enter the 6-digit code" });
+    if (action === "verify") {
+      const codeInput = String(body?.code ?? "").trim();
+      if (!/^\d{6}$/.test(codeInput)) return json(400, { error: "Enter the 6-digit code" });
       const { data: ok, error } = await admin.rpc("admin_verify_otp", {
         _user_id: user.id,
         _code: codeInput,
       });
       if (error) return json(500, { error: error.message });
-      if (!ok) return json(200, { ok: false, error: "Invalid or expired code" });
+      if (!ok) return json(400, { error: "Invalid or expired code" });
       return json(200, { ok: true });
     }
 
