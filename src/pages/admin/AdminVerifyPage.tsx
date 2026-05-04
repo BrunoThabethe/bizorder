@@ -10,6 +10,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminOtpVerified, markAdminOtpVerified } from "@/components/admin/AdminOtpGate";
 
+type AdminOtpResponse = {
+  ok?: boolean;
+  code?: string;
+  error?: string;
+};
+
+const getFunctionErrorMessage = async (error: unknown): Promise<string> => {
+  if (error && typeof error === "object" && "context" in error) {
+    const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
+    const body = await context?.json?.().catch(() => null);
+    if (body && typeof body === "object" && "error" in body) {
+      const message = (body as { error?: unknown }).error;
+      if (typeof message === "string") return message;
+    }
+  }
+
+  if (error instanceof Error) return error.message;
+  return "Try again in a moment.";
+};
+
 const AdminVerifyPage = () => {
   const { session, role, loading } = useAuth();
   const { toast } = useToast();
@@ -21,10 +41,14 @@ const AdminVerifyPage = () => {
 
   const requestCode = async () => {
     setSending(true);
-    const { error } = await supabase.functions.invoke("admin-otp", { body: { action: "request" } });
+    const { data, error } = await supabase.functions.invoke<AdminOtpResponse>("admin-otp", { body: { action: "request" } });
     setSending(false);
     if (error) {
-      toast({ title: "Could not send code", description: error.message, variant: "destructive" });
+      toast({ title: "Could not send code", description: await getFunctionErrorMessage(error), variant: "destructive" });
+      return;
+    }
+    if (!data?.ok) {
+      toast({ title: "Could not send code", description: data?.error ?? "Try again in a moment.", variant: "destructive" });
       return;
     }
     setSent(true);
@@ -55,12 +79,16 @@ const AdminVerifyPage = () => {
       return;
     }
     setVerifying(true);
-    const { data, error } = await supabase.functions.invoke("admin-otp", {
+    const { data, error } = await supabase.functions.invoke<AdminOtpResponse>("admin-otp", {
       body: { action: "verify", code },
     });
     setVerifying(false);
     if (error || !data?.ok) {
-      toast({ title: "Verification failed", description: error?.message ?? "Invalid or expired code.", variant: "destructive" });
+      toast({
+        title: "Verification failed",
+        description: error ? await getFunctionErrorMessage(error) : data?.error ?? "Invalid or expired code.",
+        variant: "destructive",
+      });
       return;
     }
     markAdminOtpVerified(session.user.id);
