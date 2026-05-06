@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAllAdminOtpFlags } from "@/components/admin/AdminOtpGate";
 
 export type AppRole = "customer" | "business" | "admin" | "crew";
 
@@ -22,8 +23,12 @@ export const useAuth = (): AuthState => {
       setRole((data as AppRole) ?? null);
     };
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+      if (event === "SIGNED_OUT" || event === "SIGNED_IN") {
+        // Force admins to re-verify OTP on every fresh sign-in / sign-out, on every device.
+        clearAllAdminOtpFlags();
+      }
       if (newSession?.user) {
         setLoading(true);
         setTimeout(() => {
