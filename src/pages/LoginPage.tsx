@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMyBusiness } from "@/lib/business/queries";
 import { isBusinessFullyVerified } from "@/lib/business/onboarding";
+import { clearAllAdminOtpFlags } from "@/components/admin/AdminOtpGate";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email").max(255),
@@ -112,6 +113,10 @@ const LoginPage = () => {
     }
 
     const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });
+    if ((roleData as string | null) === "admin") {
+      // Always force OTP on every admin login, on every device.
+      clearAllAdminOtpFlags();
+    }
     toast({ title: "Welcome back", description: "You're signed in." });
     const nextRoute = await roleHomeFor(roleData as string | null, data.user.id);
     setLoading(false);
