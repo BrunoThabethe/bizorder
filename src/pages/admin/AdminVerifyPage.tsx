@@ -70,7 +70,7 @@ const AdminVerifyPage = () => {
     );
   }
   if (!session || role !== "admin") return <Navigate to="/login" replace />;
-  if (isAdminOtpVerified(session.user.id)) return <Navigate to="/admin" replace />;
+  if (isAdminOtpVerified(session.access_token)) return <Navigate to="/admin" replace />;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
