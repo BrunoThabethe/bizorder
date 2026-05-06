@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { EmailChangeCard } from "@/components/settings/EmailChangeCard";
 import { fetchSystemSettings, logAdminAction, upsertSystemSetting } from "@/lib/admin/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -46,6 +47,7 @@ const AdminSettingsPage = () => {
           <p className="mt-1 text-sm text-muted-foreground">Platform-wide flags and configuration values.</p>
         </div>
 
+        <EmailChangeCard currentEmail={user?.email ?? null} />
         <Card className="rounded-3xl border-0 shadow-card">
           <CardContent className="space-y-4 p-5">
             <h2 className="font-display text-lg font-bold">Add or update setting</h2>
