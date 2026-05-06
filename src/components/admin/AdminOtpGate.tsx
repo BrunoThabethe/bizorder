@@ -3,27 +3,42 @@ import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
-const otpKey = (userId: string) => `admin_otp_ok_${userId}`;
+// Per-session: we tie the verification flag to the current access token.
+// A new login (any device) issues a new token, so OTP is required again every time.
+const STORAGE_PREFIX = "admin_otp_ok::";
 
-export const isAdminOtpVerified = (userId: string): boolean => {
+const tokenKey = (token: string | undefined): string | null =>
+  token ? `${STORAGE_PREFIX}${token.slice(-32)}` : null;
+
+export const isAdminOtpVerified = (accessToken: string | undefined): boolean => {
+  const key = tokenKey(accessToken);
+  if (!key) return false;
   try {
-    return sessionStorage.getItem(otpKey(userId)) === "1";
+    return sessionStorage.getItem(key) === "1";
   } catch {
     return false;
   }
 };
 
-export const markAdminOtpVerified = (userId: string): void => {
+export const markAdminOtpVerified = (accessToken: string | undefined): void => {
+  const key = tokenKey(accessToken);
+  if (!key) return;
   try {
-    sessionStorage.setItem(otpKey(userId), "1");
+    sessionStorage.setItem(key, "1");
   } catch {
     /* ignore */
   }
 };
 
-export const clearAdminOtpVerified = (userId: string): void => {
+export const clearAllAdminOtpFlags = (): void => {
   try {
-    sessionStorage.removeItem(otpKey(userId));
+    const keys: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(STORAGE_PREFIX)) keys.push(k);
+      if (k && k.startsWith("admin_otp_ok_")) keys.push(k); // legacy keys
+    }
+    keys.forEach((k) => sessionStorage.removeItem(k));
   } catch {
     /* ignore */
   }
@@ -50,7 +65,7 @@ export const AdminOtpGate = ({ children }: AdminOtpGateProps) => {
 
   if (!session || role !== "admin") return <Navigate to="/login" replace />;
 
-  if (!isAdminOtpVerified(session.user.id)) {
+  if (!isAdminOtpVerified(session.access_token)) {
     return <Navigate to="/admin/verify" replace state={{ from: location.pathname }} />;
   }
 

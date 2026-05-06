@@ -58,6 +58,7 @@ export const fetchPublishedBusinesses = async () => {
     .from("businesses")
     .select("*")
     .eq("is_published", true)
+    .is("deleted_at", null)
     .order("rating_avg", { ascending: false })
     .limit(100);
   if (error) throw error;
@@ -65,7 +66,12 @@ export const fetchPublishedBusinesses = async () => {
 };
 
 export const fetchBusinessBySlug = async (slug: string) => {
-  const { data, error } = await supabase.from("businesses").select("*").eq("slug", slug).maybeSingle();
+  const { data, error } = await supabase
+    .from("businesses")
+    .select("*")
+    .eq("slug", slug)
+    .is("deleted_at", null)
+    .maybeSingle();
   if (error) throw error;
   return data as Business | null;
 };

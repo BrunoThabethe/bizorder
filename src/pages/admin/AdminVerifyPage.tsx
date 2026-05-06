@@ -56,7 +56,7 @@ const AdminVerifyPage = () => {
   };
 
   useEffect(() => {
-    if (!loading && session && role === "admin" && !sent && !isAdminOtpVerified(session.user.id)) {
+    if (!loading && session && role === "admin" && !sent && !isAdminOtpVerified(session.access_token)) {
       void requestCode();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +70,7 @@ const AdminVerifyPage = () => {
     );
   }
   if (!session || role !== "admin") return <Navigate to="/login" replace />;
-  if (isAdminOtpVerified(session.user.id)) return <Navigate to="/admin" replace />;
+  if (isAdminOtpVerified(session.access_token)) return <Navigate to="/admin" replace />;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -91,7 +91,7 @@ const AdminVerifyPage = () => {
       });
       return;
     }
-    markAdminOtpVerified(session.user.id);
+    markAdminOtpVerified(session.access_token);
     toast({ title: "Verified", description: "Welcome to the admin portal." });
     navigate("/admin", { replace: true });
   };

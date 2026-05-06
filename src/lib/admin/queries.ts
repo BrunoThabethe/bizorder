@@ -128,12 +128,17 @@ export const fetchAdminMetrics = async () => {
     { count: openDisputes },
     { count: pendingVerifications },
     { count: subscribers },
+    { data: businessesForTop },
   ] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase.from("businesses").select("*", { count: "exact", head: true }),
-    supabase.from("businesses").select("*", { count: "exact", head: true }).eq("is_published", true),
+    supabase
+      .from("businesses")
+      .select("*", { count: "exact", head: true })
+      .eq("is_published", true)
+      .is("deleted_at", null),
     supabase.from("user_roles").select("role"),
-    supabase.from("orders").select("id, status, total, created_at"),
+    supabase.from("orders").select("id, business_id, status, total, created_at"),
     sb.from("payouts").select("amount, status"),
     sb.from("disputes").select("*", { count: "exact", head: true }).in("status", ["open", "reviewing"]),
     sb
@@ -141,9 +146,15 @@ export const fetchAdminMetrics = async () => {
       .select("*", { count: "exact", head: true })
       .eq("status", "pending"),
     sb.from("newsletter_subscribers").select("*", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("businesses").select("id, name"),
   ]);
 
-  const ordersList = (orders ?? []) as Array<{ status: OrderStatus; total: number; created_at: string }>;
+  const ordersList = (orders ?? []) as Array<{
+    business_id: string;
+    status: OrderStatus;
+    total: number;
+    created_at: string;
+  }>;
   const byStatus = ordersList.reduce<Record<string, number>>((acc, o) => {
     acc[o.status] = (acc[o.status] ?? 0) + 1;
     return acc;
@@ -167,6 +178,39 @@ export const fetchAdminMetrics = async () => {
     .filter((p) => p.status === "pending")
     .reduce((s, p) => s + Number(p.amount ?? 0), 0);
 
+  // Daily orders, last 30 days
+  const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days: { date: string; created: number; completed: number }[] = [];
+  for (let i = 29; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push({ date: dayKey(d), created: 0, completed: 0 });
+  }
+  const indexByDate = new Map(days.map((d, i) => [d.date, i]));
+  for (const o of ordersList) {
+    const k = o.created_at.slice(0, 10);
+    const idx = indexByDate.get(k);
+    if (idx === undefined) continue;
+    days[idx].created += 1;
+    if (o.status === "completed") days[idx].completed += 1;
+  }
+
+  // Top providers by GMV
+  const businessNameById = new Map<string, string>(
+    (businessesForTop ?? []).map((b: { id: string; name: string }) => [b.id, b.name]),
+  );
+  const gmvByBusiness = new Map<string, number>();
+  for (const o of ordersList) {
+    if (o.status !== "completed") continue;
+    gmvByBusiness.set(o.business_id, (gmvByBusiness.get(o.business_id) ?? 0) + Number(o.total ?? 0));
+  }
+  const topProviders = Array.from(gmvByBusiness.entries())
+    .map(([id, total]) => ({ name: businessNameById.get(id) ?? "Unknown", gmv: total }))
+    .sort((a, b) => b.gmv - a.gmv)
+    .slice(0, 5);
+
   return {
     totalUsers: totalProfiles ?? 0,
     totalBusinesses: totalBusinesses ?? 0,
@@ -188,7 +232,31 @@ export const fetchAdminMetrics = async () => {
     subscribers: subscribers ?? 0,
     completionRate,
     cancellationRate,
+    dailyOrders: days,
+    topProviders,
   };
+};
+
+export const softDeleteBusiness = async (businessId: string, reason: string) => {
+  const { error } = await sb.rpc("admin_soft_delete_business", {
+    _business_id: businessId,
+    _reason: reason,
+  });
+  if (error) throw error;
+};
+
+export const restoreBusiness = async (businessId: string) => {
+  const { error } = await sb.rpc("admin_restore_business", { _business_id: businessId });
+  if (error) throw error;
+};
+
+export const purgeBusiness = async (businessId: string) => {
+  const { data, error } = await supabase.functions.invoke<{ ok: boolean; error?: string }>(
+    "admin-business-purge",
+    { body: { business_id: businessId } },
+  );
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.error ?? "Purge failed");
 };
 
 // ============= Orders =============

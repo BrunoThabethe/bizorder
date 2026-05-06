@@ -394,6 +394,7 @@ export type Database = {
           country: string | null
           cover_url: string | null
           created_at: string
+          deleted_at: string | null
           description: string | null
           email: string | null
           id: string
@@ -420,6 +421,7 @@ export type Database = {
           country?: string | null
           cover_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           email?: string | null
           id?: string
@@ -446,6 +448,7 @@ export type Database = {
           country?: string | null
           cover_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           email?: string | null
           id?: string
@@ -545,6 +548,39 @@ export type Database = {
           resolved_by?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_change_requests: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          new_email: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          new_email: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          new_email?: string
+          used_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1157,12 +1193,24 @@ export type Database = {
         Returns: undefined
       }
       admin_issue_otp: { Args: { _user_id: string }; Returns: string }
+      admin_purge_business: {
+        Args: { _business_id: string }
+        Returns: undefined
+      }
       admin_resolve_change_request: {
         Args: {
           _approve: boolean
           _decision_reason?: string
           _request_id: string
         }
+        Returns: undefined
+      }
+      admin_restore_business: {
+        Args: { _business_id: string }
+        Returns: undefined
+      }
+      admin_soft_delete_business: {
+        Args: { _business_id: string; _reason?: string }
         Returns: undefined
       }
       admin_verify_otp: {
@@ -1217,6 +1265,10 @@ export type Database = {
       }
       promote_test_admin: { Args: never; Returns: undefined }
       promote_test_crew: { Args: never; Returns: undefined }
+      request_email_change: {
+        Args: { _new_email: string; _user_id: string }
+        Returns: string
+      }
       save_business_onboarding_document: {
         Args: {
           _business_id: string
@@ -1257,6 +1309,10 @@ export type Database = {
           _step: string
         }
         Returns: undefined
+      }
+      verify_email_change: {
+        Args: { _code: string; _user_id: string }
+        Returns: string
       }
     }
     Enums: {
