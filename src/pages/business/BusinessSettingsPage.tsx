@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { EmailChangeCard } from "@/components/settings/EmailChangeCard";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AVAILABILITY_LABEL,
@@ -321,6 +322,10 @@ const BusinessSettingsPage = () => {
         title="Business profile & settings"
         description="Customers see this when they browse or order from you."
       />
+
+      <div className="mt-5">
+        <EmailChangeCard currentEmail={user?.email ?? null} />
+      </div>
 
       {/* Branding */}
       <Card className="rounded-3xl border-0 shadow-card">
