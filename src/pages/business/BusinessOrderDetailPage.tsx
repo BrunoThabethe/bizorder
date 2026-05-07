@@ -317,7 +317,14 @@ const BusinessOrderDetailPage = () => {
                 <div className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
                   {o.status === "completed"
                     ? "This order is complete. Photos and timeline are saved as a permanent record — no further changes can be made."
-                    : "This order was cancelled. The record is locked."}
+                    : (
+                      <>
+                        <p className="font-semibold text-foreground">This order was cancelled.</p>
+                        {(o as { rejected_reason?: string | null }).rejected_reason ? (
+                          <p className="mt-1">Reason: {(o as { rejected_reason?: string | null }).rejected_reason}</p>
+                        ) : null}
+                      </>
+                    )}
                 </div>
               ) : o.status === "pending" ? (
                 <div className="grid gap-3 md:grid-cols-2">
@@ -329,19 +336,25 @@ const BusinessOrderDetailPage = () => {
                     </Button>
                   </div>
                   <div className="rounded-2xl border border-border p-3">
-                    <Label htmlFor="reject">Reject reason (optional)</Label>
-                    <Input
+                    <Label htmlFor="reject">Reason for rejection (required, visible to customer & admin)</Label>
+                    <Textarea
                       id="reject"
-                      placeholder="Why can't you take this?"
+                      placeholder="Explain why you can't take this order — at least 10 characters."
                       value={rejectReason}
                       onChange={(e) => setRejectReason(e.target.value)}
-                      maxLength={200}
-                      className="mt-2"
+                      maxLength={300}
+                      className="mt-2 min-h-[80px]"
                     />
                     <Button
                       variant="secondary"
                       className="mt-3 w-full"
-                      onClick={() => setStatus.mutate("cancelled")}
+                      onClick={() => {
+                        if (rejectReason.trim().length < 10) {
+                          toast({ title: "Reason required", description: "Tell the customer why in at least 10 characters.", variant: "destructive" });
+                          return;
+                        }
+                        setStatus.mutate("cancelled");
+                      }}
                       disabled={setStatus.isPending}
                     >
                       Reject order
@@ -365,22 +378,36 @@ const BusinessOrderDetailPage = () => {
                       </Button>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {PROVIDER_NEXT_STATUSES.filter((s) => s !== o.status).map((s) => (
-                      <Button
-                        key={s}
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setStatus.mutate(s)}
-                        disabled={setStatus.isPending}
-                      >
-                        Move to {STATUS_LABEL[s]}
-                      </Button>
-                    ))}
+                  <ProviderStageStepper
+                    status={o.status}
+                    pending={setStatus.isPending}
+                    onAdvance={(next) => setStatus.mutate(next)}
+                  />
+                  <div className="rounded-2xl border border-border p-3">
+                    <Label htmlFor="cancel-reason">Cancel this order (requires a reason)</Label>
+                    <Textarea
+                      id="cancel-reason"
+                      placeholder="Why are you cancelling? Visible to customer & admin."
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      maxLength={300}
+                      className="mt-2 min-h-[70px]"
+                    />
+                    <Button
+                      variant="secondary"
+                      className="mt-2 w-full"
+                      onClick={() => {
+                        if (rejectReason.trim().length < 10) {
+                          toast({ title: "Reason required", description: "Add at least 10 characters.", variant: "destructive" });
+                          return;
+                        }
+                        setStatus.mutate("cancelled");
+                      }}
+                      disabled={setStatus.isPending}
+                    >
+                      Cancel order
+                    </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    The customer marks the order completed after you set it to "Awaiting your confirmation".
-                  </p>
                 </div>
               )}
             </CardContent>
