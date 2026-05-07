@@ -9,7 +9,6 @@ const navLinks = [
   { label: "How it works", to: "/how-it-works" },
   { label: "For businesses", to: "/for-businesses" },
   { label: "For customers", to: "/for-customers" },
-  { label: "Pricing", to: "/pricing" },
   { label: "Contact", to: "/contact" },
 ];
 
@@ -64,7 +63,7 @@ export const Navbar = () => {
             <Link to="/login">Log in</Link>
           </Button>
           <Button size="sm" asChild>
-            <Link to="/pricing">See pricing</Link>
+            <Link to="/signup">Get started</Link>
           </Button>
         </div>
 
@@ -99,7 +98,7 @@ export const Navbar = () => {
               <Link to="/login" onClick={() => setOpen(false)}>Log in</Link>
             </Button>
             <Button asChild>
-              <Link to="/pricing" onClick={() => setOpen(false)}>See pricing</Link>
+              <Link to="/signup" onClick={() => setOpen(false)}>Get started</Link>
             </Button>
           </div>
         </div>
