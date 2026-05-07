@@ -805,9 +805,13 @@ export type Database = {
           created_at: string
           currency: string
           customer_id: string
+          delivery_distance_km: number | null
+          delivery_fee: number
           estimated_completion_at: string | null
+          fulfillment_type: string
           id: string
           notes: string | null
+          reference_image_url: string | null
           rejected_reason: string | null
           scheduled_for: string | null
           service_id: string | null
@@ -821,9 +825,13 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_id: string
+          delivery_distance_km?: number | null
+          delivery_fee?: number
           estimated_completion_at?: string | null
+          fulfillment_type?: string
           id?: string
           notes?: string | null
+          reference_image_url?: string | null
           rejected_reason?: string | null
           scheduled_for?: string | null
           service_id?: string | null
@@ -837,9 +845,13 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_id?: string
+          delivery_distance_km?: number | null
+          delivery_fee?: number
           estimated_completion_at?: string | null
+          fulfillment_type?: string
           id?: string
           notes?: string | null
+          reference_image_url?: string | null
           rejected_reason?: string | null
           scheduled_for?: string | null
           service_id?: string | null
@@ -1041,6 +1053,8 @@ export type Database = {
           business_id: string
           created_at: string
           currency: string
+          delivery_available: boolean
+          delivery_price_per_km: number
           description: string | null
           duration_minutes: number | null
           id: string
@@ -1055,6 +1069,8 @@ export type Database = {
           business_id: string
           created_at?: string
           currency?: string
+          delivery_available?: boolean
+          delivery_price_per_km?: number
           description?: string | null
           duration_minutes?: number | null
           id?: string
@@ -1069,6 +1085,8 @@ export type Database = {
           business_id?: string
           created_at?: string
           currency?: string
+          delivery_available?: boolean
+          delivery_price_per_km?: number
           description?: string | null
           duration_minutes?: number | null
           id?: string
@@ -1246,6 +1264,10 @@ export type Database = {
       }
       is_crew_of_business: {
         Args: { _business_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_slot_available: {
+        Args: { _business_id: string; _end: string; _start: string }
         Returns: boolean
       }
       open_dispute: {

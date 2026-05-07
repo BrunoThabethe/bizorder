@@ -182,8 +182,15 @@ const BusinessProfilePage = () => {
                       <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{s.description}</p>
                     ) : null}
                     <Button asChild size="sm" className="mt-3 self-start">
-                      <Link to={`/customer/order/new?business=${business.id}&service=${s.id}`}>Order this</Link>
+                      <Link to={`/customer/order/new?business=${business.id}&service=${s.id}`}>
+                        {itemKind === "service" && availability !== "available" ? "Schedule for later" : "Order this"}
+                      </Link>
                     </Button>
+                    {itemKind === "service" && availability !== "available" ? (
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        Provider is {AVAILABILITY_LABEL[availability].toLowerCase()} — pick a future date.
+                      </p>
+                    ) : null}
                   </div>
                 </li>
               );

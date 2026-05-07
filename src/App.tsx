@@ -9,7 +9,6 @@ import Index from "./pages/Index.tsx";
 import HowItWorksPage from "./pages/HowItWorksPage.tsx";
 import ForBusinessesPage from "./pages/ForBusinessesPage.tsx";
 import ForCustomersPage from "./pages/ForCustomersPage.tsx";
-import PricingPage from "./pages/PricingPage.tsx";
 import ContactPage from "./pages/ContactPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import SignupPage from "./pages/SignupPage.tsx";
@@ -81,7 +80,6 @@ const App = () => (
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/for-businesses" element={<ForBusinessesPage />} />
             <Route path="/for-customers" element={<ForCustomersPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />

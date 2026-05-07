@@ -55,6 +55,8 @@ const ServicesManagerPage = () => {
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [deliveryAvailable, setDeliveryAvailable] = useState(false);
+  const [deliveryPerKm, setDeliveryPerKm] = useState("");
 
   const onUploadProductImage = async (file: File) => {
     if (!business) {
@@ -84,8 +86,11 @@ const ServicesManagerPage = () => {
         duration_minutes: kind === "service" && duration ? Number(duration) : null,
         image_url: kind === "product" ? imageUrl : null,
         is_active: true,
-        // kind column added via migration; cast to keep generated types happy
-        ...({ kind } as Record<string, unknown>),
+        ...({
+          kind,
+          delivery_available: deliveryAvailable,
+          delivery_price_per_km: deliveryAvailable ? Number(deliveryPerKm) || 0 : 0,
+        } as Record<string, unknown>),
       });
       if (error) throw error;
     },
@@ -95,6 +100,8 @@ const ServicesManagerPage = () => {
       setDuration("");
       setDescription("");
       setImageUrl("");
+      setDeliveryAvailable(false);
+      setDeliveryPerKm("");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
     },
@@ -193,6 +200,21 @@ const ServicesManagerPage = () => {
                 )}
               </div>
             )}
+            <div className="rounded-2xl bg-muted/40 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="delivery">Offer delivery</Label>
+                  <p className="text-[11px] text-muted-foreground">Charge per kilometre on top of the item price.</p>
+                </div>
+                <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
+              </div>
+              {deliveryAvailable ? (
+                <div className="space-y-2">
+                  <Label htmlFor="perkm">Delivery price per km (ZAR)</Label>
+                  <Input id="perkm" type="number" min={0} step="0.01" value={deliveryPerKm} onChange={(e) => setDeliveryPerKm(e.target.value)} />
+                </div>
+              ) : null}
+            </div>
             <Button className="w-full" onClick={() => create.mutate()} disabled={!title || !price || create.isPending}>
               {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {kind === "product" ? " Add product" : " Add service"}

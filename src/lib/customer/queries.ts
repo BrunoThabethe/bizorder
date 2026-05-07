@@ -104,7 +104,7 @@ export const fetchOrderById = async (orderId: string) => {
     .eq("id", orderId)
     .maybeSingle();
   if (error) throw error;
-  return data;
+  return data as (typeof data & { rejected_reason?: string | null; reference_image_url?: string | null; fulfillment_type?: string; delivery_distance_km?: number | null; delivery_fee?: number | null }) | null;
 };
 
 export const fetchOrderEvents = async (orderId: string) => {

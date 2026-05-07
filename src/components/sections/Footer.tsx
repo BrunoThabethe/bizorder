@@ -5,7 +5,6 @@ const productLinks = [
   { label: "How it works", to: "/how-it-works" },
   { label: "For businesses", to: "/for-businesses" },
   { label: "For customers", to: "/for-customers" },
-  { label: "Pricing", to: "/pricing" },
 ];
 
 const supportLinks = [

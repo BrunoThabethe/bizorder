@@ -19,13 +19,13 @@ const businessFlow: Flow[] = [
     icon: UserPlus, badge: "Step 1", title: "Create your business account",
     items: [
       { label: "Home" }, { label: "How it works" }, { label: "Log in" },
-      { label: "See pricing", primary: true }, { label: "Start free", primary: true },
+      { label: "Get started", primary: true }, { label: "I'm a business", primary: true },
       { label: "Create account", primary: true }, { label: "Confirm email", primary: true },
     ],
     steps: [
-      { text: "Open the BizOrder homepage and click 'See pricing' in the top right.", targetIndex: 3 },
-      { text: "Pick the Starter plan and click 'Start free'.", targetIndex: 4 },
-      { text: "Fill in your details and click 'Create account'.", targetIndex: 5 },
+      { text: "Open the BizOrder homepage and click 'Get started' in the top right.", targetIndex: 3 },
+      { text: "Choose 'I'm a business' on the signup screen.", targetIndex: 4 },
+      { text: "Fill in your business name, email and password, then click 'Create account'.", targetIndex: 5 },
       { text: "Open the verification email and click 'Confirm email'.", targetIndex: 6 },
     ],
     animTitle: "Where to click on the homepage",
@@ -180,7 +180,7 @@ const HowItWorksPage = () => {
             BizOrder takes you through every step — with clear instructions and animated tutorials.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button size="xl" asChild><Link to="/pricing">Start free <ArrowRight className="h-5 w-5" /></Link></Button>
+            <Button size="xl" asChild><Link to="/signup">Get started <ArrowRight className="h-5 w-5" /></Link></Button>
           </div>
         </div>
       </section>

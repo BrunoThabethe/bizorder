@@ -182,6 +182,13 @@ const OrderDetailPage = () => {
           <OrderStatusStepper status={status} />
         </div>
 
+        {status === "cancelled" && (order as { rejected_reason?: string | null }).rejected_reason ? (
+          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm">
+            <p className="font-display text-sm font-bold text-destructive">Provider cancelled this order</p>
+            <p className="mt-1 text-muted-foreground">Reason: {(order as { rejected_reason?: string | null }).rejected_reason}</p>
+          </div>
+        ) : null}
+
         {(showApprove || !hasActiveDispute) && (
           <div className="mt-5 flex flex-wrap gap-2">
             {showApprove && (
