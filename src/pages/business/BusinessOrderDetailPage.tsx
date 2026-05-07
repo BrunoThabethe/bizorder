@@ -36,6 +36,7 @@ import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { ProviderStageStepper } from "@/components/orders/ProviderStageStepper";
+import { cn } from "@/lib/utils";
 
 const BusinessOrderDetailPage = () => {
   const { orderId = "" } = useParams();
