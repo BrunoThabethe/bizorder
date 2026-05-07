@@ -35,16 +35,7 @@ import { SignedImage } from "@/components/orders/SignedImage";
 import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-
-// Statuses the provider can move to from a non-pending state.
-const PROVIDER_NEXT_STATUSES: OrderStatus[] = [
-  "in_progress",
-  "ready",
-  "out_for_delivery",
-  "ready_for_review",
-  "cancelled",
-];
+import { ProviderStageStepper } from "@/components/orders/ProviderStageStepper";
 
 const BusinessOrderDetailPage = () => {
   const { orderId = "" } = useParams();
