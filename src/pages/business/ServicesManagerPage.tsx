@@ -200,6 +200,21 @@ const ServicesManagerPage = () => {
                 )}
               </div>
             )}
+            <div className="rounded-2xl bg-muted/40 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="delivery">Offer delivery</Label>
+                  <p className="text-[11px] text-muted-foreground">Charge per kilometre on top of the item price.</p>
+                </div>
+                <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
+              </div>
+              {deliveryAvailable ? (
+                <div className="space-y-2">
+                  <Label htmlFor="perkm">Delivery price per km (ZAR)</Label>
+                  <Input id="perkm" type="number" min={0} step="0.01" value={deliveryPerKm} onChange={(e) => setDeliveryPerKm(e.target.value)} />
+                </div>
+              ) : null}
+            </div>
             <Button className="w-full" onClick={() => create.mutate()} disabled={!title || !price || create.isPending}>
               {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {kind === "product" ? " Add product" : " Add service"}
