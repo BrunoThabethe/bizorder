@@ -55,6 +55,8 @@ const ServicesManagerPage = () => {
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [deliveryAvailable, setDeliveryAvailable] = useState(false);
+  const [deliveryPerKm, setDeliveryPerKm] = useState("");
 
   const onUploadProductImage = async (file: File) => {
     if (!business) {
@@ -84,8 +86,11 @@ const ServicesManagerPage = () => {
         duration_minutes: kind === "service" && duration ? Number(duration) : null,
         image_url: kind === "product" ? imageUrl : null,
         is_active: true,
-        // kind column added via migration; cast to keep generated types happy
-        ...({ kind } as Record<string, unknown>),
+        ...({
+          kind,
+          delivery_available: deliveryAvailable,
+          delivery_price_per_km: deliveryAvailable ? Number(deliveryPerKm) || 0 : 0,
+        } as Record<string, unknown>),
       });
       if (error) throw error;
     },
@@ -95,6 +100,8 @@ const ServicesManagerPage = () => {
       setDuration("");
       setDescription("");
       setImageUrl("");
+      setDeliveryAvailable(false);
+      setDeliveryPerKm("");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
     },
