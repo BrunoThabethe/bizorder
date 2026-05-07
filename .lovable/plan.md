@@ -1,87 +1,87 @@
-## 1. Business soft-delete + purge (admin)
+## Overview
 
-**Database**
-- Add `deleted_at TIMESTAMPTZ` to `businesses`.
-- Update RLS for `businesses` so customer-facing read requires `is_published = true AND deleted_at IS NULL` (owners and admins still see their own / all).
-- Update existing related read policies (services, business_hours, business_settings, browse queries) to exclude soft-deleted rows.
-- New SECURITY DEFINER RPCs (admin-only via `has_role`):
-  - `admin_soft_delete_business(_business_id, _reason)` → sets `deleted_at = now()`, `is_published = false`, logs to `audit_logs`, notifies owner.
-  - `admin_restore_business(_business_id)` → clears `deleted_at`, leaves `is_published = false` (admin re-publishes manually).
-  - `admin_purge_business(_business_id)` → hard delete: cascade-cleans services, hours, settings, verification docs/storage, change requests, payouts, order_progress, order_tasks, order_events, messages tied to its orders, then orders, then the business row. Heavy audit log entry (severity `critical`).
-- Storage cleanup helper: list and delete objects in `business-media/<business_id>/` and `verification-docs/<business_id>/` from the purge edge function (RPC can't touch storage directly).
+You've requested ~10 distinct changes across customer ordering, provider availability, pricing/delivery, booking calendar, marketing site, and order workflow UX. I'll group them into 6 work blocks and ship them in order. Each block ends in a working state so you can test as we go.
 
-**Edge function**
-- New `admin-business-purge` function: verifies caller is admin, calls the purge RPC, then wipes the two storage prefixes. Returns counts.
+---
 
-**Frontend (`AdminBusinessesPage`)**
-- Add status filter chip: All / Live / Hidden / Deleted.
-- New row actions: `Delete` (soft) with confirm dialog asking for reason; for already-soft-deleted rows show `Restore` and `Permanently delete` (purge) actions, both behind a typed-confirmation AlertDialog.
-- Show a `Deleted` badge for soft-deleted rows; hide them from `BrowseBusinessesPage` and any public/customer query (`fetchPublishedBusinesses` etc.).
+## Block 1 — Customer order: reference photo + simpler workflow
 
-## 2. Admin OTP every login, every device
+- Add a single optional **reference photo** upload on the Create Order page (next to Notes). Stored in `order-media` bucket under `orders/{orderId}/reference.jpg`. Visible to provider on the order detail page.
+- Validation: 1 photo max, JPG/PNG/WebP, ≤ 5 MB.
 
-**Behaviour**
-- OTP verification is per-session, never persisted across sign-outs or new sessions. It must re-prompt on each fresh login on every device.
+## Block 2 — Provider availability gates the "Place Order" button
 
-**Changes**
-- `AdminOtpGate` / `markAdminOtpVerified`: switch storage key from `sessionStorage` keyed by `user.id` → keyed by `session.access_token` (or a per-session UUID stored in sessionStorage on verify). New device = new access token = forced re-prompt.
-- `use-auth`: on `SIGNED_OUT` and on `SIGNED_IN` events, clear all `admin_otp_ok_*` keys from sessionStorage and any localStorage residue.
-- `LoginPage`: after a successful admin password login, immediately `clearAdminOtpVerified()` before redirecting to `/admin/verify`.
-- Server-side hardening: `admin_otp_verifications` table is purely a log; never used to bypass the gate. The gate is client-session only, so a different device cannot reuse another device's verification.
+- On the customer business profile + create-order page:
+  - If `business_settings.availability` ≠ `available` AND the order is for a **service** scheduled "as soon as possible" → "Place order" is disabled with a tooltip ("Provider is {status} — pick a future date or order a product").
+  - **Products** are always orderable.
+  - Services are orderable if the customer picks a future date/time.
 
-## 3. Email-change OTP (business + admin only)
+## Block 3 — Pricing model: in-store vs delivery (per-km)
 
-**Database**
-- New table `email_change_requests(id, user_id, new_email, code_hash, expires_at, attempts, used_at, created_at)` with RLS (user can read own).
-- RPCs:
-  - `request_email_change(_new_email)` → role check (`business` or `admin`), validates email format, throttles (max 3 active per hour), generates 6-digit code, hashes with `extensions.digest`, stores row, returns plaintext code to caller (edge function only).
-  - `verify_email_change(_code)` → matches hash, marks used, returns `new_email` on success.
+- Schema additions:
+  - `services`: `delivery_available boolean`, `delivery_price_per_km numeric`, `pickup_price numeric` (renames meaning of existing `price` to "in-store/pickup price").
+  - `orders`: `fulfillment_type text` ('pickup' | 'delivery'), `delivery_distance_km numeric`, `delivery_fee numeric`.
+- Provider service editor: new fields for delivery toggle + per-km price.
+- Customer create-order: radio for Pickup vs Delivery. If Delivery: input distance (km) → auto-calculates `delivery_fee = per_km * km`, total updates live.
+- Order summary + provider order detail show breakdown.
 
-**Edge function**
-- New `email-change-otp` with actions `request` and `verify`:
-  - `request`: calls `request_email_change`, sends the code via the existing Brevo sender to the **new** email address (subject "Confirm your new BizOrder email").
-  - `verify`: calls `verify_email_change`; on success uses service-role admin client to call `auth.admin.updateUserById(user.id, { email: new_email, email_confirm: true })` so the change takes effect without a second Supabase confirmation email.
+> Note: real address-based km calculation needs a maps API. For now we'll use a customer-entered km value (with a clear note). I can wire Google/Mapbox later if you want.
 
-**Frontend**
-- `BusinessSettingsPage` and `AdminSettingsPage`: add an "Email address" card with current email read-only, "Change email" button → dialog with new-email input → "Send code" → 6-digit input → "Confirm". On success, refresh the auth user and toast.
-- Customer/crew settings: leave existing flow untouched.
+## Block 4 — Booking calendar (provider availability + clash prevention)
 
-## 4. Admin analytics revamp
+- New table `provider_availability_slots` (per-day weekly schedule: day_of_week, start, end) — provider sets working hours per weekday.
+- `orders.scheduled_for` + `services.duration_minutes` define a busy interval.
+- New RPC `is_slot_available(business_id, start, end)` checks for overlap with accepted/in-progress orders.
+- Customer date/time picker calls the RPC; unavailable times shown disabled. Server-side guard rejects creation if clash.
+- Provider page: **Availability schedule** under Business Settings.
 
-Replace the bar-only `AdminAnalyticsPage` with proper charts using the `recharts`-based `Chart` shadcn primitive already in `src/components/ui/chart.tsx`.
+## Block 5 — Cancel/reject reason mandatory + visible
 
-**Layout**
-- KPI strip across the top: Total GMV, Completed orders, Avg order value, Completion rate (animated count-up).
-- Pie / donut: Order pipeline by status (new, accepted, in progress, completed, cancelled).
-- Pie / donut: Users by role (customers, providers, crew, admins).
-- Line chart: Orders per day (last 30 days), two series — created vs completed.
-- Bar chart: Top 5 providers by GMV (horizontal bars).
-- Health card with completion rate, cancellation rate, open disputes, subscribers (kept as compact stat list).
+- Reject/cancel actions on provider side require a reason (min 10 chars) — already partly there for `rejected_reason`. Enforce in UI + DB.
+- Surface the reason on:
+  - Customer order detail (red banner "Provider cancelled — Reason: …")
+  - Admin order detail (same)
+  - `order_events` entry already created.
 
-**Data**
-- Extend `fetchAdminMetrics` (or add `fetchAdminAnalytics`) to additionally return:
-  - `dailyOrders: { date, created, completed }[]` for last 30 days
-  - `topProviders: { name, gmv }[]` (top 5)
-- Use the design system's HSL tokens for chart colours (no hard-coded hex).
-- Subtle entry animation via `framer-motion` (already a dep) on cards; respect reduced-motion.
+## Block 6 — Provider order workflow buttons (single-action stage stepper)
 
-## Out of scope
-- Reworking the entire admin nav, customer pages, or other portals.
-- Marketing/transactional email templates beyond the two new auth-style sends.
+- Replace "Move to In progress" / multi-prompt buttons with a clean 4-stage stepper: **Accepted → In progress → Ready for review → Completed**.
+- Each stage shows one button labelled with the **next** stage name. Once clicked, that stage is locked (greyed) and the next button appears. No back/forward.
+- Same component used in OrdersQueuePage and BusinessOrderDetailPage.
 
-## Files touched (high level)
+## Block 7 — Marketing site cleanup + How-it-works rewrite
 
-```text
-supabase/migrations/<new>.sql              add deleted_at, RLS updates, RPCs, email_change_requests
-supabase/functions/admin-business-purge/   new
-supabase/functions/email-change-otp/       new
-src/components/admin/AdminOtpGate.tsx      session-token-keyed verification
-src/hooks/use-auth.ts                      clear OTP keys on SIGNED_IN / SIGNED_OUT
-src/pages/LoginPage.tsx                    clear OTP before /admin/verify redirect
-src/pages/admin/AdminBusinessesPage.tsx    soft delete / restore / purge UI
-src/pages/admin/AdminAnalyticsPage.tsx     full chart revamp
-src/pages/admin/AdminSettingsPage.tsx      email-change dialog
-src/pages/business/BusinessSettingsPage.tsx email-change dialog
-src/lib/admin/queries.ts                   purge/soft-delete/analytics helpers
-src/lib/customer/queries.ts                exclude deleted businesses
-```
+- Remove **Pricing** page + nav link + footer link + any CTAs pointing to `/pricing`. Routes redirect `/pricing` → `/`.
+- Nav becomes: How it works · For businesses · For customers · Contact · Login/Signup.
+- Rewrite `HowItWorksPage.tsx` flows (business + customer) to match the actual portal screens (mention reference photo, fulfillment choice, stage stepper, availability, etc.).
+
+---
+
+## Technical summary
+
+**DB migrations (one combined):**
+- `services`: + `delivery_available`, `delivery_price_per_km`, `pickup_price` (default = current price).
+- `orders`: + `fulfillment_type`, `delivery_distance_km`, `delivery_fee`, + reference_image_url.
+- New `provider_availability_slots` table with RLS (owner manages, public reads when business is published).
+- RPC `is_slot_available(_business_id uuid, _start timestamptz, _end timestamptz) returns boolean`.
+- RLS additions for the new table; storage policy for `order-media/orders/{orderId}/reference.*` (customer of that order can write, provider/admin can read).
+
+**Frontend files touched:**
+- `src/pages/customer/CreateOrderPage.tsx` (ref photo, fulfillment, gating, slot check)
+- `src/pages/customer/BusinessProfilePage.tsx` (gating "Order now" button)
+- `src/pages/business/ServicesManagerPage.tsx` (delivery pricing fields)
+- `src/pages/business/BusinessSettingsPage.tsx` (availability schedule editor)
+- `src/pages/business/OrdersQueuePage.tsx` + `BusinessOrderDetailPage.tsx` (stage stepper, mandatory reject reason)
+- `src/pages/customer/OrderDetailPage.tsx` + `src/pages/admin/AdminOrderDetailPage.tsx` (reason banner, fulfillment + reference photo display)
+- `src/components/Navbar.tsx`, `src/components/sections/Footer.tsx`, `src/App.tsx` (remove pricing route + links)
+- `src/pages/HowItWorksPage.tsx` (rewrite flows)
+- New `src/components/orders/StageStepper.tsx`, `src/components/business/AvailabilityScheduleEditor.tsx`.
+- Delete `src/pages/PricingPage.tsx` and `src/components/sections/PricingSlider.tsx`.
+
+---
+
+## Order of execution
+
+I'll go: **Block 7 (quick UI cleanup)** → **Block 6 (workflow buttons)** → **Block 5 (reject reason)** → **Block 1 (reference photo)** → **Block 2 (availability gating)** → **Block 3 (delivery pricing)** → **Block 4 (booking calendar)**.
+
+Approve and I'll start with the database migration covering Blocks 1, 3, 4 plus the storage policy, then move through the frontend blocks.
