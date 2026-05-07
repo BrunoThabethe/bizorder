@@ -293,7 +293,22 @@ const AdminOrderDetailPage = () => {
           </CardContent>
         </Card>
 
-        {/* Dispute alert */}
+        {/* Cancellation reason */}
+        {o.status === "cancelled" && o.rejected_reason ? (
+          <Card className="rounded-3xl border-0 shadow-card">
+            <CardContent className="flex items-start gap-3 p-5">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-destructive/15 text-destructive">
+                <XCircle className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-display text-lg font-bold">Order cancelled by provider</p>
+                <p className="text-sm text-muted-foreground">Reason: {o.rejected_reason}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
+
         {dispute ? (
           <Card className="rounded-3xl border-0 shadow-card">
             <CardContent className="flex items-start gap-3 p-5">
