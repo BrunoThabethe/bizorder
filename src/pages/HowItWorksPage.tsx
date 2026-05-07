@@ -180,7 +180,7 @@ const HowItWorksPage = () => {
             BizOrder takes you through every step — with clear instructions and animated tutorials.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button size="xl" asChild><Link to="/pricing">Start free <ArrowRight className="h-5 w-5" /></Link></Button>
+            <Button size="xl" asChild><Link to="/signup">Get started <ArrowRight className="h-5 w-5" /></Link></Button>
           </div>
         </div>
       </section>

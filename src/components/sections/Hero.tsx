@@ -28,7 +28,7 @@ export const Hero = () => {
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button size="xl" asChild>
-                <Link to="/pricing">
+                <Link to="/signup">
                   Start selling today <ArrowRight className="h-5 w-5" />
                 </Link>
               </Button>

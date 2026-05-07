@@ -26,7 +26,7 @@ const ForBusinessesPage = () => {
             BizOrder is the simplest way to take your business online and start getting real, paying orders — fast.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button size="xl" asChild><Link to="/pricing">See pricing <ArrowRight className="h-5 w-5" /></Link></Button>
+            <Button size="xl" asChild><Link to="/signup">Get started <ArrowRight className="h-5 w-5" /></Link></Button>
             <Button size="xl" variant="outline" asChild><Link to="/how-it-works">How it works</Link></Button>
           </div>
         </div>
