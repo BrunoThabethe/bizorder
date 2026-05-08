@@ -107,6 +107,48 @@ const CreateOrderPage = () => {
   const scheduledFuture = scheduledFor && new Date(scheduledFor).getTime() > Date.now() + 30 * 60 * 1000;
   const blockedByAvailability = isService && availability !== "available" && !scheduledFuture;
 
+  // Auto-calculate distance between provider address and selected delivery address
+  useEffect(() => {
+    if (fulfillment !== "delivery" || !selectedAddress || !business) {
+      setDistanceKm(null);
+      setDistanceError(null);
+      return;
+    }
+    const from = [business.address, business.city, business.country].filter(Boolean).join(", ");
+    const to = [
+      selectedAddress.line1,
+      selectedAddress.line2,
+      selectedAddress.city,
+      selectedAddress.postal_code,
+      selectedAddress.country,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    if (!from || !to) {
+      setDistanceError("Provider or your address is incomplete.");
+      setDistanceKm(null);
+      return;
+    }
+    let cancelled = false;
+    setDistanceLoading(true);
+    setDistanceError(null);
+    supabase.functions
+      .invoke("compute-distance", { body: { from, to } })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data || typeof (data as { km?: number }).km !== "number") {
+          setDistanceError((error as Error | null)?.message ?? "Could not calculate distance.");
+          setDistanceKm(null);
+        } else {
+          setDistanceKm((data as { km: number }).km);
+        }
+      })
+      .finally(() => !cancelled && setDistanceLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [fulfillment, selectedAddress, business]);
+
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user || !business || !selectedService) return;
