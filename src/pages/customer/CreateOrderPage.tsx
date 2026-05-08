@@ -373,19 +373,7 @@ const CreateOrderPage = () => {
             </div>
 
             {fulfillment === "delivery" ? (
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="km">Distance (km)</Label>
-                  <Input
-                    id="km"
-                    type="number"
-                    min={0}
-                    step={0.1}
-                    value={distanceKm}
-                    onChange={(e) => setDistanceKm(e.target.value)}
-                    placeholder="e.g. 4.5"
-                  />
-                </div>
+              <div className="mt-3 space-y-3">
                 <div className="space-y-2">
                   <Label htmlFor="address">Delivery address</Label>
                   <Select value={addressId} onValueChange={setAddressId}>
@@ -405,6 +393,25 @@ const CreateOrderPage = () => {
                       <Link to="/customer/addresses">Add an address</Link>
                     </Button>
                   ) : null}
+                </div>
+                <div className="flex items-start gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="font-semibold">Distance</p>
+                    {distanceLoading ? (
+                      <p className="mt-0.5 inline-flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Calculating from your address to the provider…
+                      </p>
+                    ) : distanceError ? (
+                      <p className="mt-0.5 text-xs text-destructive">{distanceError}</p>
+                    ) : km > 0 ? (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {km} km · {formatPrice(perKm, selectedService?.currency)} per km
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-xs text-muted-foreground">Pick an address to calculate.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : null}
