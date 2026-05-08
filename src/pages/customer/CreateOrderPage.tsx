@@ -98,7 +98,7 @@ const CreateOrderPage = () => {
 
   const deliveryAvailable = !!selectedService?.delivery_available;
   const perKm = Number(selectedService?.delivery_price_per_km ?? 0);
-  const km = Number(distanceKm) || 0;
+  const km = distanceKm ?? 0;
   const deliveryFee = fulfillment === "delivery" ? Math.max(0, perKm * km) : 0;
   const basePrice = Number(selectedService?.price ?? 0);
   const total = basePrice + deliveryFee;
