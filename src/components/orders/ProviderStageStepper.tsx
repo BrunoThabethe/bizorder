@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { OrderStatus } from "@/lib/business/queries";
 
-const STAGES: { key: OrderStatus; label: string; nextLabel: string }[] = [
-  { key: "accepted", label: "Accepted", nextLabel: "Start work" },
-  { key: "in_progress", label: "In progress", nextLabel: "Mark ready" },
-  { key: "ready_for_review", label: "Ready for approval", nextLabel: "Send for approval" },
-  { key: "completed", label: "Completed", nextLabel: "Done" },
+const STAGES: { key: OrderStatus | "awaiting"; label: string }[] = [
+  { key: "accepted", label: "Accepted" },
+  { key: "in_progress", label: "In progress" },
+  { key: "ready", label: "Ready" },
+  { key: "ready_for_review", label: "Awaiting customer confirmation" },
+  { key: "completed", label: "Completed" },
 ];
 
 const STAGE_INDEX: Partial<Record<OrderStatus, number>> = {
@@ -15,8 +16,14 @@ const STAGE_INDEX: Partial<Record<OrderStatus, number>> = {
   in_progress: 1,
   ready: 2,
   out_for_delivery: 2,
-  ready_for_review: 2,
-  completed: 3,
+  ready_for_review: 3,
+  completed: 4,
+};
+
+const NEXT_BUTTON: Record<number, { next: OrderStatus; label: string }> = {
+  0: { next: "in_progress", label: "Start work" },
+  1: { next: "ready", label: "Mark ready" },
+  2: { next: "ready_for_review", label: "Send for customer confirmation" },
 };
 
 type Props = {
@@ -27,7 +34,7 @@ type Props = {
 
 export const ProviderStageStepper = ({ status, pending, onAdvance }: Props) => {
   const current = STAGE_INDEX[status] ?? 0;
-  const nextStage = STAGES[current + 1];
+  const nextAction = NEXT_BUTTON[current];
 
   return (
     <div className="space-y-4">
@@ -63,23 +70,22 @@ export const ProviderStageStepper = ({ status, pending, onAdvance }: Props) => {
         })}
       </ol>
 
-      {nextStage && status !== "completed" ? (
-        <Button
-          size="lg"
-          className="w-full"
-          disabled={pending}
-          onClick={() => onAdvance(nextStage.key)}
-        >
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : nextStage.nextLabel}
+      {nextAction ? (
+        <Button size="lg" className="w-full" disabled={pending} onClick={() => onAdvance(nextAction.next)}>
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : nextAction.label}
+        </Button>
+      ) : status === "completed" ? (
+        <Button size="lg" className="w-full" disabled>
+          Completed
         </Button>
       ) : (
         <Button size="lg" className="w-full" disabled>
-          Awaiting customer approval
+          Awaiting customer confirmation
         </Button>
       )}
 
       <p className="text-xs text-muted-foreground">
-        Each stage locks once you advance. The customer approves the final completion.
+        Each stage locks once you advance. After "Send for customer confirmation", the customer must approve to mark this order complete.
       </p>
     </div>
   );

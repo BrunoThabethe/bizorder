@@ -383,31 +383,9 @@ const BusinessOrderDetailPage = () => {
                     pending={setStatus.isPending}
                     onAdvance={(next) => setStatus.mutate(next)}
                   />
-                  <div className="rounded-2xl border border-border p-3">
-                    <Label htmlFor="cancel-reason">Cancel this order (requires a reason)</Label>
-                    <Textarea
-                      id="cancel-reason"
-                      placeholder="Why are you cancelling? Visible to customer & admin."
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      maxLength={300}
-                      className="mt-2 min-h-[70px]"
-                    />
-                    <Button
-                      variant="secondary"
-                      className="mt-2 w-full"
-                      onClick={() => {
-                        if (rejectReason.trim().length < 10) {
-                          toast({ title: "Reason required", description: "Add at least 10 characters.", variant: "destructive" });
-                          return;
-                        }
-                        setStatus.mutate("cancelled");
-                      }}
-                      disabled={setStatus.isPending}
-                    >
-                      Cancel order
-                    </Button>
-                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Once you accept an order, you can no longer cancel it. If something goes wrong, open a dispute below so admin can help.
+                  </p>
                 </div>
               )}
             </CardContent>

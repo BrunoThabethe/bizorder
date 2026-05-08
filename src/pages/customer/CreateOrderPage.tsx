@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ImageIcon, Loader2, ShieldCheck, Truck, Store, X } from "lucide-react";
+import { ArrowLeft, ImageIcon, Loader2, MapPin, ShieldCheck, Truck, Store, X } from "lucide-react";
 import { z } from "zod";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
@@ -57,7 +57,9 @@ const CreateOrderPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [refFile, setRefFile] = useState<File | null>(null);
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
-  const [distanceKm, setDistanceKm] = useState<string>("");
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [distanceLoading, setDistanceLoading] = useState(false);
+  const [distanceError, setDistanceError] = useState<string | null>(null);
 
   const { data: business } = useQuery({
     queryKey: ["business-by-id", businessId],
@@ -96,7 +98,7 @@ const CreateOrderPage = () => {
 
   const deliveryAvailable = !!selectedService?.delivery_available;
   const perKm = Number(selectedService?.delivery_price_per_km ?? 0);
-  const km = Number(distanceKm) || 0;
+  const km = distanceKm ?? 0;
   const deliveryFee = fulfillment === "delivery" ? Math.max(0, perKm * km) : 0;
   const basePrice = Number(selectedService?.price ?? 0);
   const total = basePrice + deliveryFee;
@@ -104,6 +106,48 @@ const CreateOrderPage = () => {
   // Availability gating: services need provider available OR a future scheduled time
   const scheduledFuture = scheduledFor && new Date(scheduledFor).getTime() > Date.now() + 30 * 60 * 1000;
   const blockedByAvailability = isService && availability !== "available" && !scheduledFuture;
+
+  // Auto-calculate distance between provider address and selected delivery address
+  useEffect(() => {
+    if (fulfillment !== "delivery" || !selectedAddress || !business) {
+      setDistanceKm(null);
+      setDistanceError(null);
+      return;
+    }
+    const from = [business.address, business.city, business.country].filter(Boolean).join(", ");
+    const to = [
+      selectedAddress.line1,
+      selectedAddress.line2,
+      selectedAddress.city,
+      selectedAddress.postal_code,
+      selectedAddress.country,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    if (!from || !to) {
+      setDistanceError("Provider or your address is incomplete.");
+      setDistanceKm(null);
+      return;
+    }
+    let cancelled = false;
+    setDistanceLoading(true);
+    setDistanceError(null);
+    supabase.functions
+      .invoke("compute-distance", { body: { from, to } })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data || typeof (data as { km?: number }).km !== "number") {
+          setDistanceError((error as Error | null)?.message ?? "Could not calculate distance.");
+          setDistanceKm(null);
+        } else {
+          setDistanceKm((data as { km: number }).km);
+        }
+      })
+      .finally(() => !cancelled && setDistanceLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [fulfillment, selectedAddress, business]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -118,7 +162,7 @@ const CreateOrderPage = () => {
       return;
     }
     if (fulfillment === "delivery" && (!km || km <= 0)) {
-      toast({ title: "Delivery distance required", description: "Enter how far you are in km.", variant: "destructive" });
+      toast({ title: "Delivery distance not ready", description: distanceError ?? "Pick an address so we can calculate the distance.", variant: "destructive" });
       return;
     }
 
@@ -329,19 +373,7 @@ const CreateOrderPage = () => {
             </div>
 
             {fulfillment === "delivery" ? (
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="km">Distance (km)</Label>
-                  <Input
-                    id="km"
-                    type="number"
-                    min={0}
-                    step={0.1}
-                    value={distanceKm}
-                    onChange={(e) => setDistanceKm(e.target.value)}
-                    placeholder="e.g. 4.5"
-                  />
-                </div>
+              <div className="mt-3 space-y-3">
                 <div className="space-y-2">
                   <Label htmlFor="address">Delivery address</Label>
                   <Select value={addressId} onValueChange={setAddressId}>
@@ -361,6 +393,25 @@ const CreateOrderPage = () => {
                       <Link to="/customer/addresses">Add an address</Link>
                     </Button>
                   ) : null}
+                </div>
+                <div className="flex items-start gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="font-semibold">Distance</p>
+                    {distanceLoading ? (
+                      <p className="mt-0.5 inline-flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Calculating from your address to the provider…
+                      </p>
+                    ) : distanceError ? (
+                      <p className="mt-0.5 text-xs text-destructive">{distanceError}</p>
+                    ) : km > 0 ? (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {km} km · {formatPrice(perKm, selectedService?.currency)} per km
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-xs text-muted-foreground">Pick an address to calculate.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : null}

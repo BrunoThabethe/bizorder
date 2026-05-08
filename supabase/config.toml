@@ -2,3 +2,6 @@ project_id = "snktlkofkwxqvjwqnevh"
 
 [functions.admin-otp]
 verify_jwt = true
+
+[functions.compute-distance]
+verify_jwt = false
