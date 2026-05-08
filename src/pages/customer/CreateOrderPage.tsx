@@ -162,7 +162,7 @@ const CreateOrderPage = () => {
       return;
     }
     if (fulfillment === "delivery" && (!km || km <= 0)) {
-      toast({ title: "Delivery distance required", description: "Enter how far you are in km.", variant: "destructive" });
+      toast({ title: "Delivery distance not ready", description: distanceError ?? "Pick an address so we can calculate the distance.", variant: "destructive" });
       return;
     }
 
