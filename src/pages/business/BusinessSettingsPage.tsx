@@ -464,8 +464,10 @@ const BusinessSettingsPage = () => {
       <Card className="mt-5 rounded-3xl border-0 shadow-card">
         <CardContent className="space-y-4 p-5">
           <div>
-            <h2 className="font-display text-base font-bold">Weekly hours</h2>
-            <p className="text-xs text-muted-foreground">Add one or more time ranges per day. Customers see this on your profile.</p>
+            <h2 className="font-display text-base font-bold">Weekly availability</h2>
+            <p className="text-xs text-muted-foreground">
+              Customers can only book service slots inside these ranges. Add one or more time windows per day — leave a day closed and bookings won't be allowed.
+            </p>
           </div>
           <div className="space-y-3">
             {DAY_LABELS.map((label, dow) => {
