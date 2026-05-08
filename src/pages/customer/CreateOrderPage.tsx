@@ -57,7 +57,9 @@ const CreateOrderPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [refFile, setRefFile] = useState<File | null>(null);
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
-  const [distanceKm, setDistanceKm] = useState<string>("");
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [distanceLoading, setDistanceLoading] = useState(false);
+  const [distanceError, setDistanceError] = useState<string | null>(null);
 
   const { data: business } = useQuery({
     queryKey: ["business-by-id", businessId],
