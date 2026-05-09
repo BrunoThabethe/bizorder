@@ -190,28 +190,40 @@ export const PixelTree = () => {
         tree = buildTree();
       }
 
-      const styles = getComputedStyle(document.documentElement);
-      const fg = styles.getPropertyValue("--foreground").trim() || "0 0% 100%";
-
       ctx.clearRect(0, 0, cssSize, cssSize);
 
       const groundY = GRID - 5;
-      ctx.fillStyle = `hsl(${fg} / 0.35)`;
       for (let x = 6; x < GRID - 6; x += 2) {
+        ctx.fillStyle = `hsla(200, 10%, 40%, 0.45)`;
         ctx.fillRect(x * cell, groundY * cell, cell, cell);
       }
 
       const fadeOut = cyclePos > 0.7 ? Math.max(0, 1 - (cyclePos - 0.7) / 0.25) : 1;
 
+      // Chrome / alien metal palette: cool steel base, lit highlights based on
+      // pixel position relative to a virtual top-left light source.
       for (const p of pixels) {
         if (now < p.born) continue;
         if (p.x < 0 || p.x >= GRID || p.y < 0 || p.y >= GRID) continue;
         const age = now - p.born;
         const appear = Math.min(1, age / 220);
-        let alpha = appear * fadeOut;
-        if (p.kind === "leaf") alpha *= 0.9;
-        ctx.fillStyle = `hsl(${fg} / ${alpha.toFixed(3)})`;
+        const alpha = appear * fadeOut;
+
+        // Light dot — top-left lit, bottom-right shadowed
+        const ny = p.y / GRID;
+        const nx = p.x / GRID;
+        const lit = Math.max(0, 1 - (nx * 0.55 + ny * 0.65));
+        const lightness = p.kind === "leaf" ? 38 + lit * 50 : 28 + lit * 60;
+        const sat = p.kind === "leaf" ? 8 : 6;
+
+        ctx.fillStyle = `hsla(200, ${sat}%, ${lightness}%, ${alpha.toFixed(3)})`;
         ctx.fillRect(p.x * cell, p.y * cell, cell, cell);
+
+        // Specular pip on the most-lit pixels
+        if (lit > 0.7 && alpha > 0.5) {
+          ctx.fillStyle = `hsla(195, 25%, 96%, ${(alpha * (lit - 0.65)).toFixed(3)})`;
+          ctx.fillRect(p.x * cell, p.y * cell, cell * 0.5, cell * 0.5);
+        }
       }
 
       raf = requestAnimationFrame(tick);
