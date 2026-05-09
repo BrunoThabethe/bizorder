@@ -9,63 +9,70 @@
 @layer base {
   :root,
   .dark {
-    /* Monochrome dark — deep black with off-white type */
-    --background: 0 0% 4%;
-    --foreground: 40 12% 92%;
+    /* Alien chrome — deep slate void with cool steel highlights */
+    --background: 210 18% 5%;
+    --foreground: 200 15% 88%;
 
-    --card: 0 0% 7%;
-    --card-foreground: 40 12% 92%;
+    --card: 210 16% 8%;
+    --card-foreground: 200 15% 88%;
 
-    --popover: 0 0% 7%;
-    --popover-foreground: 40 12% 92%;
+    --popover: 210 16% 8%;
+    --popover-foreground: 200 15% 88%;
 
-    --primary: 40 15% 96%;
-    --primary-foreground: 0 0% 6%;
-    --primary-glow: 40 15% 100%;
+    --primary: 200 25% 86%;
+    --primary-foreground: 210 25% 6%;
+    --primary-glow: 195 60% 70%;
 
-    --secondary: 36 8% 70%;
-    --secondary-foreground: 0 0% 6%;
+    --secondary: 200 12% 60%;
+    --secondary-foreground: 210 25% 6%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 36 6% 62%;
+    --muted: 210 14% 12%;
+    --muted-foreground: 200 10% 62%;
 
-    --accent: 40 12% 92%;
-    --accent-foreground: 0 0% 6%;
+    --accent: 190 70% 55%;
+    --accent-foreground: 210 25% 6%;
 
     --destructive: 0 62% 55%;
-    --destructive-foreground: 40 12% 96%;
+    --destructive-foreground: 200 15% 96%;
 
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 40 15% 96%;
+    --border: 210 14% 16%;
+    --input: 210 14% 16%;
+    --ring: 195 60% 70%;
 
     --radius: 0.85rem;
 
-    --surface-elevated: 0 0% 6%;
-    --surface-bright: 40 15% 96%;
-    --surface-bright-foreground: 0 0% 6%;
+    --surface-elevated: 210 16% 8%;
+    --surface-bright: 200 20% 92%;
+    --surface-bright-foreground: 210 25% 6%;
 
-    --gradient-hero: radial-gradient(ellipse at top left, hsl(0 0% 18% / 0.6), transparent 55%),
-                     radial-gradient(ellipse at bottom right, hsl(0 0% 14% / 0.5), transparent 55%),
-                     linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 2%) 100%);
-    --gradient-cta: linear-gradient(135deg, hsl(40 15% 98%) 0%, hsl(36 12% 86%) 100%);
-    --gradient-lime: linear-gradient(135deg, hsl(40 12% 88%) 0%, hsl(36 8% 72%) 100%);
-    --gradient-card: linear-gradient(160deg, hsl(0 0% 9%) 0%, hsl(0 0% 5%) 100%);
+    --gradient-hero: radial-gradient(ellipse at top left, hsl(200 30% 18% / 0.55), transparent 55%),
+                     radial-gradient(ellipse at bottom right, hsl(210 25% 12% / 0.55), transparent 55%),
+                     linear-gradient(180deg, hsl(210 18% 5%) 0%, hsl(210 22% 3%) 100%);
+    /* Brushed chrome gradient — used for primary CTAs */
+    --gradient-cta: linear-gradient(135deg,
+                      hsl(200 20% 96%) 0%,
+                      hsl(200 18% 78%) 28%,
+                      hsl(210 14% 42%) 55%,
+                      hsl(200 18% 78%) 78%,
+                      hsl(195 30% 92%) 100%);
+    --gradient-lime: linear-gradient(135deg, hsl(190 60% 60%) 0%, hsl(200 30% 80%) 100%);
+    --gradient-card: linear-gradient(160deg, hsl(210 16% 10%) 0%, hsl(210 20% 5%) 100%);
 
-    --shadow-glow: 0 20px 60px -15px hsl(40 15% 96% / 0.18);
-    --shadow-lime: 0 20px 60px -15px hsl(0 0% 100% / 0.12);
-    --shadow-card: 0 10px 40px -10px hsl(0 0% 0% / 0.8);
+    --shadow-glow: 0 20px 60px -15px hsl(195 60% 60% / 0.35),
+                   0 0 0 1px hsl(200 20% 70% / 0.1) inset;
+    --shadow-lime: 0 20px 60px -15px hsl(190 60% 50% / 0.25);
+    --shadow-card: 0 10px 40px -10px hsl(210 30% 0% / 0.85);
 
     --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 40 12% 92%;
-    --sidebar-primary: 40 15% 96%;
-    --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 40 12% 92%;
-    --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 40 15% 96%;
+    --sidebar-background: 210 18% 5%;
+    --sidebar-foreground: 200 15% 88%;
+    --sidebar-primary: 200 25% 86%;
+    --sidebar-primary-foreground: 210 25% 6%;
+    --sidebar-accent: 210 14% 12%;
+    --sidebar-accent-foreground: 200 15% 88%;
+    --sidebar-border: 210 14% 16%;
+    --sidebar-ring: 195 60% 70%;
   }
 
   .light {
