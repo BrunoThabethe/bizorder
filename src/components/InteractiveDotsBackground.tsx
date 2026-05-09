@@ -1,11 +1,10 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Metallic / alien interactive particle field.
- * Dots are shaded with a chrome highlight + shadow and displaced by a slow
- * organic flow field plus a central spherical bulge, creating the look of a
- * liquid-metal blob from the reference image. Pointer interaction warps the
- * field locally.
+ * Dense metallic dot wallpaper. Fills the entire viewport with a tight grid
+ * of chrome-shaded dots that ripple subtly with an organic flow field and
+ * warp locally around the pointer. No central sphere — uniform texture edge
+ * to edge so it reads like a wallpaper on any screen size.
  */
 export const InteractiveDotsBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -21,10 +20,12 @@ export const InteractiveDotsBackground = () => {
 
     let width = 0;
     let height = 0;
-    type Dot = { bx: number; by: number; r: number };
+    type Dot = { bx: number; by: number };
     let dots: Dot[] = [];
 
-    const SPACING = 18;
+    // Tight spacing for dense wallpaper texture
+    const SPACING = 9;
+    const DOT_R = 1.4;
 
     const build = () => {
       width = window.innerWidth;
@@ -40,13 +41,12 @@ export const InteractiveDotsBackground = () => {
       const rows = Math.ceil(height / SPACING) + 2;
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
-          dots.push({ bx: i * SPACING, by: j * SPACING, r: 1.1 });
+          dots.push({ bx: i * SPACING, by: j * SPACING });
         }
       }
     };
 
     const pointer = { x: -9999, y: -9999, active: false };
-    let scrollOffset = 0;
 
     const onMove = (e: PointerEvent) => {
       pointer.x = e.clientX;
@@ -58,9 +58,6 @@ export const InteractiveDotsBackground = () => {
       pointer.x = -9999;
       pointer.y = -9999;
     };
-    const onScroll = () => {
-      scrollOffset = window.scrollY;
-    };
     const onResize = () => build();
 
     build();
@@ -69,53 +66,35 @@ export const InteractiveDotsBackground = () => {
       window.addEventListener("pointermove", onMove, { passive: true });
       window.addEventListener("pointerleave", onLeave);
     }
-    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
 
     let raf = 0;
-    const RADIUS = 180;
+    const RADIUS = 160;
     const RADIUS_SQ = RADIUS * RADIUS;
     const start = performance.now();
 
     const tick = (now: number) => {
-      ctx.clearRect(0, 0, width, height);
+      // Solid base wash so the wallpaper looks continuous
+      ctx.fillStyle = "hsl(210, 18%, 5%)";
+      ctx.fillRect(0, 0, width, height);
 
-      const t = (now - start) * 0.00035;
-      const drift = (scrollOffset * 0.05) % SPACING;
-
-      // Center of the alien blob — slowly drifts
-      const cx = width * 0.5 + Math.sin(t * 0.7) * width * 0.05;
-      const cy = height * 0.5 + Math.cos(t * 0.5) * height * 0.05;
-      const blobR = Math.min(width, height) * 0.42;
+      const t = (now - start) * 0.0004;
 
       for (let k = 0; k < dots.length; k++) {
         const d = dots[k];
-        const baseY = d.by - drift;
 
-        // Organic flow displacement
-        const fx = Math.sin((d.bx + baseY) * 0.012 + t * 1.8) * 4;
-        const fy = Math.cos((d.bx - baseY) * 0.014 + t * 1.5) * 4;
+        // Two overlapping wave fields produce slow rolling "liquid metal" highlights
+        const wave1 = Math.sin(d.bx * 0.018 + d.by * 0.022 + t * 1.4);
+        const wave2 = Math.cos(d.bx * 0.011 - d.by * 0.015 + t * 1.1);
+        const field = (wave1 + wave2) * 0.5; // -1..1
 
-        let dx = d.bx + fx;
-        let dy = baseY + fy;
+        // Small organic displacement
+        let dx = d.bx + wave1 * 1.6;
+        let dy = d.by + wave2 * 1.6;
 
-        // Spherical bulge — push outward + lift toward camera near center
-        const ox = dx - cx;
-        const oy = dy - cy;
-        const distC = Math.sqrt(ox * ox + oy * oy);
-        const inSphere = distC < blobR;
-        let depth = 0;
-        if (inSphere) {
-          const nd = distC / blobR;
-          depth = Math.sqrt(1 - nd * nd); // 0..1, max at center
-          const push = depth * 14;
-          if (distC > 0.001) {
-            dx += (ox / distC) * push;
-            dy += (oy / distC) * push;
-          }
-        }
+        let warpBoost = 0;
 
-        // Pointer warp
+        // Pointer warp + brighten
         if (pointer.active) {
           const px = dx - pointer.x;
           const py = dy - pointer.y;
@@ -123,40 +102,32 @@ export const InteractiveDotsBackground = () => {
           if (distSq < RADIUS_SQ) {
             const dist = Math.sqrt(distSq);
             const force = 1 - dist / RADIUS;
-            const push = force * 22;
+            const push = force * 18;
             const nx = dist === 0 ? 0 : px / dist;
             const ny = dist === 0 ? 0 : py / dist;
             dx += nx * push;
             dy += ny * push;
-            depth = Math.min(1, depth + force * 0.6);
+            warpBoost = force;
           }
         }
 
-        // Chrome shading: cool dark base + bright highlight at top-left
-        // Light direction normalized (-0.6, -0.6) on the bulge normal
-        const normX = distC > 0.001 ? ox / Math.max(distC, 1) : 0;
-        const normY = distC > 0.001 ? oy / Math.max(distC, 1) : 0;
-        const lightDot = Math.max(0, -normX * 0.6 - normY * 0.6);
-        const lit = Math.min(1, depth * 0.6 + lightDot * depth * 0.7);
+        // Chrome shading from the wave field (bright crests, dark troughs)
+        const lit = (field + 1) * 0.5; // 0..1
+        const lightness = 14 + lit * 78; // deep slate -> near white
+        const sat = 6 + (1 - lit) * 8;
+        const alpha = 0.55 + lit * 0.45 + warpBoost * 0.3;
 
-        // Base alpha: stronger inside the blob, faint outside (ambient field)
-        const baseAlpha = inSphere ? 0.25 + depth * 0.55 : 0.08;
-        const alpha = Math.min(1, baseAlpha + lit * 0.35);
-
-        // Cool steel hue: silver-cyan highlights, deep slate shadow
-        // hue ~200 (cool), low sat, lightness driven by lit
-        const lightness = 30 + lit * 65;
-        const sat = 8 + depth * 12;
-        ctx.fillStyle = `hsla(200, ${sat}%, ${lightness}%, ${alpha})`;
+        ctx.fillStyle = `hsla(200, ${sat}%, ${lightness}%, ${Math.min(1, alpha)})`;
         ctx.beginPath();
-        ctx.arc(dx, dy, d.r + depth * 0.6, 0, Math.PI * 2);
+        ctx.arc(dx, dy, DOT_R + lit * 0.4, 0, Math.PI * 2);
         ctx.fill();
 
-        // Specular highlight pip on lit dots
-        if (lit > 0.55) {
-          ctx.fillStyle = `hsla(195, 30%, 96%, ${(lit - 0.5) * 0.9})`;
+        // Specular pip on the brightest dots
+        if (lit > 0.78 || warpBoost > 0.4) {
+          const spec = Math.max(lit - 0.7, warpBoost * 0.6);
+          ctx.fillStyle = `hsla(195, 25%, 98%, ${Math.min(1, spec * 1.2)})`;
           ctx.beginPath();
-          ctx.arc(dx - 0.4, dy - 0.4, 0.55, 0, Math.PI * 2);
+          ctx.arc(dx - 0.5, dy - 0.5, 0.6, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -169,7 +140,6 @@ export const InteractiveDotsBackground = () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerleave", onLeave);
-      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
   }, []);
