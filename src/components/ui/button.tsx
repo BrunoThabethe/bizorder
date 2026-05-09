@@ -10,18 +10,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-cta text-primary-foreground shadow-glow hover:scale-[1.03] hover:shadow-[0_25px_70px_-15px_hsl(var(--primary)/0.7)] active:scale-[0.98]",
+          "surface-chrome hover:scale-[1.03] active:scale-[0.98]",
         lime:
-          "bg-secondary text-secondary-foreground shadow-lime hover:scale-[1.03] hover:brightness-110 active:scale-[0.98]",
+          "surface-chrome hover:scale-[1.03] active:scale-[0.98]",
         bright:
-          "bg-[hsl(var(--surface-bright))] text-[hsl(var(--surface-bright-foreground))] hover:scale-[1.03] hover:bg-white active:scale-[0.98] shadow-card-lift",
+          "surface-chrome hover:scale-[1.03] active:scale-[0.98]",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 ring-1 ring-destructive/40",
         outline:
-          "border-2 border-foreground bg-foreground text-background hover:bg-foreground/90 hover:border-foreground/90 active:scale-[0.98]",
+          "surface-etched hover:scale-[1.02] active:scale-[0.98]",
         secondary:
-          "bg-foreground text-background hover:bg-foreground/85 active:scale-[0.98]",
-        ghost: "bg-foreground text-background hover:bg-foreground/85 active:scale-[0.98]",
+          "surface-etched hover:scale-[1.02] active:scale-[0.98]",
+        ghost:
+          "surface-etched hover:scale-[1.02] active:scale-[0.98]",
         link: "text-foreground underline-offset-4 underline font-bold hover:opacity-80",
       },
       size: {
