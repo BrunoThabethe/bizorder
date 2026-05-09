@@ -9,7 +9,7 @@ export const PixelTree = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const GRID = 220;
+    const GRID = 110;
     const CYCLE_MS = 9000;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -190,42 +190,28 @@ export const PixelTree = () => {
         tree = buildTree();
       }
 
+      const styles = getComputedStyle(document.documentElement);
+      const fg = styles.getPropertyValue("--foreground").trim() || "0 0% 100%";
+
       ctx.clearRect(0, 0, cssSize, cssSize);
 
-      const groundY = GRID - 10;
-      const tWave = now * 0.0004;
-      for (let x = 12; x < GRID - 12; x += 1) {
-        const w = (Math.sin(x * 0.05 + tWave * 1.2) + 1) * 0.5;
-        const l = 18 + w * 55;
-        ctx.fillStyle = `hsla(200, 8%, ${l}%, 0.55)`;
+      const groundY = GRID - 5;
+      ctx.fillStyle = `hsl(${fg} / 0.35)`;
+      for (let x = 6; x < GRID - 6; x += 2) {
         ctx.fillRect(x * cell, groundY * cell, cell, cell);
       }
 
       const fadeOut = cyclePos > 0.7 ? Math.max(0, 1 - (cyclePos - 0.7) / 0.25) : 1;
 
-      // Same chrome wave shading as the wallpaper background — dense dots,
-      // brightness driven by overlapping sine fields, not position.
       for (const p of pixels) {
         if (now < p.born) continue;
         if (p.x < 0 || p.x >= GRID || p.y < 0 || p.y >= GRID) continue;
         const age = now - p.born;
         const appear = Math.min(1, age / 220);
-        const alpha = appear * fadeOut;
-
-        const wave1 = Math.sin(p.x * 0.18 + p.y * 0.22 + tWave * 1.4);
-        const wave2 = Math.cos(p.x * 0.11 - p.y * 0.15 + tWave * 1.1);
-        const lit = ((wave1 + wave2) * 0.5 + 1) * 0.5;
-
-        const lightness = 14 + lit * 78;
-        const sat = 6 + (1 - lit) * 8;
-
-        ctx.fillStyle = `hsla(200, ${sat}%, ${lightness}%, ${(Math.min(1, 0.55 + lit * 0.45) * alpha).toFixed(3)})`;
+        let alpha = appear * fadeOut;
+        if (p.kind === "leaf") alpha *= 0.9;
+        ctx.fillStyle = `hsl(${fg} / ${alpha.toFixed(3)})`;
         ctx.fillRect(p.x * cell, p.y * cell, cell, cell);
-
-        if (lit > 0.78 && alpha > 0.4) {
-          ctx.fillStyle = `hsla(195, 25%, 98%, ${(alpha * (lit - 0.7) * 1.2).toFixed(3)})`;
-          ctx.fillRect(p.x * cell, p.y * cell, cell * 0.5, cell * 0.5);
-        }
       }
 
       raf = requestAnimationFrame(tick);

@@ -1,11 +1,5 @@
 import { useEffect, useRef } from "react";
 
-/**
- * Dense metallic dot wallpaper. Fills the entire viewport with a tight grid
- * of chrome-shaded dots that ripple subtly with an organic flow field and
- * warp locally around the pointer. No central sphere — uniform texture edge
- * to edge so it reads like a wallpaper on any screen size.
- */
 export const InteractiveDotsBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -20,12 +14,10 @@ export const InteractiveDotsBackground = () => {
 
     let width = 0;
     let height = 0;
-    type Dot = { bx: number; by: number };
+    type Dot = { bx: number; by: number; x: number; y: number; r: number; base: number };
     let dots: Dot[] = [];
 
-    // Tight spacing for dense wallpaper texture
-    const SPACING = 9;
-    const DOT_R = 1.4;
+    const SPACING = 26;
 
     const build = () => {
       width = window.innerWidth;
@@ -41,12 +33,18 @@ export const InteractiveDotsBackground = () => {
       const rows = Math.ceil(height / SPACING) + 2;
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
-          dots.push({ bx: i * SPACING, by: j * SPACING });
+          const bx = i * SPACING;
+          const by = j * SPACING;
+          const base = 0.18 + Math.random() * 0.22;
+          dots.push({ bx, by, x: bx, y: by, r: 0.9, base });
         }
       }
     };
 
     const pointer = { x: -9999, y: -9999, active: false };
+    let scrollOffset = 0;
+    let scrollPulse = 0;
+    let lastScrollY = window.scrollY;
 
     const onMove = (e: PointerEvent) => {
       pointer.x = e.clientX;
@@ -58,6 +56,13 @@ export const InteractiveDotsBackground = () => {
       pointer.x = -9999;
       pointer.y = -9999;
     };
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastScrollY;
+      lastScrollY = y;
+      scrollOffset = y;
+      scrollPulse = Math.min(1, scrollPulse + Math.abs(delta) * 0.01);
+    };
     const onResize = () => build();
 
     build();
@@ -66,70 +71,56 @@ export const InteractiveDotsBackground = () => {
       window.addEventListener("pointermove", onMove, { passive: true });
       window.addEventListener("pointerleave", onLeave);
     }
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
 
     let raf = 0;
-    const RADIUS = 160;
+    const RADIUS = 140;
     const RADIUS_SQ = RADIUS * RADIUS;
-    const start = performance.now();
 
-    const tick = (now: number) => {
-      // Solid base wash so the wallpaper looks continuous
-      ctx.fillStyle = "hsl(210, 18%, 5%)";
-      ctx.fillRect(0, 0, width, height);
+    const tick = () => {
+      ctx.clearRect(0, 0, width, height);
 
-      const t = (now - start) * 0.0004;
+      const fgVar = getComputedStyle(document.documentElement)
+        .getPropertyValue("--foreground")
+        .trim() || "0 0% 8%";
+      const fgHsl = fgVar.split(/\s+/).join(", ");
+
+      scrollPulse *= 0.92;
+      const drift = (scrollOffset * 0.06) % SPACING;
 
       for (let k = 0; k < dots.length; k++) {
         const d = dots[k];
+        const baseY = d.by - drift;
 
-        // Two overlapping wave fields produce slow rolling "liquid metal" highlights
-        const wave1 = Math.sin(d.bx * 0.018 + d.by * 0.022 + t * 1.4);
-        const wave2 = Math.cos(d.bx * 0.011 - d.by * 0.015 + t * 1.1);
-        const field = (wave1 + wave2) * 0.5; // -1..1
+        let alpha = d.base;
+        let dx = d.bx;
+        let dy = baseY;
 
-        // Small organic displacement
-        let dx = d.bx + wave1 * 1.6;
-        let dy = d.by + wave2 * 1.6;
-
-        let warpBoost = 0;
-
-        // Pointer warp + brighten
         if (pointer.active) {
-          const px = dx - pointer.x;
-          const py = dy - pointer.y;
-          const distSq = px * px + py * py;
+          const ox = d.bx - pointer.x;
+          const oy = baseY - pointer.y;
+          const distSq = ox * ox + oy * oy;
           if (distSq < RADIUS_SQ) {
             const dist = Math.sqrt(distSq);
             const force = 1 - dist / RADIUS;
-            const push = force * 18;
-            const nx = dist === 0 ? 0 : px / dist;
-            const ny = dist === 0 ? 0 : py / dist;
-            dx += nx * push;
-            dy += ny * push;
-            warpBoost = force;
+            alpha = Math.min(1, d.base + force * 0.85);
+            const push = force * 12;
+            const nx = dist === 0 ? 0 : ox / dist;
+            const ny = dist === 0 ? 0 : oy / dist;
+            dx = d.bx + nx * push;
+            dy = baseY + ny * push;
           }
         }
 
-        // Chrome shading from the wave field (bright crests, dark troughs)
-        const lit = (field + 1) * 0.5; // 0..1
-        const lightness = 14 + lit * 78; // deep slate -> near white
-        const sat = 6 + (1 - lit) * 8;
-        const alpha = 0.55 + lit * 0.45 + warpBoost * 0.3;
-
-        ctx.fillStyle = `hsla(200, ${sat}%, ${lightness}%, ${Math.min(1, alpha)})`;
-        ctx.beginPath();
-        ctx.arc(dx, dy, DOT_R + lit * 0.4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Specular pip on the brightest dots
-        if (lit > 0.78 || warpBoost > 0.4) {
-          const spec = Math.max(lit - 0.7, warpBoost * 0.6);
-          ctx.fillStyle = `hsla(195, 25%, 98%, ${Math.min(1, spec * 1.2)})`;
-          ctx.beginPath();
-          ctx.arc(dx - 0.5, dy - 0.5, 0.6, 0, Math.PI * 2);
-          ctx.fill();
+        if (isTouch && scrollPulse > 0.02) {
+          alpha = Math.min(1, alpha + scrollPulse * 0.5);
         }
+
+        ctx.fillStyle = `hsla(${fgHsl}, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(dx, dy, d.r, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       raf = requestAnimationFrame(tick);
@@ -140,6 +131,7 @@ export const InteractiveDotsBackground = () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
   }, []);
