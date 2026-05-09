@@ -175,37 +175,28 @@
   .shadow-lime { box-shadow: var(--shadow-lime); }
   .shadow-card-lift { box-shadow: var(--shadow-card); }
 
-  /* Brushed-chrome surface — primary CTAs */
+  /* Solid white CTA — readable on any wallpaper region */
   .surface-chrome {
-    background:
-      linear-gradient(180deg, hsl(200 20% 96% / 0.22), transparent 45%),
-      repeating-linear-gradient(90deg,
-        hsl(200 14% 70% / 0.08) 0 2px,
-        transparent 2px 4px),
-      var(--gradient-cta);
+    background: hsl(0 0% 100%);
+    color: hsl(0 0% 6%);
     box-shadow:
-      0 1px 0 hsl(200 30% 100% / 0.6) inset,
-      0 -1px 0 hsl(210 30% 0% / 0.4) inset,
-      0 0 0 1px hsl(210 20% 0% / 0.5),
-      0 18px 40px -12px hsl(195 70% 40% / 0.45);
-    color: hsl(var(--primary-foreground));
-    text-shadow: 0 1px 0 hsl(200 30% 100% / 0.4);
+      0 0 0 1px hsl(0 0% 0% / 0.9),
+      0 0 0 3px hsl(0 0% 100% / 0.35),
+      0 14px 36px -10px hsl(0 0% 0% / 0.7);
+    text-shadow: none;
   }
-  .surface-chrome:hover { filter: brightness(1.08) contrast(1.05); }
+  .surface-chrome:hover { background: hsl(0 0% 94%); }
 
-  /* Etched dark metal — secondary buttons */
+  /* Solid black secondary — equally readable on light or dark areas */
   .surface-etched {
-    background: linear-gradient(180deg, hsl(200 20% 22%) 0%, hsl(210 24% 8%) 100%);
+    background: hsl(0 0% 6%);
+    color: hsl(0 0% 100%);
     box-shadow:
-      0 1px 0 hsl(200 30% 60% / 0.25) inset,
-      0 -1px 0 hsl(210 30% 0% / 0.6) inset,
-      0 0 0 1px hsl(195 40% 60% / 0.18),
-      0 14px 30px -12px hsl(210 60% 0% / 0.8);
-    color: hsl(var(--foreground));
+      0 0 0 1px hsl(0 0% 100% / 0.9),
+      0 0 0 3px hsl(0 0% 0% / 0.35),
+      0 14px 36px -10px hsl(0 0% 0% / 0.7);
   }
-  .surface-etched:hover {
-    background: linear-gradient(180deg, hsl(200 24% 28%) 0%, hsl(210 26% 10%) 100%);
-  }
+  .surface-etched:hover { background: hsl(0 0% 14%); }
 
   .marquee {
     display: flex;
