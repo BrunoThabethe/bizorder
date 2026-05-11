@@ -9,28 +9,28 @@
 @layer base {
   :root {
     /* BizOrder Nexus — Light brand
-       Off-white canvas, leopard brown structure, gold CTAs. */
-    --background: 0 0% 98%;            /* Off-white #FAFAFA */
-    --foreground: 0 0% 7%;             /* Jet Black #111 */
+       Warm beige canvas, leopard brown structure & text, gold CTAs. */
+    --background: 40 60% 89%;          /* Warm Beige #F3E9D3 */
+    --foreground: 28 31% 18%;          /* Leopard Brown */
 
-    --card: 40 60% 89%;                /* Warm Beige #F3E9D3 */
+    --card: 40 55% 84%;                /* Slightly deeper beige spot */
     --card-foreground: 28 31% 18%;     /* Leopard Brown */
 
-    --popover: 0 0% 98%;
-    --popover-foreground: 0 0% 7%;
+    --popover: 40 60% 92%;
+    --popover-foreground: 28 31% 18%;
 
     --primary: 38 63% 60%;             /* Gold Accent #D9A957 */
     --primary-foreground: 28 31% 14%;  /* Deep Leopard Brown for contrast on gold */
     --primary-glow: 38 70% 70%;
 
     --secondary: 28 31% 18%;           /* Leopard Brown */
-    --secondary-foreground: 0 0% 98%;  /* Off-white */
+    --secondary-foreground: 40 60% 89%;/* Warm Beige */
 
-    --muted: 40 60% 89%;               /* Warm Beige */
-    --muted-foreground: 28 31% 28%;    /* Leopard Brown muted */
+    --muted: 40 55% 84%;               /* Beige spot */
+    --muted-foreground: 28 31% 30%;    /* Leopard Brown muted */
 
     --accent: 28 31% 18%;              /* Leopard Brown */
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 40 60% 89%;
 
     --destructive: 0 65% 51%;          /* Alert Red #D32F2F */
     --destructive-foreground: 0 0% 98%;
@@ -41,22 +41,22 @@
     --info: 210 79% 46%;               /* Info Blue #1976D2 */
     --info-foreground: 0 0% 98%;
 
-    --border: 0 0% 90%;                /* Slate Gray #E5E5E5 */
-    --input: 0 0% 90%;
+    --border: 28 31% 70%;              /* Soft brown border on beige */
+    --input: 28 31% 70%;
     --ring: 38 63% 60%;                /* Gold focus ring */
 
     --radius: 0.85rem;
 
     --surface-elevated: 40 60% 92%;
     --surface-bright: 28 31% 18%;      /* Leopard Brown bright surface */
-    --surface-bright-foreground: 0 0% 98%;
+    --surface-bright-foreground: 40 60% 89%;
 
-    --gradient-hero: radial-gradient(ellipse at top left, hsl(38 63% 60% / 0.18), transparent 55%),
-                     radial-gradient(ellipse at bottom right, hsl(28 31% 18% / 0.12), transparent 55%),
-                     linear-gradient(180deg, hsl(0 0% 98%) 0%, hsl(40 60% 94%) 100%);
+    --gradient-hero: radial-gradient(ellipse at top left, hsl(38 63% 60% / 0.22), transparent 55%),
+                     radial-gradient(ellipse at bottom right, hsl(28 31% 18% / 0.18), transparent 55%),
+                     linear-gradient(180deg, hsl(40 60% 92%) 0%, hsl(40 55% 84%) 100%);
     --gradient-cta: linear-gradient(135deg, hsl(38 63% 60%) 0%, hsl(38 70% 52%) 100%);
     --gradient-lime: linear-gradient(135deg, hsl(28 31% 22%) 0%, hsl(28 31% 14%) 100%);
-    --gradient-card: linear-gradient(160deg, hsl(40 60% 92%) 0%, hsl(40 60% 86%) 100%);
+    --gradient-card: linear-gradient(160deg, hsl(40 60% 92%) 0%, hsl(40 55% 82%) 100%);
 
     --shadow-glow: 0 20px 60px -15px hsl(38 63% 60% / 0.45);
     --shadow-lime: 0 20px 60px -15px hsl(28 31% 18% / 0.35);
@@ -76,28 +76,28 @@
 
   .dark {
     /* BizOrder Nexus — Dark brand
-       Jet black canvas, leopard brown surfaces, gold CTAs. */
-    --background: 0 0% 7%;             /* Jet Black */
-    --foreground: 0 0% 98%;            /* Off-white */
+       Leopard brown canvas with warm beige spots, gold CTAs. */
+    --background: 28 31% 18%;          /* Leopard Brown */
+    --foreground: 40 60% 89%;          /* Warm Beige */
 
-    --card: 28 31% 14%;                /* Deep Leopard Brown */
-    --card-foreground: 0 0% 98%;
+    --card: 28 31% 14%;                /* Deeper leopard brown spot */
+    --card-foreground: 40 60% 89%;
 
     --popover: 28 31% 14%;
-    --popover-foreground: 0 0% 98%;
+    --popover-foreground: 40 60% 89%;
 
     --primary: 38 63% 60%;             /* Gold */
-    --primary-foreground: 0 0% 7%;
+    --primary-foreground: 28 31% 14%;
     --primary-glow: 38 75% 68%;
 
     --secondary: 40 60% 89%;           /* Warm beige */
     --secondary-foreground: 28 31% 14%;
 
     --muted: 28 31% 14%;
-    --muted-foreground: 40 30% 78%;
+    --muted-foreground: 40 50% 80%;
 
     --accent: 38 63% 60%;
-    --accent-foreground: 0 0% 7%;
+    --accent-foreground: 28 31% 14%;
 
     --destructive: 0 65% 51%;
     --destructive-foreground: 0 0% 98%;
@@ -108,17 +108,17 @@
     --info: 210 79% 46%;
     --info-foreground: 0 0% 98%;
 
-    --border: 28 31% 22%;
-    --input: 28 31% 22%;
+    --border: 28 31% 28%;
+    --input: 28 31% 28%;
     --ring: 38 63% 60%;
 
-    --surface-elevated: 28 31% 12%;
-    --surface-bright: 38 63% 60%;
+    --surface-elevated: 28 31% 14%;
+    --surface-bright: 40 60% 89%;
     --surface-bright-foreground: 28 31% 14%;
 
-    --gradient-hero: radial-gradient(ellipse at top left, hsl(38 63% 60% / 0.18), transparent 55%),
-                     radial-gradient(ellipse at bottom right, hsl(28 31% 18% / 0.55), transparent 55%),
-                     linear-gradient(180deg, hsl(0 0% 7%) 0%, hsl(0 0% 4%) 100%);
+    --gradient-hero: radial-gradient(ellipse at top left, hsl(38 63% 60% / 0.22), transparent 55%),
+                     radial-gradient(ellipse at bottom right, hsl(40 60% 89% / 0.10), transparent 55%),
+                     linear-gradient(180deg, hsl(28 31% 18%) 0%, hsl(28 31% 12%) 100%);
     --gradient-cta: linear-gradient(135deg, hsl(38 63% 60%) 0%, hsl(38 70% 52%) 100%);
     --gradient-lime: linear-gradient(135deg, hsl(40 60% 89%) 0%, hsl(38 50% 78%) 100%);
     --gradient-card: linear-gradient(160deg, hsl(28 31% 14%) 0%, hsl(28 31% 10%) 100%);
@@ -127,7 +127,7 @@
     --shadow-lime: 0 20px 60px -15px hsl(40 60% 89% / 0.18);
     --shadow-card: 0 10px 40px -10px hsl(0 0% 0% / 0.7);
 
-    --sidebar-background: 0 0% 7%;
+    --sidebar-background: 28 31% 14%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 38 63% 60%;
     --sidebar-primary-foreground: 0 0% 7%;
