@@ -7,120 +7,134 @@
    All colors HSL. */
 
 @layer base {
-  :root,
-  .dark {
-    /* Monochrome dark — deep black with off-white type */
-    --background: 0 0% 4%;
-    --foreground: 40 12% 92%;
+  :root {
+    /* BizOrder Nexus — Light brand
+       Off-white canvas, leopard brown structure, gold CTAs. */
+    --background: 0 0% 98%;            /* Off-white #FAFAFA */
+    --foreground: 0 0% 7%;             /* Jet Black #111 */
 
-    --card: 0 0% 7%;
-    --card-foreground: 40 12% 92%;
+    --card: 40 60% 89%;                /* Warm Beige #F3E9D3 */
+    --card-foreground: 28 31% 18%;     /* Leopard Brown */
 
-    --popover: 0 0% 7%;
-    --popover-foreground: 40 12% 92%;
+    --popover: 0 0% 98%;
+    --popover-foreground: 0 0% 7%;
 
-    --primary: 40 15% 96%;
-    --primary-foreground: 0 0% 6%;
-    --primary-glow: 40 15% 100%;
+    --primary: 38 63% 60%;             /* Gold Accent #D9A957 */
+    --primary-foreground: 28 31% 14%;  /* Deep Leopard Brown for contrast on gold */
+    --primary-glow: 38 70% 70%;
 
-    --secondary: 36 8% 70%;
-    --secondary-foreground: 0 0% 6%;
+    --secondary: 28 31% 18%;           /* Leopard Brown */
+    --secondary-foreground: 0 0% 98%;  /* Off-white */
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 36 6% 62%;
+    --muted: 40 60% 89%;               /* Warm Beige */
+    --muted-foreground: 28 31% 28%;    /* Leopard Brown muted */
 
-    --accent: 40 12% 92%;
-    --accent-foreground: 0 0% 6%;
+    --accent: 28 31% 18%;              /* Leopard Brown */
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62% 55%;
-    --destructive-foreground: 40 12% 96%;
+    --destructive: 0 65% 51%;          /* Alert Red #D32F2F */
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 40 15% 96%;
+    --success: 134 61% 41%;            /* Success Green #28A745 */
+    --success-foreground: 0 0% 98%;
+
+    --info: 210 79% 46%;               /* Info Blue #1976D2 */
+    --info-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%;                /* Slate Gray #E5E5E5 */
+    --input: 0 0% 90%;
+    --ring: 38 63% 60%;                /* Gold focus ring */
 
     --radius: 0.85rem;
 
-    --surface-elevated: 0 0% 6%;
-    --surface-bright: 40 15% 96%;
-    --surface-bright-foreground: 0 0% 6%;
+    --surface-elevated: 40 60% 92%;
+    --surface-bright: 28 31% 18%;      /* Leopard Brown bright surface */
+    --surface-bright-foreground: 0 0% 98%;
 
-    --gradient-hero: radial-gradient(ellipse at top left, hsl(0 0% 18% / 0.6), transparent 55%),
-                     radial-gradient(ellipse at bottom right, hsl(0 0% 14% / 0.5), transparent 55%),
-                     linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(0 0% 2%) 100%);
-    --gradient-cta: linear-gradient(135deg, hsl(40 15% 98%) 0%, hsl(36 12% 86%) 100%);
-    --gradient-lime: linear-gradient(135deg, hsl(40 12% 88%) 0%, hsl(36 8% 72%) 100%);
-    --gradient-card: linear-gradient(160deg, hsl(0 0% 9%) 0%, hsl(0 0% 5%) 100%);
+    --gradient-hero: radial-gradient(ellipse at top left, hsl(38 63% 60% / 0.18), transparent 55%),
+                     radial-gradient(ellipse at bottom right, hsl(28 31% 18% / 0.12), transparent 55%),
+                     linear-gradient(180deg, hsl(0 0% 98%) 0%, hsl(40 60% 94%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(38 63% 60%) 0%, hsl(38 70% 52%) 100%);
+    --gradient-lime: linear-gradient(135deg, hsl(28 31% 22%) 0%, hsl(28 31% 14%) 100%);
+    --gradient-card: linear-gradient(160deg, hsl(40 60% 92%) 0%, hsl(40 60% 86%) 100%);
 
-    --shadow-glow: 0 20px 60px -15px hsl(40 15% 96% / 0.18);
-    --shadow-lime: 0 20px 60px -15px hsl(0 0% 100% / 0.12);
-    --shadow-card: 0 10px 40px -10px hsl(0 0% 0% / 0.8);
+    --shadow-glow: 0 20px 60px -15px hsl(38 63% 60% / 0.45);
+    --shadow-lime: 0 20px 60px -15px hsl(28 31% 18% / 0.35);
+    --shadow-card: 0 10px 40px -10px hsl(28 31% 18% / 0.18);
 
     --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 40 12% 92%;
-    --sidebar-primary: 40 15% 96%;
-    --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 40 12% 92%;
-    --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 40 15% 96%;
+    --sidebar-background: 28 31% 18%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 38 63% 60%;
+    --sidebar-primary-foreground: 28 31% 14%;
+    --sidebar-accent: 28 31% 24%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 28 31% 24%;
+    --sidebar-ring: 38 63% 60%;
   }
 
-  .light {
-    --background: 40 20% 98%;
-    --foreground: 0 0% 8%;
+  .dark {
+    /* BizOrder Nexus — Dark brand
+       Jet black canvas, leopard brown surfaces, gold CTAs. */
+    --background: 0 0% 7%;             /* Jet Black */
+    --foreground: 0 0% 98%;            /* Off-white */
 
-    --card: 40 15% 96%;
-    --card-foreground: 0 0% 8%;
+    --card: 28 31% 14%;                /* Deep Leopard Brown */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 40 15% 96%;
-    --popover-foreground: 0 0% 8%;
+    --popover: 28 31% 14%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 0 0% 8%;
-    --primary-foreground: 40 20% 98%;
-    --primary-glow: 0 0% 18%;
+    --primary: 38 63% 60%;             /* Gold */
+    --primary-foreground: 0 0% 7%;
+    --primary-glow: 38 75% 68%;
 
-    --secondary: 0 0% 25%;
-    --secondary-foreground: 40 20% 98%;
+    --secondary: 40 60% 89%;           /* Warm beige */
+    --secondary-foreground: 28 31% 14%;
 
-    --muted: 40 12% 92%;
-    --muted-foreground: 0 0% 22%;
+    --muted: 28 31% 14%;
+    --muted-foreground: 40 30% 78%;
 
-    --accent: 0 0% 8%;
-    --accent-foreground: 40 20% 98%;
+    --accent: 38 63% 60%;
+    --accent-foreground: 0 0% 7%;
 
-    --destructive: 0 62% 45%;
-    --destructive-foreground: 40 20% 98%;
+    --destructive: 0 65% 51%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 86%;
-    --input: 0 0% 86%;
-    --ring: 0 0% 8%;
+    --success: 134 61% 41%;
+    --success-foreground: 0 0% 98%;
 
-    --surface-elevated: 40 18% 95%;
-    --surface-bright: 0 0% 8%;
-    --surface-bright-foreground: 40 20% 98%;
+    --info: 210 79% 46%;
+    --info-foreground: 0 0% 98%;
 
-    --gradient-hero: radial-gradient(ellipse at top left, hsl(0 0% 80% / 0.4), transparent 55%),
-                     radial-gradient(ellipse at bottom right, hsl(0 0% 88% / 0.5), transparent 55%),
-                     linear-gradient(180deg, hsl(40 20% 98%) 0%, hsl(40 15% 95%) 100%);
-    --gradient-cta: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 22%) 100%);
-    --gradient-lime: linear-gradient(135deg, hsl(0 0% 25%) 0%, hsl(0 0% 45%) 100%);
-    --gradient-card: linear-gradient(160deg, hsl(40 15% 97%) 0%, hsl(40 12% 92%) 100%);
+    --border: 28 31% 22%;
+    --input: 28 31% 22%;
+    --ring: 38 63% 60%;
 
-    --shadow-glow: 0 20px 60px -15px hsl(0 0% 0% / 0.2);
-    --shadow-lime: 0 20px 60px -15px hsl(0 0% 0% / 0.15);
-    --shadow-card: 0 10px 40px -10px hsl(0 0% 0% / 0.15);
+    --surface-elevated: 28 31% 12%;
+    --surface-bright: 38 63% 60%;
+    --surface-bright-foreground: 28 31% 14%;
 
-    --sidebar-background: 40 20% 98%;
-    --sidebar-foreground: 0 0% 8%;
-    --sidebar-primary: 0 0% 8%;
-    --sidebar-primary-foreground: 40 20% 98%;
-    --sidebar-accent: 40 12% 92%;
-    --sidebar-accent-foreground: 0 0% 8%;
-    --sidebar-border: 0 0% 86%;
-    --sidebar-ring: 0 0% 8%;
+    --gradient-hero: radial-gradient(ellipse at top left, hsl(38 63% 60% / 0.18), transparent 55%),
+                     radial-gradient(ellipse at bottom right, hsl(28 31% 18% / 0.55), transparent 55%),
+                     linear-gradient(180deg, hsl(0 0% 7%) 0%, hsl(0 0% 4%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(38 63% 60%) 0%, hsl(38 70% 52%) 100%);
+    --gradient-lime: linear-gradient(135deg, hsl(40 60% 89%) 0%, hsl(38 50% 78%) 100%);
+    --gradient-card: linear-gradient(160deg, hsl(28 31% 14%) 0%, hsl(28 31% 10%) 100%);
+
+    --shadow-glow: 0 20px 60px -15px hsl(38 63% 60% / 0.5);
+    --shadow-lime: 0 20px 60px -15px hsl(40 60% 89% / 0.18);
+    --shadow-card: 0 10px 40px -10px hsl(0 0% 0% / 0.7);
+
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 38 63% 60%;
+    --sidebar-primary-foreground: 0 0% 7%;
+    --sidebar-accent: 28 31% 18%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 28 31% 22%;
+    --sidebar-ring: 38 63% 60%;
   }
 }
 
