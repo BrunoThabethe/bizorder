@@ -26,8 +26,8 @@ export const Navbar = () => {
   return (
     <header
       className={cn(
-        "fixed left-1/2 top-4 z-50 w-[min(1200px,94vw)] -translate-x-1/2 rounded-2xl transition-all duration-500",
-        scrolled || open ? "bg-background/60 backdrop-blur-xl" : "bg-transparent",
+        "fixed left-1/2 top-4 z-50 w-[min(1200px,94vw)] -translate-x-1/2 rounded-2xl bg-secondary text-secondary-foreground shadow-card-lift transition-all duration-500",
+        scrolled || open ? "shadow-glow" : "",
       )}
     >
       <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
@@ -49,8 +49,8 @@ export const Navbar = () => {
                 cn(
                   "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "text-primary"
+                    : "text-secondary-foreground/80 hover:text-primary",
                 )
               }
             >
