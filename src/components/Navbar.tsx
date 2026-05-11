@@ -49,8 +49,8 @@ export const Navbar = () => {
                 cn(
                   "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "text-primary"
+                    : "text-secondary-foreground/80 hover:text-primary",
                 )
               }
             >
