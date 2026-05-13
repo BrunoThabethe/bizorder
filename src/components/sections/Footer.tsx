@@ -22,19 +22,17 @@ const legalLinks = [
 
 export const Footer = () => {
   return (
-    <footer className="relative border-t border-border bg-secondary text-secondary-foreground py-14 mt-12">
+    <footer className="relative border-t border-foreground/10 py-14 mt-12">
       <div className="container mx-auto px-4">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <Link to="/" className="flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-                <Zap className="h-5 w-5" strokeWidth={2.5} />
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground">
+                <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
               </span>
-              <span className="font-display text-xl font-bold">
-                BizOrder <span className="text-primary">Nexus</span>
-              </span>
+              <span className="font-display text-xl font-bold">BizOrder</span>
             </Link>
-            <p className="mt-4 max-w-xs text-sm opacity-80">
+            <p className="mt-4 max-w-xs text-sm text-muted-foreground">
               The simplest way to take orders, get paid, and grow your business online.
             </p>
           </div>
@@ -44,8 +42,8 @@ export const Footer = () => {
           <FooterColumn title="Legal" links={legalLinks} />
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-secondary-foreground/15 pt-6 text-xs opacity-75 md:flex-row">
-          <p>© {new Date().getFullYear()} BizOrder Nexus. Built to sell.</p>
+        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-foreground/10 pt-6 text-xs text-muted-foreground md:flex-row">
+          <p>© {new Date().getFullYear()} BizOrder. Built to sell.</p>
           <p>Transparency · Accountability · Impartiality · Responsiveness · Integrity</p>
         </div>
       </div>
@@ -60,11 +58,11 @@ type FooterColumnProps = {
 
 const FooterColumn = ({ title, links }: FooterColumnProps) => (
   <div>
-    <p className="font-display text-sm font-bold uppercase tracking-wider">{title}</p>
+    <p className="font-display text-sm font-bold uppercase tracking-wider text-foreground">{title}</p>
     <ul className="mt-4 space-y-2 text-sm">
       {links.map((l) => (
         <li key={l.to}>
-          <Link to={l.to} className="opacity-80 transition-colors hover:opacity-100 hover:text-primary">
+          <Link to={l.to} className="text-muted-foreground transition-colors hover:text-foreground">
             {l.label}
           </Link>
         </li>

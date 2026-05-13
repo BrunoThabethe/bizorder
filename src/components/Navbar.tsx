@@ -26,18 +26,16 @@ export const Navbar = () => {
   return (
     <header
       className={cn(
-        "fixed left-1/2 top-4 z-50 w-[min(1200px,94vw)] -translate-x-1/2 rounded-2xl bg-secondary text-secondary-foreground shadow-card-lift transition-all duration-500",
-        scrolled || open ? "shadow-glow" : "",
+        "fixed left-1/2 top-4 z-50 w-[min(1200px,94vw)] -translate-x-1/2 rounded-2xl transition-all duration-500",
+        scrolled || open ? "bg-background/60 backdrop-blur-xl" : "bg-transparent",
       )}
     >
       <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
         <Link to="/" className="flex items-center gap-2 group">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-glow">
-            <Zap className="h-5 w-5" strokeWidth={2.5} />
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground">
+            <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
           </span>
-          <span className="font-display text-xl font-bold tracking-tight">
-            BizOrder <span className="text-primary">Nexus</span>
-          </span>
+          <span className="font-display text-xl font-bold tracking-tight">BizOrder</span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
@@ -49,8 +47,8 @@ export const Navbar = () => {
                 cn(
                   "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "text-primary"
-                    : "text-secondary-foreground/80 hover:text-primary",
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )
               }
             >
