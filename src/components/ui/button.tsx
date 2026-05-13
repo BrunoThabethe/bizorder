@@ -10,19 +10,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-cta text-primary-foreground shadow-glow hover:scale-[1.03] hover:shadow-[0_25px_70px_-15px_hsl(var(--primary)/0.7)] active:scale-[0.98]",
+          "bg-[hsl(38_63%_60%)] text-[hsl(0_0%_7%)] shadow-glow hover:scale-[1.03] hover:bg-[hsl(38_63%_55%)] hover:shadow-[0_25px_70px_-15px_hsl(38_63%_60%/0.7)] active:scale-[0.98]",
         lime:
           "bg-secondary text-secondary-foreground shadow-lime hover:scale-[1.03] hover:brightness-110 active:scale-[0.98]",
         bright:
-          "bg-[hsl(var(--surface-bright))] text-[hsl(var(--surface-bright-foreground))] hover:scale-[1.03] hover:bg-white active:scale-[0.98] shadow-card-lift",
+          "bg-[hsl(var(--surface-bright))] text-[hsl(var(--surface-bright-foreground))] hover:scale-[1.03] active:scale-[0.98] shadow-card-lift",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-[hsl(0_65%_51%)] text-[hsl(0_0%_98%)] hover:bg-[hsl(0_65%_46%)] active:scale-[0.98]",
         outline:
-          "border-2 border-foreground bg-foreground text-background hover:bg-foreground/90 hover:border-foreground/90 active:scale-[0.98]",
+          "border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground active:scale-[0.98]",
         secondary:
-          "bg-foreground text-background hover:bg-foreground/85 active:scale-[0.98]",
-        ghost: "bg-foreground text-background hover:bg-foreground/85 active:scale-[0.98]",
-        link: "text-foreground underline-offset-4 underline font-bold hover:opacity-80",
+          "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]",
+        ghost: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]",
+        link: "text-primary underline-offset-4 underline font-bold hover:opacity-80",
       },
       size: {
         default: "h-11 px-6 py-2",
