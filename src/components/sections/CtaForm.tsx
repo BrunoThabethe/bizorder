@@ -41,13 +41,13 @@ export const CtaForm = () => {
   return (
     <section id="signup" className="relative py-20 md:py-28">
       <div className="container relative mx-auto px-4">
-        <div className="mx-auto max-w-3xl rounded-3xl bg-background/40 p-8 backdrop-blur-md md:p-12">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-border/60 bg-card-gradient p-8 shadow-card-lift md:p-12">
           <div className="text-center">
-            <span className="inline-block rounded-full bg-foreground/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="inline-block rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary">
               Get started — free
             </span>
             <h2 className="mt-5 font-display text-3xl font-bold md:text-5xl">
-              Ready to <span className="text-foreground/60">stop losing sales?</span>
+              Ready to <span className="text-primary">stop losing sales?</span>
             </h2>
             <p className="mt-3 text-base text-muted-foreground md:text-lg">
               Tell us about your business. We'll get you live in 24 hours.
