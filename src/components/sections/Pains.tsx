@@ -28,12 +28,12 @@ export const Pains = () => {
     <section className="relative py-20 md:py-28">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-block rounded-full bg-foreground/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="inline-block rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary">
             The painful truth
           </span>
           <h2 className="mt-5 font-display text-4xl font-bold md:text-5xl">
             Every day without BizOrder is{" "}
-            <span className="text-foreground/60">money lost.</span>
+            <span className="text-primary">money lost.</span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
             These are the real reasons businesses fail online. Sound familiar?
@@ -44,9 +44,9 @@ export const Pains = () => {
           {pains.map((p) => (
             <div
               key={p.title}
-              className="group rounded-2xl bg-background/30 p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:bg-background/50"
+              className="group rounded-2xl border border-border/60 bg-card-gradient p-6 shadow-card-lift transition-all duration-300 hover:-translate-y-1 hover:border-primary/40"
             >
-              <div className="grid h-12 w-12 place-items-center rounded-xl bg-foreground/10 text-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
+              <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary/15 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                 <p.icon className="h-6 w-6" />
               </div>
               <h3 className="mt-5 font-display text-lg font-bold leading-tight">{p.title}</h3>

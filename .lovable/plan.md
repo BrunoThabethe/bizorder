@@ -1,87 +1,58 @@
-## Overview
+# Dark Dashboard Redesign
 
-You've requested ~10 distinct changes across customer ordering, provider availability, pricing/delivery, booking calendar, marketing site, and order workflow UX. I'll group them into 6 work blocks and ship them in order. Each block ends in a working state so you can test as we go.
+Apply the look & feel of the reference dashboards (near-black surfaces, soft rounded cards, gold accents replacing orange, subtle gradients, pill chips, sidebar shell) across the entire site — public marketing pages and the customer / business / admin / crew portals — without changing any functionality, routes, queries, or data flow.
 
----
+## Visual language (from references)
 
-## Block 1 — Customer order: reference photo + simpler workflow
+- **Surfaces**: near-black canvas (`#0F0F0F`), elevated cards (`#171717` → `#1C1C1C`), soft inner borders (`#262626`), generous 16–20px radius.
+- **Accent**: Gold `#D9A957` everywhere orange appears in the refs — primary buttons, active nav, key numbers, chart highlights, focus rings.
+- **Typography**: keep Space Grotesk display + Inter body; tighten weights — large bold numbers for stats, muted gray labels above them.
+- **Cards**: dark card with subtle top-edge highlight, soft shadow, rounded-2xl. Inline pill badges (`+8%`, status chips) with translucent backgrounds.
+- **Buttons**: solid gold primary (dark text), solid dark secondary (light text), pill or rounded-xl. No ghost / no outline-only.
+- **Charts/visuals**: dark bars with one gold highlighted bar, gold line accents, subtle grid.
+- **Light mode**: keep functional but mirror the structure (off-white canvas, warm beige cards, gold accent stays).
 
-- Add a single optional **reference photo** upload on the Create Order page (next to Notes). Stored in `order-media` bucket under `orders/{orderId}/reference.jpg`. Visible to provider on the order detail page.
-- Validation: 1 photo max, JPG/PNG/WebP, ≤ 5 MB.
+## Scope of changes (presentation only)
 
-## Block 2 — Provider availability gates the "Place Order" button
+1. **Design tokens** (`src/index.css`)
+   - Refine dark tokens: card / popover / muted / border / sidebar values to match dashboard palette.
+   - Add `--card-elevated`, `--ring-gold`, refined shadow tokens (`--shadow-card`, `--shadow-glow`).
+   - Update gradients (`--gradient-hero`, `--gradient-card`, `--gradient-cta`) to dark + gold.
 
-- On the customer business profile + create-order page:
-  - If `business_settings.availability` ≠ `available` AND the order is for a **service** scheduled "as soon as possible" → "Place order" is disabled with a tooltip ("Provider is {status} — pick a future date or order a product").
-  - **Products** are always orderable.
-  - Services are orderable if the customer picks a future date/time.
+2. **Primitives**
+   - `components/ui/card.tsx` — default to elevated dark surface, rounded-2xl, soft border + shadow.
+   - `components/ui/button.tsx` — refine variants (gold primary, dark secondary, destructive, link). Remove ghost/outline visual weakness; keep variant names so call-sites don't change.
+   - `components/ui/badge.tsx`, `input.tsx`, `tabs.tsx`, `table.tsx` — minor token swaps for the dashboard look.
 
-## Block 3 — Pricing model: in-store vs delivery (per-km)
+3. **Marketing shell** (public pages: `/`, `/how-it-works`, `/for-businesses`, `/for-customers`, `/contact`, legal)
+   - `Navbar.tsx`: dark translucent pill with gold logo mark, gold active link, solid gold CTA.
+   - `Footer.tsx`: dark surface, gold wordmark accent, lighter dividers.
+   - `sections/Hero.tsx`, `Pains.tsx`, `SocialProof.tsx`, `CtaForm.tsx`: dark cards, gold stat chips, dashboard-style stat tiles in hero, bar/line motif in social proof.
 
-- Schema additions:
-  - `services`: `delivery_available boolean`, `delivery_price_per_km numeric`, `pickup_price numeric` (renames meaning of existing `price` to "in-store/pickup price").
-  - `orders`: `fulfillment_type text` ('pickup' | 'delivery'), `delivery_distance_km numeric`, `delivery_fee numeric`.
-- Provider service editor: new fields for delivery toggle + per-km price.
-- Customer create-order: radio for Pickup vs Delivery. If Delivery: input distance (km) → auto-calculates `delivery_fee = per_km * km`, total updates live.
-- Order summary + provider order detail show breakdown.
+4. **Portal layouts** (sidebar shells)
+   - `components/customer/CustomerLayout.tsx`, `business/BusinessLayout.tsx`, `admin/AdminLayout.tsx`, `crew/CrewLayout.tsx`: restyle the sidebar to match the reference (dark sidebar, rounded gold pill on active item, muted icons, section labels in uppercase tracked-wide).
+   - `components/customer/PageHeader.tsx`: title + subtitle stack, gold accent underline.
 
-> Note: real address-based km calculation needs a maps API. For now we'll use a customer-entered km value (with a clear note). I can wire Google/Mapbox later if you want.
+5. **Page polish (token-only, no markup changes)**
+   - Dashboard pages (`*DashboardPage.tsx`): swap stat-card visuals to dashboard-style tiles (large number, label above, % chip).
+   - Order detail / queue / settings pages: cards adopt new elevated style automatically via token updates.
 
-## Block 4 — Booking calendar (provider availability + clash prevention)
+## What does NOT change
 
-- New table `provider_availability_slots` (per-day weekly schedule: day_of_week, start, end) — provider sets working hours per weekday.
-- `orders.scheduled_for` + `services.duration_minutes` define a busy interval.
-- New RPC `is_slot_available(business_id, start, end)` checks for overlap with accepted/in-progress orders.
-- Customer date/time picker calls the RPC; unavailable times shown disabled. Server-side guard rejects creation if clash.
-- Provider page: **Availability schedule** under Business Settings.
+- No route changes, no new pages, no removed pages.
+- No query/mutation/edge-function/migration changes.
+- No business logic, role-gating, validation, or copy rewrites (unless a heading needs sentence-case fix).
+- No component prop changes; all variant names preserved so consuming pages don't need edits.
+- ThemeProvider / theme toggle untouched.
 
-## Block 5 — Cancel/reject reason mandatory + visible
+## Verification
 
-- Reject/cancel actions on provider side require a reason (min 10 chars) — already partly there for `rejected_reason`. Enforce in UI + DB.
-- Surface the reason on:
-  - Customer order detail (red banner "Provider cancelled — Reason: …")
-  - Admin order detail (same)
-  - `order_events` entry already created.
+- Visit `/`, `/how-it-works`, `/login`, `/customer`, `/business`, `/admin` (already-styled portals will pick up new tokens).
+- Confirm contrast (WCAG AA) for gold-on-dark text, gold buttons, muted labels.
+- Check mobile (Navbar collapse, sidebar Sheet) at 375px.
 
-## Block 6 — Provider order workflow buttons (single-action stage stepper)
+## Technical notes
 
-- Replace "Move to In progress" / multi-prompt buttons with a clean 4-stage stepper: **Accepted → In progress → Ready for review → Completed**.
-- Each stage shows one button labelled with the **next** stage name. Once clicked, that stage is locked (greyed) and the next button appears. No back/forward.
-- Same component used in OrdersQueuePage and BusinessOrderDetailPage.
-
-## Block 7 — Marketing site cleanup + How-it-works rewrite
-
-- Remove **Pricing** page + nav link + footer link + any CTAs pointing to `/pricing`. Routes redirect `/pricing` → `/`.
-- Nav becomes: How it works · For businesses · For customers · Contact · Login/Signup.
-- Rewrite `HowItWorksPage.tsx` flows (business + customer) to match the actual portal screens (mention reference photo, fulfillment choice, stage stepper, availability, etc.).
-
----
-
-## Technical summary
-
-**DB migrations (one combined):**
-- `services`: + `delivery_available`, `delivery_price_per_km`, `pickup_price` (default = current price).
-- `orders`: + `fulfillment_type`, `delivery_distance_km`, `delivery_fee`, + reference_image_url.
-- New `provider_availability_slots` table with RLS (owner manages, public reads when business is published).
-- RPC `is_slot_available(_business_id uuid, _start timestamptz, _end timestamptz) returns boolean`.
-- RLS additions for the new table; storage policy for `order-media/orders/{orderId}/reference.*` (customer of that order can write, provider/admin can read).
-
-**Frontend files touched:**
-- `src/pages/customer/CreateOrderPage.tsx` (ref photo, fulfillment, gating, slot check)
-- `src/pages/customer/BusinessProfilePage.tsx` (gating "Order now" button)
-- `src/pages/business/ServicesManagerPage.tsx` (delivery pricing fields)
-- `src/pages/business/BusinessSettingsPage.tsx` (availability schedule editor)
-- `src/pages/business/OrdersQueuePage.tsx` + `BusinessOrderDetailPage.tsx` (stage stepper, mandatory reject reason)
-- `src/pages/customer/OrderDetailPage.tsx` + `src/pages/admin/AdminOrderDetailPage.tsx` (reason banner, fulfillment + reference photo display)
-- `src/components/Navbar.tsx`, `src/components/sections/Footer.tsx`, `src/App.tsx` (remove pricing route + links)
-- `src/pages/HowItWorksPage.tsx` (rewrite flows)
-- New `src/components/orders/StageStepper.tsx`, `src/components/business/AvailabilityScheduleEditor.tsx`.
-- Delete `src/pages/PricingPage.tsx` and `src/components/sections/PricingSlider.tsx`.
-
----
-
-## Order of execution
-
-I'll go: **Block 7 (quick UI cleanup)** → **Block 6 (workflow buttons)** → **Block 5 (reject reason)** → **Block 1 (reference photo)** → **Block 2 (availability gating)** → **Block 3 (delivery pricing)** → **Block 4 (booking calendar)**.
-
-Approve and I'll start with the database migration covering Blocks 1, 3, 4 plus the storage policy, then move through the frontend blocks.
+- All colors stay HSL in `index.css`; component files use semantic Tailwind classes (`bg-card`, `text-primary`, `border-border`) — no hex literals in components.
+- Button variants keep their current names (`default`, `secondary`, `outline`, `destructive`, `link`, `lime`, `bright`) but `outline` becomes a high-contrast bordered solid (per "no ghost buttons" rule).
+- Light mode receives the same structural treatment with the warm-beige palette so toggling stays coherent.

@@ -24,7 +24,7 @@ export const SocialProof = () => {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-4xl font-bold md:text-5xl">
-            Real businesses. <span className="text-foreground/60">Real growth.</span>
+            Real businesses. <span className="text-primary">Real growth.</span>
           </h2>
         </div>
 
@@ -32,9 +32,9 @@ export const SocialProof = () => {
           {reviews.map((r) => (
             <figure
               key={r.name}
-              className="rounded-2xl bg-background/30 p-7 backdrop-blur-sm transition-transform duration-300 hover:-translate-y-1 hover:bg-background/50"
+              className="rounded-2xl border border-border/60 bg-card-gradient p-7 shadow-card-lift transition-transform duration-300 hover:-translate-y-1 hover:border-primary/40"
             >
-              <div className="flex gap-1 text-foreground">
+              <div className="flex gap-1 text-primary">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="h-4 w-4 fill-current" />
                 ))}

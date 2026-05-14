@@ -32,8 +32,8 @@ export const Navbar = () => {
     >
       <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
         <Link to="/" className="flex items-center gap-2 group">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground">
-            <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
+            <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
           </span>
           <span className="font-display text-xl font-bold tracking-tight">BizOrder</span>
         </Link>
