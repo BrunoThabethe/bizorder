@@ -34,6 +34,12 @@
     --destructive: 0 65% 51%;
     --destructive-foreground: 0 0% 98%;
 
+    --success: 134 61% 41%;
+    --success-foreground: 0 0% 98%;
+
+    --info: 210 79% 46%;
+    --info-foreground: 0 0% 98%;
+
     --border: 24 31% 27%;
     --input: 24 31% 27%;
     --ring: 38 63% 60%;
@@ -92,6 +98,12 @@
 
     --destructive: 0 65% 51%;
     --destructive-foreground: 0 0% 98%;
+
+    --success: 134 61% 41%;
+    --success-foreground: 0 0% 98%;
+
+    --info: 210 79% 46%;
+    --info-foreground: 0 0% 98%;
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
@@ -166,6 +178,18 @@
   .shadow-glow { box-shadow: var(--shadow-glow); }
   .shadow-lime { box-shadow: var(--shadow-lime); }
   .shadow-card-lift { box-shadow: var(--shadow-card); }
+
+  .bg-leopard-print {
+    background-image: url('/src/assets/leopard-print.jpg');
+    background-size: 320px 320px;
+    background-repeat: repeat;
+  }
+
+  .leopard-accent-border {
+    border-image: url('/src/assets/leopard-print.jpg') 30 round;
+    border-width: 6px;
+    border-style: solid;
+  }
 
   .marquee {
     display: flex;
