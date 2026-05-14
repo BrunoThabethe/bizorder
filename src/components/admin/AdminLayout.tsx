@@ -75,8 +75,8 @@ export const AdminLayout = ({ children }: Props) => {
       <div className="mx-auto flex max-w-[1700px] gap-4 p-3 md:p-5">
         <aside className="hidden w-60 shrink-0 flex-col gap-1 rounded-3xl bg-card p-4 shadow-card md:flex">
           <NavLink to="/" className="mb-3 flex items-center gap-2 px-2">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground">
-              <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
+              <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
             </span>
             <span className="font-display text-lg font-bold">Admin</span>
           </NavLink>
@@ -90,7 +90,7 @@ export const AdminLayout = ({ children }: Props) => {
                   cn(
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
                     isActive
-                      ? "bg-foreground text-background"
+                      ? "bg-primary text-primary-foreground shadow-glow"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )
                 }
@@ -128,7 +128,7 @@ export const AdminLayout = ({ children }: Props) => {
             </button>
             <div className="hidden items-center gap-3 rounded-2xl bg-muted px-2 py-1.5 sm:flex">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-foreground text-xs text-background">{initials}</AvatarFallback>
+                <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials}</AvatarFallback>
               </Avatar>
               <span className="pr-2 text-sm font-semibold">{fullName}</span>
             </div>
@@ -144,8 +144,8 @@ export const AdminLayout = ({ children }: Props) => {
           <aside className="absolute inset-y-0 left-0 flex w-72 flex-col gap-1 overflow-y-auto bg-card p-4 shadow-card">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground">
-                  <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
+                  <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
                 </span>
                 <span className="font-display text-lg font-bold">Admin</span>
               </div>
@@ -162,7 +162,7 @@ export const AdminLayout = ({ children }: Props) => {
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors",
-                    isActive ? "bg-foreground text-background" : "text-foreground hover:bg-muted",
+                    isActive ? "bg-primary text-primary-foreground shadow-glow" : "text-foreground hover:bg-muted",
                   )
                 }
               >

@@ -42,8 +42,8 @@ export const CrewLayout = ({ children }: Props) => {
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-[1400px] gap-4 p-3 md:p-5">
         <aside className="hidden w-16 shrink-0 flex-col items-center gap-2 rounded-3xl bg-card py-5 shadow-card md:flex">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-foreground">
-            <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary">
+            <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
           </span>
           <nav className="mt-4 flex flex-1 flex-col items-center gap-1">
             {navItems.map((item) => (
@@ -56,7 +56,7 @@ export const CrewLayout = ({ children }: Props) => {
                   cn(
                     "grid h-11 w-11 place-items-center rounded-xl transition-colors",
                     isActive
-                      ? "bg-foreground text-background"
+                      ? "bg-primary text-primary-foreground shadow-glow"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )
                 }
@@ -98,7 +98,7 @@ export const CrewLayout = ({ children }: Props) => {
             </NavLink>
             <div className="hidden items-center gap-3 rounded-2xl bg-muted px-2 py-1.5 sm:flex">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-foreground text-xs text-background">{initials}</AvatarFallback>
+                <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials}</AvatarFallback>
               </Avatar>
               <span className="pr-2 text-sm font-semibold">{displayName}</span>
             </div>
@@ -114,8 +114,8 @@ export const CrewLayout = ({ children }: Props) => {
           <aside className="absolute inset-y-0 left-0 flex w-72 flex-col gap-1 bg-card p-4 shadow-card">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground">
-                  <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
+                  <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
                 </span>
                 <span className="font-display text-lg font-bold">Crew portal</span>
               </div>
@@ -132,7 +132,7 @@ export const CrewLayout = ({ children }: Props) => {
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors",
-                    isActive ? "bg-foreground text-background" : "text-foreground hover:bg-muted",
+                    isActive ? "bg-primary text-primary-foreground shadow-glow" : "text-foreground hover:bg-muted",
                   )
                 }
               >
@@ -155,7 +155,7 @@ export const CrewLayout = ({ children }: Props) => {
             className={({ isActive }) =>
               cn(
                 "grid h-11 w-11 place-items-center rounded-2xl transition-colors",
-                isActive ? "bg-foreground text-background" : "text-muted-foreground",
+                isActive ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground",
               )
             }
             aria-label={item.label}
