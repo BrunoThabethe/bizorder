@@ -8,25 +8,26 @@
 @layer base {
   :root,
   .dark {
-    /* Dark theme — Leopard Brown base, Gold accent, Off-White text */
-    --background: 28 31% 18%;
+    /* Dark theme — Near-black dashboard base, Gold accent, Off-White text.
+       Inspired by modern fintech/admin dashboards with gold replacing orange. */
+    --background: 0 0% 7%;
     --foreground: 0 0% 98%;
 
-    --card: 30 30% 22%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 30 30% 22%;
+    --popover: 0 0% 10%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 38 63% 60%;
     --primary-foreground: 0 0% 7%;
     --primary-glow: 38 70% 68%;
 
-    --secondary: 40 60% 89%;
-    --secondary-foreground: 28 31% 18%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 30 30% 22%;
-    --muted-foreground: 34 36% 64%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 64%;
 
     --accent: 38 63% 60%;
     --accent-foreground: 0 0% 7%;
@@ -40,36 +41,36 @@
     --info: 210 79% 46%;
     --info-foreground: 0 0% 98%;
 
-    --border: 24 31% 27%;
-    --input: 24 31% 27%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
     --ring: 38 63% 60%;
 
     --radius: 0.85rem;
 
-    --surface-elevated: 30 30% 22%;
+    --surface-elevated: 0 0% 12%;
     --surface-bright: 38 63% 60%;
     --surface-bright-foreground: 0 0% 7%;
 
-    --gradient-hero: radial-gradient(ellipse at top left, hsl(28 31% 22% / 0.7), transparent 55%),
-                     radial-gradient(ellipse at bottom right, hsl(24 31% 27% / 0.6), transparent 55%),
-                     linear-gradient(180deg, hsl(28 31% 18%) 0%, hsl(28 39% 12%) 100%);
-    --gradient-cta: linear-gradient(135deg, hsl(38 63% 60%) 0%, hsl(28 31% 18%) 100%);
-    --gradient-lime: linear-gradient(135deg, hsl(38 63% 60%) 0%, hsl(40 60% 89%) 100%);
-    --gradient-card: linear-gradient(160deg, hsl(30 30% 22%) 0%, hsl(28 31% 18%) 100%);
+    --gradient-hero: radial-gradient(ellipse at top left, hsl(38 63% 60% / 0.18), transparent 55%),
+                     radial-gradient(ellipse at bottom right, hsl(0 0% 14% / 0.8), transparent 55%),
+                     linear-gradient(180deg, hsl(0 0% 7%) 0%, hsl(0 0% 4%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(38 63% 60%) 0%, hsl(38 70% 50%) 100%);
+    --gradient-lime: linear-gradient(135deg, hsl(38 63% 60%) 0%, hsl(38 70% 68%) 100%);
+    --gradient-card: linear-gradient(160deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
 
-    --shadow-glow: 0 20px 60px -15px hsl(38 60% 58% / 0.25);
-    --shadow-lime: 0 20px 60px -15px hsl(38 63% 60% / 0.18);
-    --shadow-card: 0 10px 40px -10px hsl(0 0% 0% / 0.55);
+    --shadow-glow: 0 20px 60px -15px hsl(38 63% 60% / 0.45);
+    --shadow-lime: 0 20px 60px -15px hsl(38 63% 60% / 0.3);
+    --shadow-card: 0 10px 40px -10px hsl(0 0% 0% / 0.65);
 
     --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
-    --sidebar-background: 28 39% 12%;
+    --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 38 63% 60%;
     --sidebar-primary-foreground: 0 0% 7%;
-    --sidebar-accent: 30 30% 22%;
+    --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 24 31% 27%;
+    --sidebar-border: 0 0% 16%;
     --sidebar-ring: 38 63% 60%;
   }
 
