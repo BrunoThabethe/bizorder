@@ -32,8 +32,9 @@ export const REQUIRED_DOCUMENT_TYPES: DocumentType[] = [
 
 export const DOCUMENT_LABELS: Record<DocumentType, { title: string; helper: string; required: boolean }> = {
   owner_id: {
-    title: "Owner ID",
-    helper: "South African ID or passport (clear photo or scan).",
+    title: "Certified copy of owner's ID",
+    helper:
+      "Upload a certified copy of the owner's South African ID or passport. Certification must be done by a Commissioner of Oaths (police station, post office, or attorney) within the last 3 months — not just a regular photo.",
     required: true,
   },
   proof_of_residence: {

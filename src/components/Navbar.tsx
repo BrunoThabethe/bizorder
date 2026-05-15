@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { BrandMark } from "@/components/BrandMark";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -32,9 +33,7 @@ export const Navbar = () => {
     >
       <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
         <Link to="/" className="flex items-center gap-2 group">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
-            <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
-          </span>
+          <BrandMark size={40} className="ring-1 ring-primary/30" />
           <span className="font-display text-xl font-bold tracking-tight">BizOrder</span>
         </Link>
 

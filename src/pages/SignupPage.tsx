@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Briefcase, Eye, EyeOff, Loader2, ShoppingBag, Zap } from "lucide-react";
+import { ArrowRight, Briefcase, Eye, EyeOff, Loader2, ShoppingBag } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { z } from "zod";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { Button } from "@/components/ui/button";
@@ -113,9 +114,7 @@ const SignupPage = () => {
       <section className="relative flex min-h-screen items-center justify-center px-4 pt-32 pb-16 md:pt-40">
         <div className="w-full max-w-2xl rounded-2xl bg-background/40 p-7 backdrop-blur-md md:p-10">
           <Link to="/" className="inline-flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground">
-              <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
-            </span>
+            <BrandMark size={40} />
             <span className="font-display text-xl font-bold">BizOrder</span>
           </Link>
 

@@ -20,7 +20,7 @@ import {
   Users,
   Wallet,
   X,
-  Zap,
+  
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { BrandMark } from "@/components/BrandMark";
 
 type Props = { children: ReactNode };
 
@@ -75,9 +76,7 @@ export const AdminLayout = ({ children }: Props) => {
       <div className="mx-auto flex max-w-[1700px] gap-4 p-3 md:p-5">
         <aside className="hidden w-60 shrink-0 flex-col gap-1 rounded-3xl bg-card p-4 shadow-card md:flex">
           <NavLink to="/" className="mb-3 flex items-center gap-2 px-2">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
-              <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
-            </span>
+            <BrandMark size={36} />
             <span className="font-display text-lg font-bold">Admin</span>
           </NavLink>
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
@@ -144,9 +143,7 @@ export const AdminLayout = ({ children }: Props) => {
           <aside className="absolute inset-y-0 left-0 flex w-72 flex-col gap-1 overflow-y-auto bg-card p-4 shadow-card">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
-                  <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
-                </span>
+                <BrandMark size={36} />
                 <span className="font-display text-lg font-bold">Admin</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="grid h-9 w-9 place-items-center rounded-xl bg-muted">

@@ -14,7 +14,7 @@ import {
   Users,
   Wallet,
   X,
-  Zap,
+  
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { BrandMark } from "@/components/BrandMark";
 import { OnboardingGate } from "@/components/business/OnboardingGate";
 
 type Props = { children: ReactNode };
@@ -67,8 +68,8 @@ export const BusinessLayout = ({ children }: Props) => {
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-[1600px] gap-4 p-3 md:p-5">
         <aside className="hidden w-16 shrink-0 flex-col items-center gap-2 rounded-3xl bg-card py-5 shadow-card md:flex">
-          <NavLink to="/" className="grid h-10 w-10 place-items-center rounded-xl bg-primary">
-            <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
+          <NavLink to="/" className="grid h-10 w-10 place-items-center">
+            <BrandMark size={40} />
           </NavLink>
           <nav className="mt-4 flex flex-1 flex-col items-center gap-1">
             {navItems.map((item) => (
@@ -142,9 +143,7 @@ export const BusinessLayout = ({ children }: Props) => {
           <aside className="absolute inset-y-0 left-0 flex w-72 flex-col gap-1 bg-card p-4 shadow-card">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
-                  <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
-                </span>
+                <BrandMark size={36} />
                 <span className="font-display text-lg font-bold">BizOrder</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="grid h-9 w-9 place-items-center rounded-xl bg-muted">
