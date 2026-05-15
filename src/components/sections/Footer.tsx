@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { Link } from "react-router-dom";
 
 const productLinks = [
@@ -27,9 +27,7 @@ export const Footer = () => {
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <Link to="/" className="flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary">
-                <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
-              </span>
+              <BrandMark size={40} />
               <span className="font-display text-xl font-bold">BizOrder</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">

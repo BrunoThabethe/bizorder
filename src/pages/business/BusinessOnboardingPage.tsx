@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, FileText, Globe, Loader2, LogOut, MapPin, ShieldCheck, Upload, Zap } from "lucide-react";
+import { CheckCircle2, FileText, Globe, Loader2, LogOut, MapPin, ShieldCheck, Upload } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { z } from "zod";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -177,9 +178,7 @@ export const BusinessOnboardingPage = () => {
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground text-background">
-              <Zap className="h-5 w-5" strokeWidth={2.5} />
-            </span>
+            <BrandMark size={36} />
             <span className="font-display text-lg font-bold">BizOrder</span>
           </div>
           <Button variant="secondary" onClick={() => void onSignOut()}>

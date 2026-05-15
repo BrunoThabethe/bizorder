@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Eye, EyeOff, Info, Loader2, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Info, Loader2, Sparkles } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { z } from "zod";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { Button } from "@/components/ui/button";
@@ -162,9 +163,7 @@ const LoginPage = () => {
         <div className="grid w-full max-w-5xl gap-8 lg:grid-cols-[1.1fr_1fr]">
           <div className="rounded-2xl bg-background/40 p-7 backdrop-blur-md md:p-10">
             <Link to="/" className="inline-flex items-center gap-2">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-foreground">
-                <Zap className="h-5 w-5 text-background" strokeWidth={2.5} />
-              </span>
+              <BrandMark size={40} />
               <span className="font-display text-xl font-bold">BizOrder</span>
             </Link>
 

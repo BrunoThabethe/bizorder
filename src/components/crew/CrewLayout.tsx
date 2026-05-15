@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Bell, Briefcase, Home, LogOut, Menu, User, X, Zap } from "lucide-react";
+import { Bell, Briefcase, Home, LogOut, Menu, User, X } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
