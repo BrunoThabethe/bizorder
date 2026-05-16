@@ -33,7 +33,7 @@ export const Navbar = () => {
     >
       <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
         <Link to="/" className="flex items-center gap-2 group">
-          <BrandMark size={40} className="ring-1 ring-primary/30" />
+          <BrandMark size={40} />
           <span className="font-display text-xl font-bold tracking-tight">BizOrder</span>
         </Link>
 
