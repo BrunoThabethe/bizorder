@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SignedImage } from "@/components/orders/SignedImage";
 import { fetchAdminOrderDetail, formatPrice } from "@/lib/admin/queries";
+import { useRealtimeInvalidate } from "@/lib/cache";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE: Record<string, string> = {
@@ -87,6 +88,18 @@ const AdminOrderDetailPage = () => {
     queryFn: () => fetchAdminOrderDetail(orderId),
     enabled: !!orderId,
   });
+
+  useRealtimeInvalidate(
+    [
+      { table: "orders", filter: `id=eq.${orderId}` },
+      { table: "order_events", filter: `order_id=eq.${orderId}` },
+      { table: "order_progress", filter: `order_id=eq.${orderId}` },
+      { table: "messages", filter: `order_id=eq.${orderId}` },
+      { table: "disputes", filter: `order_id=eq.${orderId}` },
+    ],
+    [["admin", "order", orderId]],
+    { enabled: !!orderId },
+  );
 
   if (isLoading) {
     return (

@@ -36,6 +36,7 @@ import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { ProviderStageStepper } from "@/components/orders/ProviderStageStepper";
+import { useRealtimeInvalidate } from "@/lib/cache";
 import { cn } from "@/lib/utils";
 
 const BusinessOrderDetailPage = () => {
@@ -67,6 +68,23 @@ const BusinessOrderDetailPage = () => {
     queryFn: () => fetchCrew(businessId),
     enabled: !!businessId,
   });
+
+  useRealtimeInvalidate(
+    [
+      { table: "orders", filter: `id=eq.${orderId}` },
+      { table: "order_events", filter: `order_id=eq.${orderId}` },
+      { table: "order_progress", filter: `order_id=eq.${orderId}` },
+      { table: "order_tasks", filter: `order_id=eq.${orderId}` },
+      { table: "messages", filter: `order_id=eq.${orderId}` },
+    ],
+    [
+      ["business-order", orderId],
+      ["order-progress", orderId],
+      ["order-tasks", orderId],
+      ["order-messages", orderId],
+    ],
+    { enabled: !!orderId },
+  );
 
   const [eta, setEta] = useState("");
   const [rejectReason, setRejectReason] = useState("");
