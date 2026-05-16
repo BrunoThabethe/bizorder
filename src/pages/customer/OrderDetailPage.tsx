@@ -29,6 +29,7 @@ import { customerConfirmCompletion, fetchOrderProgress } from "@/lib/business/qu
 import { SignedImage } from "@/components/orders/SignedImage";
 import { OpenDisputeButton } from "@/components/orders/OpenDisputeButton";
 import { OrderStatusStepper } from "@/components/orders/OrderStatusStepper";
+import { useRealtimeInvalidate } from "@/lib/cache";
 import { cn } from "@/lib/utils";
 
 const OrderDetailPage = () => {
@@ -67,6 +68,26 @@ const OrderDetailPage = () => {
     queryFn: () => fetchOrderDisputes(orderId),
     enabled: !!orderId,
   });
+
+  // Realtime → cache: any new message, event, progress row, or status flip on
+  // this order invalidates the matching cache so the screen updates live.
+  useRealtimeInvalidate(
+    [
+      { table: "orders", filter: `id=eq.${orderId}` },
+      { table: "order_events", filter: `order_id=eq.${orderId}` },
+      { table: "messages", filter: `order_id=eq.${orderId}` },
+      { table: "order_progress", filter: `order_id=eq.${orderId}` },
+      { table: "disputes", filter: `order_id=eq.${orderId}` },
+    ],
+    [
+      ["order", orderId],
+      ["order-events", orderId],
+      ["order-messages", orderId],
+      ["order-progress", orderId],
+      ["order-disputes", orderId],
+    ],
+    { enabled: !!orderId },
+  );
 
   const sendMessage = useMutation({
     mutationFn: async (body: string) => {
