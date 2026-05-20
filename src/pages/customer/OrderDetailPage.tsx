@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, Loader2, Send, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, MessageSquare, Send, Star } from "lucide-react";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -210,28 +210,31 @@ const OrderDetailPage = () => {
           </div>
         ) : null}
 
-        {(showApprove || !hasActiveDispute) && (
-          <div className="mt-5 flex flex-wrap gap-2">
-            {showApprove && (
-              <Button size="lg" onClick={() => approveCompletion.mutate()} disabled={approveCompletion.isPending}>
-                {approveCompletion.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4" /> Approve completion
-                  </>
-                )}
-              </Button>
-            )}
-            {!hasActiveDispute && !completed && (
-              <OpenDisputeButton
-                orderId={order.id}
-                variant="secondary"
-                onOpened={() => qc.invalidateQueries({ queryKey: ["order-disputes", orderId] })}
-              />
-            )}
-          </div>
-        )}
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button asChild size="lg" variant="secondary">
+            <Link to={`/customer/messages?order=${order.id}`}>
+              <MessageSquare className="h-4 w-4" /> Message provider
+            </Link>
+          </Button>
+          {showApprove && (
+            <Button size="lg" onClick={() => approveCompletion.mutate()} disabled={approveCompletion.isPending}>
+              {approveCompletion.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" /> Approve completion
+                </>
+              )}
+            </Button>
+          )}
+          {!hasActiveDispute && !completed && (
+            <OpenDisputeButton
+              orderId={order.id}
+              variant="secondary"
+              onOpened={() => qc.invalidateQueries({ queryKey: ["order-disputes", orderId] })}
+            />
+          )}
+        </div>
       </header>
 
       {/* Tabs */}
