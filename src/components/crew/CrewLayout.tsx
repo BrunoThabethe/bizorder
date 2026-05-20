@@ -58,7 +58,7 @@ export const CrewLayout = ({ children }: Props) => {
                     "grid h-11 w-11 place-items-center rounded-xl transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-glow"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      : "text-muted-foreground hover:bg-accent/15 hover:text-foreground",
                   )
                 }
               >
@@ -69,7 +69,7 @@ export const CrewLayout = ({ children }: Props) => {
           <button
             onClick={onSignOut}
             title="Sign out"
-            className="grid h-11 w-11 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="grid h-11 w-11 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground"
           >
             <LogOut className="h-5 w-5" />
           </button>
@@ -92,7 +92,7 @@ export const CrewLayout = ({ children }: Props) => {
             </div>
             <NavLink
               to="/crew/notifications"
-              className="relative grid h-10 w-10 place-items-center rounded-xl bg-muted text-foreground hover:bg-muted/70"
+              className="relative grid h-10 w-10 place-items-center rounded-xl bg-muted text-foreground hover:bg-accent/15 hover:text-foreground"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
@@ -131,7 +131,7 @@ export const CrewLayout = ({ children }: Props) => {
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors",
-                    isActive ? "bg-primary text-primary-foreground shadow-glow" : "text-foreground hover:bg-muted",
+                    isActive ? "bg-primary text-primary-foreground shadow-glow" : "text-foreground hover:bg-accent/15",
                   )
                 }
               >
