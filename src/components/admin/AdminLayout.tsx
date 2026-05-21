@@ -90,7 +90,7 @@ export const AdminLayout = ({ children }: Props) => {
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-glow"
-                      : "text-muted-foreground hover:bg-accent/15 hover:text-foreground",
+                      : "text-muted-foreground hover:bg-primary/15 hover:text-primary",
                   )
                 }
               >
@@ -120,7 +120,7 @@ export const AdminLayout = ({ children }: Props) => {
               />
             </div>
             <button
-              className="relative grid h-10 w-10 place-items-center rounded-xl bg-muted text-foreground hover:bg-accent/15 hover:text-foreground"
+              className="relative grid h-10 w-10 place-items-center rounded-xl bg-muted text-foreground hover:bg-primary/15 hover:text-primary"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
@@ -159,7 +159,7 @@ export const AdminLayout = ({ children }: Props) => {
                 className={({ isActive }) =>
                   cn(
                     "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors",
-                    isActive ? "bg-primary text-primary-foreground shadow-glow" : "text-foreground hover:bg-accent/15",
+                    isActive ? "bg-primary text-primary-foreground shadow-glow" : "text-foreground hover:bg-primary/15 hover:text-primary",
                   )
                 }
               >

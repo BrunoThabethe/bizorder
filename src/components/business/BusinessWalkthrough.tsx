@@ -61,7 +61,7 @@ export const BusinessWalkthrough = ({ ownerId }: Props) => {
           type="button"
           onClick={finish}
           aria-label="Skip walkthrough"
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-muted text-foreground hover:bg-accent/15 hover:text-foreground"
+          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-muted text-foreground hover:bg-primary/15 hover:text-primary"
         >
           <X className="h-4 w-4" />
         </button>
