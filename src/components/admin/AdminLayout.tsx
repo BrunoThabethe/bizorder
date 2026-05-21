@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   Bell,
@@ -30,6 +31,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { BrandMark } from "@/components/BrandMark";
+
+const fetchPendingChangeRequestsCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from("profile_change_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+  if (error) return 0;
+  return count ?? 0;
+};
+
+
 
 type Props = { children: ReactNode };
 
