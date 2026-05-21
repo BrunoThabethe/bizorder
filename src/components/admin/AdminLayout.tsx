@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   Bell,
@@ -31,6 +32,17 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { BrandMark } from "@/components/BrandMark";
 
+const fetchPendingChangeRequestsCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from("profile_change_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+  if (error) return 0;
+  return count ?? 0;
+};
+
+
+
 type Props = { children: ReactNode };
 
 const navItems = [
@@ -57,6 +69,12 @@ export const AdminLayout = ({ children }: Props) => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const { data: pendingChangeRequests = 0 } = useQuery({
+    queryKey: ["admin-change-requests-count"],
+    queryFn: fetchPendingChangeRequestsCount,
+    refetchInterval: 30_000,
+  });
+
   const fullName = (user?.user_metadata?.full_name as string | undefined) ?? "Admin";
   const initials = fullName
     .split(" ")
@@ -64,6 +82,7 @@ export const AdminLayout = ({ children }: Props) => {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
 
   const onSignOut = async () => {
     await supabase.auth.signOut();
@@ -120,11 +139,20 @@ export const AdminLayout = ({ children }: Props) => {
               />
             </div>
             <button
+              type="button"
+              onClick={() => navigate("/admin/change-requests")}
               className="relative grid h-10 w-10 place-items-center rounded-xl bg-muted text-foreground hover:bg-primary/15 hover:text-primary"
-              aria-label="Notifications"
+              aria-label={`Change requests${pendingChangeRequests > 0 ? `, ${pendingChangeRequests} pending` : ""}`}
+              title={pendingChangeRequests > 0 ? `${pendingChangeRequests} pending change request${pendingChangeRequests === 1 ? "" : "s"}` : "No pending change requests"}
             >
               <Bell className="h-5 w-5" />
+              {pendingChangeRequests > 0 ? (
+                <span className="absolute -right-1 -top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-glow">
+                  {pendingChangeRequests > 9 ? "9+" : pendingChangeRequests}
+                </span>
+              ) : null}
             </button>
+
             <div className="hidden items-center gap-3 rounded-2xl bg-muted px-2 py-1.5 sm:flex">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials}</AvatarFallback>

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   Briefcase,
+  FileEdit,
   Inbox,
   Loader2,
   ShieldCheck,
@@ -11,6 +12,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+
 import {
   Area,
   AreaChart,
@@ -23,6 +25,7 @@ import {
   YAxis,
 } from "recharts";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchAdminMetrics, fetchAdminTrends, formatNumber, formatPrice } from "@/lib/admin/queries";
 import { cn } from "@/lib/utils";
@@ -107,6 +110,19 @@ const AdminDashboardPage = () => {
     queryKey: ["admin", "trends"],
     queryFn: fetchAdminTrends,
   });
+  const { data: pendingChangeRequests = 0 } = useQuery({
+    queryKey: ["admin-change-requests-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("profile_change_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      return count ?? 0;
+    },
+    refetchInterval: 30_000,
+  });
+
+
 
   const orderPieData = useMemo(() => {
     if (!m) return [];
@@ -333,6 +349,14 @@ const AdminDashboardPage = () => {
                 icon={ShieldCheck}
                 tone="warning"
                 to="/admin/verification"
+              />
+              <Kpi
+                label="Change requests"
+                value={formatNumber(pendingChangeRequests)}
+                hint={pendingChangeRequests > 0 ? "Waiting for your review" : "All caught up"}
+                icon={FileEdit}
+                tone={pendingChangeRequests > 0 ? "warning" : "default"}
+                to="/admin/change-requests"
               />
               <Kpi
                 label="Customers"
