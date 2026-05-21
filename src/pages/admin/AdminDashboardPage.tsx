@@ -25,6 +25,7 @@ import {
   YAxis,
 } from "recharts";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchAdminMetrics, fetchAdminTrends, formatNumber, formatPrice } from "@/lib/admin/queries";
 import { cn } from "@/lib/utils";
