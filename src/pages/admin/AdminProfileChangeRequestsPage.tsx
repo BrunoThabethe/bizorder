@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, X } from "lucide-react";
+import { Briefcase, Check, Loader2, User, X } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,15 +20,41 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { sb, type ProfileChangeRequest } from "@/lib/business/queries";
 
-type RequestRow = ProfileChangeRequest & { businesses?: { name: string | null } | null };
+type RequestRow = ProfileChangeRequest & {
+  businesses?: { name: string | null } | null;
+  target_user_id?: string | null;
+  submitter?: { full_name: string | null; email: string | null } | null;
+};
 
-const fetchAllRequests = async () => {
+const fetchAllRequests = async (): Promise<RequestRow[]> => {
   const { data, error } = await sb
     .from("profile_change_requests")
     .select("*, businesses(name)")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as RequestRow[];
+  const rows = (data ?? []) as RequestRow[];
+
+  // Hydrate submitter profile for user-scoped requests
+  const userIds = Array.from(
+    new Set(
+      rows
+        .filter((r) => !r.business_id)
+        .map((r) => r.target_user_id ?? r.submitted_by)
+        .filter((v): v is string => !!v),
+    ),
+  );
+  if (userIds.length === 0) return rows;
+
+  const { data: profiles } = await sb
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", userIds);
+  const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+  return rows.map((r) => {
+    const key = r.target_user_id ?? r.submitted_by;
+    const p = key ? byId.get(key) : undefined;
+    return { ...r, submitter: p ? { full_name: p.full_name, email: p.email } : null };
+  });
 };
 
 const STATUS_TONE: Record<ProfileChangeRequest["status"], string> = {
@@ -63,20 +89,26 @@ const AdminProfileChangeRequestsPage = () => {
       setDialog(null);
       setReason("");
       qc.invalidateQueries({ queryKey: ["admin-change-requests"] });
+      qc.invalidateQueries({ queryKey: ["admin-change-requests-count"] });
     },
     onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
   });
+
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
 
   return (
     <AdminLayout>
       <PageHeader
         eyebrow="Profile changes"
-        title="Business change requests"
-        description="Approve or deny requests to change a business's name, phone, or email."
+        title="Change requests"
+        description="Customers and providers ask to change their name, email, or phone. Approve or deny with a note."
       />
 
       <Card className="rounded-3xl border-0 shadow-card">
         <CardContent className="p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{pendingCount} pending · {requests.length} total</p>
+          </div>
           {isLoading ? (
             <div className="grid place-items-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -87,38 +119,47 @@ const AdminProfileChangeRequestsPage = () => {
             </p>
           ) : (
             <ul className="divide-y divide-border">
-              {requests.map((r) => (
-                <li key={r.id} className="grid gap-3 py-4 md:grid-cols-[1fr_auto] md:items-center">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate font-semibold">{r.businesses?.name ?? "Unknown business"}</p>
-                      <Badge className={STATUS_TONE[r.status]}>{r.status}</Badge>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                        {r.field}
-                      </span>
+              {requests.map((r) => {
+                const isBusiness = !!r.business_id;
+                const who = isBusiness
+                  ? r.businesses?.name ?? "Unknown business"
+                  : r.submitter?.full_name || r.submitter?.email || "Unknown user";
+                return (
+                  <li key={r.id} className="grid gap-3 py-4 md:grid-cols-[1fr_auto] md:items-center">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
+                          {isBusiness ? <Briefcase className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
+                        </span>
+                        <p className="truncate font-semibold">{who}</p>
+                        <Badge className={STATUS_TONE[r.status]}>{r.status}</Badge>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {isBusiness ? "Business" : "Customer"} · {r.field}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm">
+                        <span className="text-muted-foreground line-through">{r.current_value || "—"}</span>{" "}
+                        <span className="mx-1 text-muted-foreground">→</span>
+                        <span className="font-semibold">{r.requested_value}</span>
+                      </p>
+                      {r.reason ? <p className="mt-1 text-xs text-muted-foreground">Reason: {r.reason}</p> : null}
+                      {r.decision_reason ? (
+                        <p className="mt-1 text-xs text-muted-foreground">Admin note: {r.decision_reason}</p>
+                      ) : null}
                     </div>
-                    <p className="mt-1 text-sm">
-                      <span className="text-muted-foreground line-through">{r.current_value || "—"}</span>{" "}
-                      <span className="mx-1 text-muted-foreground">→</span>
-                      <span className="font-semibold">{r.requested_value}</span>
-                    </p>
-                    {r.reason ? <p className="mt-1 text-xs text-muted-foreground">Reason: {r.reason}</p> : null}
-                    {r.decision_reason ? (
-                      <p className="mt-1 text-xs text-muted-foreground">Admin note: {r.decision_reason}</p>
-                    ) : null}
-                  </div>
-                  {r.status === "pending" && (
-                    <div className="flex gap-2 md:justify-end">
-                      <Button variant="secondary" onClick={() => setDialog({ id: r.id, approve: false })}>
-                        <X className="h-4 w-4" /> Deny
-                      </Button>
-                      <Button onClick={() => setDialog({ id: r.id, approve: true })}>
-                        <Check className="h-4 w-4" /> Approve
-                      </Button>
-                    </div>
-                  )}
-                </li>
-              ))}
+                    {r.status === "pending" && (
+                      <div className="flex gap-2 md:justify-end">
+                        <Button variant="secondary" onClick={() => setDialog({ id: r.id, approve: false })}>
+                          <X className="h-4 w-4" /> Deny
+                        </Button>
+                        <Button onClick={() => setDialog({ id: r.id, approve: true })}>
+                          <Check className="h-4 w-4" /> Approve
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </CardContent>
@@ -130,8 +171,8 @@ const AdminProfileChangeRequestsPage = () => {
             <DialogTitle>{dialog?.approve ? "Approve change" : "Deny change"}</DialogTitle>
             <DialogDescription>
               {dialog?.approve
-                ? "The change will be applied immediately and the business owner will be notified."
-                : "Add a brief note so the business owner understands why."}
+                ? "The change will be applied immediately and the requester will be notified."
+                : "Add a brief note so the requester understands why."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
