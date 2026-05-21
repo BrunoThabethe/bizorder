@@ -49,12 +49,14 @@ const fetchAllRequests = async (): Promise<RequestRow[]> => {
     .from("profiles")
     .select("id, full_name, email")
     .in("id", userIds);
-  const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const list = (profiles ?? []) as Array<{ id: string; full_name: string | null; email: string | null }>;
+  const byId = new Map(list.map((p) => [p.id, p]));
   return rows.map((r) => {
     const key = r.target_user_id ?? r.submitted_by;
     const p = key ? byId.get(key) : undefined;
     return { ...r, submitter: p ? { full_name: p.full_name, email: p.email } : null };
   });
+
 };
 
 const STATUS_TONE: Record<ProfileChangeRequest["status"], string> = {
