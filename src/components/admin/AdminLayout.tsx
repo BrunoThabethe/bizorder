@@ -69,6 +69,12 @@ export const AdminLayout = ({ children }: Props) => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const { data: pendingChangeRequests = 0 } = useQuery({
+    queryKey: ["admin-change-requests-count"],
+    queryFn: fetchPendingChangeRequestsCount,
+    refetchInterval: 30_000,
+  });
+
   const fullName = (user?.user_metadata?.full_name as string | undefined) ?? "Admin";
   const initials = fullName
     .split(" ")
@@ -76,6 +82,7 @@ export const AdminLayout = ({ children }: Props) => {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
 
   const onSignOut = async () => {
     await supabase.auth.signOut();
