@@ -113,7 +113,7 @@ const AdminDashboardPage = () => {
   const { data: pendingChangeRequests = 0 } = useQuery({
     queryKey: ["admin-change-requests-count"],
     queryFn: async () => {
-      const { count } = await (await import("@/integrations/supabase/client")).supabase
+      const { count } = await supabase
         .from("profile_change_requests")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending");
@@ -121,6 +121,7 @@ const AdminDashboardPage = () => {
     },
     refetchInterval: 30_000,
   });
+
 
 
   const orderPieData = useMemo(() => {
