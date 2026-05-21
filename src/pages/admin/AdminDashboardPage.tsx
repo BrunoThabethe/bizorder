@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   Briefcase,
+  FileEdit,
   Inbox,
   Loader2,
   ShieldCheck,
@@ -11,6 +12,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+
 import {
   Area,
   AreaChart,
