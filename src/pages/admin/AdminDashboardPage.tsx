@@ -349,6 +349,14 @@ const AdminDashboardPage = () => {
                 to="/admin/verification"
               />
               <Kpi
+                label="Change requests"
+                value={formatNumber(pendingChangeRequests)}
+                hint={pendingChangeRequests > 0 ? "Waiting for your review" : "All caught up"}
+                icon={FileEdit}
+                tone={pendingChangeRequests > 0 ? "warning" : "default"}
+                to="/admin/change-requests"
+              />
+              <Kpi
                 label="Customers"
                 value={formatNumber(m.customers)}
                 hint="Buying on the platform"
