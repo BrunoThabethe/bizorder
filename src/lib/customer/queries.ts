@@ -174,3 +174,35 @@ export const fetchMyProfile = async (userId: string) => {
   if (error) throw error;
   return data as Profile | null;
 };
+
+export type ProfileChangeRequest = Database["public"]["Tables"]["profile_change_requests"]["Row"];
+
+export const fetchMyUserChangeRequests = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("profile_change_requests")
+    .select("*")
+    .eq("target_user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as ProfileChangeRequest[];
+};
+
+export const submitUserChangeRequest = async (input: {
+  userId: string;
+  field: "name" | "phone" | "email";
+  currentValue: string | null;
+  requestedValue: string;
+  reason: string | null;
+}) => {
+  const { error } = await supabase.from("profile_change_requests").insert({
+    target_user_id: input.userId,
+    business_id: null,
+    submitted_by: input.userId,
+    field: input.field,
+    current_value: input.currentValue,
+    requested_value: input.requestedValue,
+    reason: input.reason,
+  });
+  if (error) throw error;
+};
+
