@@ -1,47 +1,67 @@
 ## Goal
 
-Give providers a dedicated **Availability** page to manage working hours, and make the customer booking flow only accept dates/times that fall inside those hours AND are not already booked.
+Give providers a clear visual calendar of booked vs free slots, and let crew capacity drive how many simultaneous bookings a slot can accept. When all crew are taken, that slot disappears for customers and the provider is shown as Busy.
 
-## Provider portal — new Availability page
+## 1. Capacity model
 
-Add `/business/availability` route + sidebar entry ("Availability", Clock icon) in `BusinessLayout`.
+A slot is "free" only if `active crew count` (or 1 if no crew) > concurrent bookings overlapping it.
 
-Page `src/pages/business/BusinessAvailabilityPage.tsx`:
-- Status card (reuses `business_settings`): availability dropdown (Available / Busy / Away / Closed) + optional "Back on" date when Away.
-- **Weekly working hours** editor: per-day toggle (open/closed) with one or more `opens_at`–`closes_at` ranges. Same shape currently embedded in `BusinessSettingsPage` — move that block here so settings page focuses on profile only.
-- **Upcoming bookings preview**: read-only list of next 7 days of accepted/in-progress orders with `scheduled_for`, so the provider can see what's already taken.
-- Save uses existing `upsertBusinessSettings` + `replaceBusinessHours` helpers.
+Update `public.is_slot_available(_business_id, _start, _end)` to:
 
-Remove the duplicate Weekly availability block from `BusinessSettingsPage.tsx` and link to the new page.
+```text
+capacity = COALESCE((SELECT COUNT(*) FROM crew_members
+                     WHERE business_id = _business_id AND is_active = true), 0)
+capacity = GREATEST(capacity, 1)   -- solo provider counts as 1
+overlapping = COUNT(orders) where order.status NOT IN (cancelled, completed)
+              AND scheduled_for range overlaps [_start, _end)
+RETURN overlapping < capacity
+```
 
-## Customer booking — respect hours and free slots
+`list_free_slots` already calls `is_slot_available`, so it inherits the new rule automatically.
 
-In `src/pages/customer/CreateOrderPage.tsx`:
+Add small helper `public.business_capacity(_business_id uuid) RETURNS int` so both the RPC and the UI can read the same number.
 
-1. Fetch provider's `business_hours` (already exposed via RLS to authenticated users for published businesses).
-2. Fetch the provider's upcoming `orders` rows for the selected date (status not in cancelled/completed) with `scheduled_for` and joined service `duration_minutes`.
-3. Replace the free-form `datetime-local` input with:
-   - A **date picker** (shadcn Calendar in a Popover) — disable days where `business_hours.is_open = false` for that weekday, days fully booked, and days before today / after Away-until.
-   - A **time slot grid** generated from the day's open ranges, stepped by the selected service `duration_minutes` (default 60 min). Each candidate slot is filtered out if it overlaps an existing order (same logic as `is_slot_available`).
-   - Show "No slots available — try another day" when empty.
-4. Keep server-side `is_slot_available` RPC check on submit as the final guard.
-5. Update the availability/away gating message to reference the new picker.
+## 2. Provider Availability page — calendar + clock view
+
+Extend `BusinessAvailabilityPage.tsx` with a new "Schedule" card above the weekly hours editor:
+
+- **Month calendar** (shadcn `Calendar`, single select). Day cells show a small indicator:
+  - grey dot = closed
+  - amber dot = partially booked
+  - red dot = fully booked (all crew taken for every slot)
+- **Day clock view** (right side, or below on mobile): vertical list of every slot generated from that day's open ranges stepped by 60 min, showing `HH:mm – HH:mm · X/Y booked` with a coloured pill (green = free, amber = some crew taken, red = full).
+- Live status badge updates: if today's current hour is full → show "Busy" badge; if availability is manually set, that wins.
+
+New helpers in `src/lib/business/queries.ts`:
+- `fetchBusinessSlotsForDay(businessId, date)` → returns array of `{ start, end, capacity, booked }` (single round trip — new RPC `list_day_slots`).
+
+New RPC `public.list_day_slots(_business_id uuid, _date date, _duration_minutes int default 60)` returns `setof (slot_start timestamptz, slot_end timestamptz, capacity int, booked int)`. Same loop as `list_free_slots` but returns counts instead of filtering.
+
+## 3. Customer booking — automatic capacity respect
+
+`CreateOrderPage.tsx` already calls `list_free_slots`. With the capacity-aware `is_slot_available`, fully booked slots will drop out automatically — no UI change needed beyond what's already there.
+
+Add a subtle "X of Y open" label under each slot button by switching the customer fetch from `list_free_slots` to `list_day_slots` and filtering `booked < capacity` client-side, so the customer sees realistic remaining capacity per slot.
+
+## 4. Auto-Busy status
+
+Add an effective availability indicator on the customer-facing business profile:
+
+- Compute on the client when rendering the provider card: if `availability = 'available'` AND **today** has zero free slots for the rest of the day at the smallest service duration, show "Busy today" badge (existing manual `busy`/`away`/`closed` still wins).
+
+No DB write — purely derived so it stays accurate without cron.
+
+## 5. Files touched
+
+- `supabase/migrations/<new>.sql` — replace `is_slot_available`, add `business_capacity`, add `list_day_slots`.
+- `src/lib/business/queries.ts` — `fetchBusinessSlotsForDay` + types.
+- `src/pages/business/BusinessAvailabilityPage.tsx` — new calendar + clock card, day indicators.
+- `src/pages/customer/CreateOrderPage.tsx` — swap to `list_day_slots`, show "X of Y open".
+- `src/pages/customer/BusinessProfilePage.tsx` — derived "Busy today" badge.
 
 ## Technical notes
 
-- New file: `src/pages/business/BusinessAvailabilityPage.tsx`. Route added in `src/App.tsx` under `RoleGuard allow={["business"]}`.
-- Reuse existing helpers in `src/lib/business/queries.ts` (`fetchBusinessSettings`, `upsertBusinessSettings`, `fetchBusinessHours`, `replaceBusinessHours`). Add `fetchBusinessUpcomingOrders(businessId, fromIso, toIso)` returning `{ scheduled_for, services: { duration_minutes } }[]` (RLS already allows owners to read their own orders; for the customer-side overlap check we'll rely on the existing `is_slot_available` RPC — we don't need to read other customers' orders client-side).
-- Customer slot rendering computes available slots purely from `business_hours` ranges + provider's own published "busy" set. Because customers cannot read others' orders due to RLS, the slot grid will instead call `is_slot_available` lazily as the user picks a slot (slot button shows loading → disabled if not free), OR we expose a SECURITY DEFINER RPC `list_free_slots(_business_id, _date, _duration_minutes)` that returns the list of free start times for that date. **Recommended:** add this RPC so the grid renders only truly-free slots in one round trip.
-- Migration: add `public.list_free_slots(_business_id uuid, _date date, _duration_minutes int)` returning `setof timestamptz`. It iterates open ranges for that weekday and excludes any slot whose `[start, start+duration)` overlaps an existing non-cancelled/non-completed order (mirroring `is_slot_available`).
-- Honour `business_settings.availability` ("busy"/"closed" → no slots) and `away_until` (no slots before that date).
-- Keep date format DD/MM/YYYY in the UI per project conventions.
-
-## Files touched
-
-- `supabase/migrations/<new>.sql` — `list_free_slots` RPC.
-- `src/App.tsx` — new route.
-- `src/components/business/BusinessLayout.tsx` — sidebar item.
-- `src/pages/business/BusinessAvailabilityPage.tsx` — new page.
-- `src/pages/business/BusinessSettingsPage.tsx` — remove weekly availability block, add link to new page.
-- `src/lib/business/queries.ts` — add `listFreeSlots` helper.
-- `src/pages/customer/CreateOrderPage.tsx` — new date + slot picker UI.
+- All RPCs `SECURITY DEFINER`, `STABLE`, `search_path = public`.
+- Capacity is read fresh on each call; no caching needed.
+- Day indicator colours use existing semantic tokens (`bg-emerald-500`, `bg-amber-500`, `bg-destructive`) via Tailwind — no new tokens.
+- Date format stays DD/MM/YYYY; times in 24h `HH:mm`.
