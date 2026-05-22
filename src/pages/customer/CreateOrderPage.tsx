@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ImageIcon, Loader2, MapPin, ShieldCheck, Truck, Store, X } from "lucide-react";
+import { ArrowLeft, CalendarIcon, ImageIcon, Loader2, MapPin, ShieldCheck, Truck, Store, X } from "lucide-react";
 import { z } from "zod";
+import { format } from "date-fns";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +24,13 @@ import {
   type Address,
   type Service,
 } from "@/lib/customer/queries";
-import { AVAILABILITY_LABEL, fetchBusinessSettings, type Availability } from "@/lib/business/queries";
+import {
+  AVAILABILITY_LABEL,
+  fetchBusinessHours,
+  fetchBusinessSettings,
+  listFreeSlots,
+  type Availability,
+} from "@/lib/business/queries";
 
 const orderSchema = z.object({
   serviceId: z.string().uuid(),
@@ -53,7 +63,9 @@ const CreateOrderPage = () => {
   const [serviceId, setServiceId] = useState(initialServiceId);
   const [addressId, setAddressId] = useState<string>("");
   const [notes, setNotes] = useState("");
-  const [scheduledFor, setScheduledFor] = useState("");
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
+  const [scheduledSlot, setScheduledSlot] = useState<string>(""); // ISO timestamp
+  const scheduledFor = scheduledSlot;
   const [submitting, setSubmitting] = useState(false);
   const [refFile, setRefFile] = useState<File | null>(null);
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
@@ -81,6 +93,11 @@ const CreateOrderPage = () => {
     queryFn: () => fetchBusinessSettings(businessId),
     enabled: !!businessId,
   });
+  const { data: providerHours = [] } = useQuery({
+    queryKey: ["business-hours", businessId],
+    queryFn: () => fetchBusinessHours(businessId),
+    enabled: !!businessId,
+  });
 
   useEffect(() => {
     if (!serviceId && services[0]) setServiceId(services[0].id);
@@ -102,6 +119,26 @@ const CreateOrderPage = () => {
   const deliveryFee = fulfillment === "delivery" ? Math.max(0, perKm * km) : 0;
   const basePrice = Number(selectedService?.price ?? 0);
   const total = basePrice + deliveryFee;
+
+  const slotDuration = Number(selectedService?.duration_minutes ?? 60);
+  const dateKey = scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : "";
+  const { data: freeSlots = [], isFetching: slotsLoading } = useQuery({
+    queryKey: ["free-slots", businessId, dateKey, slotDuration],
+    queryFn: () => listFreeSlots(businessId, dateKey, slotDuration),
+    enabled: !!businessId && !!dateKey && isService,
+  });
+
+  // Reset slot when date or service duration changes
+  useEffect(() => {
+    setScheduledSlot("");
+  }, [dateKey, slotDuration]);
+
+  const openWeekdays = useMemo(() => {
+    const s = new Set<number>();
+    for (const h of providerHours) if (h.is_open) s.add(h.day_of_week);
+    return s;
+  }, [providerHours]);
+  const awayUntil = settings?.away_until ? new Date(settings.away_until) : null;
 
   // Availability gating: services need provider available OR a future scheduled time
   const scheduledFuture = scheduledFor && new Date(scheduledFor).getTime() > Date.now() + 30 * 60 * 1000;
@@ -421,15 +458,80 @@ const CreateOrderPage = () => {
             <h2 className="font-display text-base font-bold">Details</h2>
             <div className="mt-3 grid gap-3">
               <div className="space-y-2">
-                <Label htmlFor="scheduledFor">Preferred date and time {isService && availability !== "available" ? "(required)" : "(optional)"}</Label>
-                <Input
-                  id="scheduledFor"
-                  type="datetime-local"
-                  value={scheduledFor}
-                  onChange={(e) => setScheduledFor(e.target.value)}
-                  className="h-11 rounded-2xl border-0 bg-muted"
-                />
+                <Label>Preferred date {isService && availability !== "available" ? "(required)" : "(optional)"}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className={cn(
+                        "h-11 w-full justify-start rounded-2xl border-0 bg-muted font-normal",
+                        !scheduledDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {scheduledDate ? format(scheduledDate, "dd/MM/yyyy") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={scheduledDate}
+                      onSelect={setScheduledDate}
+                      disabled={(d) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (d < today) return true;
+                        if (awayUntil && d < awayUntil) return true;
+                        if (openWeekdays.size > 0 && !openWeekdays.has(d.getDay())) return true;
+                        return false;
+                      }}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {isService && scheduledDate ? (
+                  <div className="space-y-2 pt-1">
+                    <Label className="text-xs text-muted-foreground">Available time slots</Label>
+                    {slotsLoading ? (
+                      <p className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Checking the provider's calendar…
+                      </p>
+                    ) : freeSlots.length === 0 ? (
+                      <p className="rounded-2xl bg-muted/40 p-3 text-xs text-muted-foreground">
+                        No free slots on this day. Try another date — the provider may be fully booked or closed.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                        {freeSlots.map((iso) => {
+                          const time = new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+                          const active = scheduledSlot === iso;
+                          return (
+                            <button
+                              type="button"
+                              key={iso}
+                              onClick={() => setScheduledSlot(iso)}
+                              className={cn(
+                                "rounded-xl px-2 py-2 text-xs font-semibold transition-colors",
+                                active
+                                  ? "bg-primary text-primary-foreground shadow-glow"
+                                  : "bg-muted text-foreground hover:bg-primary/15 hover:text-primary",
+                              )}
+                            >
+                              {time}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      Slots are {slotDuration} minutes long and only show times that aren't already booked.
+                    </p>
+                  </div>
+                ) : null}
               </div>
+
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes for the provider</Label>

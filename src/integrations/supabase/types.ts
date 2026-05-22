@@ -1276,6 +1276,14 @@ export type Database = {
         Args: { _business_id: string; _end: string; _start: string }
         Returns: boolean
       }
+      list_free_slots: {
+        Args: {
+          _business_id: string
+          _date: string
+          _duration_minutes?: number
+        }
+        Returns: string[]
+      }
       open_dispute: {
         Args: { _details: string; _order_id: string; _reason: string }
         Returns: string

@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Bell,
   Briefcase,
+  CalendarClock,
   Home,
   Inbox,
   LogOut,
@@ -14,7 +15,6 @@ import {
   Users,
   Wallet,
   X,
-  
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ const navItems = [
   { to: "/business/orders", label: "Orders", icon: Inbox },
   { to: "/business/messages", label: "Messages", icon: MessageSquare },
   { to: "/business/services", label: "Services", icon: Briefcase },
+  { to: "/business/availability", label: "Availability", icon: CalendarClock },
   { to: "/business/crew", label: "Crew", icon: Users },
   { to: "/business/reviews", label: "Reviews", icon: Star },
   { to: "/business/payouts", label: "Payouts", icon: Wallet },
