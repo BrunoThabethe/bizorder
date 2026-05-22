@@ -1241,6 +1241,7 @@ export type Database = {
         Args: { _code: string; _user_id: string }
         Returns: boolean
       }
+      business_capacity: { Args: { _business_id: string }; Returns: number }
       can_access_verification_object: {
         Args: { _bucket_id: string; _object_name: string; _user_id: string }
         Returns: boolean
@@ -1275,6 +1276,19 @@ export type Database = {
       is_slot_available: {
         Args: { _business_id: string; _end: string; _start: string }
         Returns: boolean
+      }
+      list_day_slots: {
+        Args: {
+          _business_id: string
+          _date: string
+          _duration_minutes?: number
+        }
+        Returns: {
+          booked: number
+          capacity: number
+          slot_end: string
+          slot_start: string
+        }[]
       }
       list_free_slots: {
         Args: {

@@ -28,7 +28,8 @@ import {
   AVAILABILITY_LABEL,
   fetchBusinessHours,
   fetchBusinessSettings,
-  listFreeSlots,
+  listDaySlots,
+  type DaySlot,
   type Availability,
 } from "@/lib/business/queries";
 
@@ -122,11 +123,12 @@ const CreateOrderPage = () => {
 
   const slotDuration = Number(selectedService?.duration_minutes ?? 60);
   const dateKey = scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : "";
-  const { data: freeSlots = [], isFetching: slotsLoading } = useQuery({
-    queryKey: ["free-slots", businessId, dateKey, slotDuration],
-    queryFn: () => listFreeSlots(businessId, dateKey, slotDuration),
+  const { data: daySlots = [], isFetching: slotsLoading } = useQuery<DaySlot[]>({
+    queryKey: ["day-slots", businessId, dateKey, slotDuration],
+    queryFn: () => listDaySlots(businessId, dateKey, slotDuration),
     enabled: !!businessId && !!dateKey && isService,
   });
+  const freeSlots = useMemo(() => daySlots.filter((s) => s.booked < s.capacity), [daySlots]);
 
   // Reset slot when date or service duration changes
   useEffect(() => {
@@ -504,26 +506,32 @@ const CreateOrderPage = () => {
                       </p>
                     ) : (
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                        {freeSlots.map((iso) => {
+                        {freeSlots.map((slot) => {
+                          const iso = slot.slot_start;
                           const time = new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
                           const active = scheduledSlot === iso;
+                          const open = slot.capacity - slot.booked;
                           return (
                             <button
                               type="button"
                               key={iso}
                               onClick={() => setScheduledSlot(iso)}
                               className={cn(
-                                "rounded-xl px-2 py-2 text-xs font-semibold transition-colors",
+                                "flex flex-col items-center rounded-xl px-2 py-2 text-xs font-semibold transition-colors",
                                 active
                                   ? "bg-primary text-primary-foreground shadow-glow"
                                   : "bg-muted text-foreground hover:bg-primary/15 hover:text-primary",
                               )}
                             >
-                              {time}
+                              <span>{time}</span>
+                              <span className={cn("text-[10px] font-normal", active ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                                {open} of {slot.capacity} open
+                              </span>
                             </button>
                           );
                         })}
                       </div>
+
                     )}
                     <p className="text-[11px] text-muted-foreground">
                       Slots are {slotDuration} minutes long and only show times that aren't already booked.

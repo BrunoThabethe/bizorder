@@ -11,8 +11,10 @@ import {
   DAY_LABELS,
   fetchBusinessHours,
   fetchBusinessSettings,
+  listDaySlots,
   type Availability,
 } from "@/lib/business/queries";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const formatTime = (t: string) => t.slice(0, 5);
@@ -73,6 +75,17 @@ const BusinessProfilePage = () => {
     ranges: hours.filter((h) => h.day_of_week === dow && h.is_open),
   }));
 
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const { data: todaySlots = [] } = useQuery({
+    queryKey: ["day-slots", business?.id, todayKey, 60],
+    queryFn: () => listDaySlots(business!.id, todayKey, 60),
+    enabled: !!business?.id && availability === "available",
+  });
+  const now = Date.now();
+  const remainingToday = todaySlots.filter((s) => new Date(s.slot_start).getTime() > now && s.booked < s.capacity);
+  const busyToday = availability === "available" && todaySlots.length > 0 && remainingToday.length === 0;
+
+
   return (
     <CustomerLayout>
       <Link
@@ -103,6 +116,10 @@ const BusinessProfilePage = () => {
                 <Badge className={cn("font-semibold", AVAILABILITY_TONE[availability])}>
                   {AVAILABILITY_LABEL[availability]}
                 </Badge>
+                {busyToday ? (
+                  <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 font-semibold">Busy today</Badge>
+                ) : null}
+
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{business.tagline ?? business.category}</p>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
