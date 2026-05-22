@@ -33,6 +33,7 @@ const navItems = [
   { to: "/business/orders", label: "Orders", icon: Inbox },
   { to: "/business/messages", label: "Messages", icon: MessageSquare },
   { to: "/business/services", label: "Services", icon: Briefcase },
+  { to: "/business/availability", label: "Availability", icon: CalendarClock },
   { to: "/business/crew", label: "Crew", icon: Users },
   { to: "/business/reviews", label: "Reviews", icon: Star },
   { to: "/business/payouts", label: "Payouts", icon: Wallet },
