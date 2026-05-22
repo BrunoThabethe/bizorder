@@ -1,67 +1,109 @@
-## Goal
 
-Give providers a clear visual calendar of booked vs free slots, and let crew capacity drive how many simultaneous bookings a slot can accept. When all crew are taken, that slot disappears for customers and the provider is shown as Busy.
+# Coming Soon Gate
 
-## 1. Capacity model
+A full-screen "coming soon" page that hides the entire app from the public. Double-click anywhere → password modal → entering `BizOrder2026` unlocks the real app on the device.
 
-A slot is "free" only if `active crew count` (or 1 if no crew) > concurrent bookings overlapping it.
+## 1. Gate behavior
 
-Update `public.is_slot_available(_business_id, _start, _end)` to:
+- New route wrapper `ComingSoonGate` mounted at the root of the router, wrapping every existing route.
+- Reads `localStorage["bo_unlocked"] === "1"`. If unlocked → render children (current app). If not → render `ComingSoonPage`.
+- `ComingSoonPage` listens for `dblclick` on the whole page → opens a shadcn `Dialog` with password input + "Enter" button.
+- Correct password sets the flag and reloads. Wrong password shakes the input and shows an inline error. Rate-limited to 5 attempts per 15 min via in-memory + localStorage counter (matches your security rule).
+- A hidden `/admin-unlock` route also accepts the password (escape hatch in case dbl-click is awkward on mobile).
+
+## 2. Page layout (top → bottom, smooth scroll, no borders)
 
 ```text
-capacity = COALESCE((SELECT COUNT(*) FROM crew_members
-                     WHERE business_id = _business_id AND is_active = true), 0)
-capacity = GREATEST(capacity, 1)   -- solo provider counts as 1
-overlapping = COUNT(orders) where order.status NOT IN (cancelled, completed)
-              AND scheduled_for range overlaps [_start, _end)
-RETURN overlapping < capacity
+┌──────────────────────────────────────────┐
+│            [ leopard logo ]              │  ← top-middle, interactive
+│                                          │
+│   "Big things are coming."               │  ← 2-line marketing hook
+│   "Be first in line when we go live."    │
+│                                          │
+│   [ glossy email input ][ Notify me → ]  │
+│                                          │
+│        ◯  ◯  ◯  ◯   (social icons)       │
+│                                          │
+│  ─────── (lots of breathing room) ───────│
+│                                          │
+│        [ hover-to-play looping video ]   │
+└──────────────────────────────────────────┘
 ```
 
-`list_free_slots` already calls `is_slot_available`, so it inherits the new rule automatically.
+- Background: deep leopard-brown gradient with subtle animated grain + soft gold radial glow.
+- Smooth scroll via `scroll-behavior: smooth` + `framer-motion` fade/slide-up reveal on each section.
+- Brand palette only: leopard brown `#3A2C1F`, gold `#D9A957`, warm beige `#F3E9D3`. Space Grotesk display, Inter body.
 
-Add small helper `public.business_capacity(_business_id uuid) RETURNS int` so both the RPC and the UI can read the same number.
+## 3. Interactive leopard logo
 
-## 2. Provider Availability page — calendar + clock view
+- Logo asset extracted from `BON_logo_OBJ_package.zip` → `src/assets/bon-leopard.png` (and any layered ear/tail pieces in the zip used as separate SVG/PNG layers if available).
+- Component `LeopardMark` renders the body and overlays separate **ear** and **tail** layers positioned absolutely.
+- Global `mousemove` listener (throttled) feeds normalized pointer coords into framer-motion springs:
+  - Ears tilt ±8° toward the cursor.
+  - Tail sways with a delayed spring (feels alive).
+  - Subtle head/eye parallax (±4px) toward cursor.
+- If the zip only contains a flat logo, I'll slice the ears + tail into separate transparent PNGs during build using the bundled image so the animation still works.
 
-Extend `BusinessAvailabilityPage.tsx` with a new "Schedule" card above the weekly hours editor:
+## 4. Email capture + auto-reply
 
-- **Month calendar** (shadcn `Calendar`, single select). Day cells show a small indicator:
-  - grey dot = closed
-  - amber dot = partially booked
-  - red dot = fully booked (all crew taken for every slot)
-- **Day clock view** (right side, or below on mobile): vertical list of every slot generated from that day's open ranges stepped by 60 min, showing `HH:mm – HH:mm · X/Y booked` with a coloured pill (green = free, amber = some crew taken, red = full).
-- Live status badge updates: if today's current hour is full → show "Busy" badge; if availability is manually set, that wins.
+**Database** (`waitlist_signups`)
+- `email` (citext, unique), `source` (text default 'coming_soon'), `ip_hash` (text), `user_agent` (text)
+- RLS: `INSERT` allowed for `anon` with row-level rate check; no `SELECT/UPDATE/DELETE` for anon. Admin role can read.
+- Unique constraint → duplicate email returns 23505 → UI shows "You're already on the list 🎯".
 
-New helpers in `src/lib/business/queries.ts`:
-- `fetchBusinessSlotsForDay(businessId, date)` → returns array of `{ start, end, capacity, booked }` (single round trip — new RPC `list_day_slots`).
+**Edge function** `waitlist-subscribe`
+- Validates email with Zod (trim, lowercase, max 160).
+- Rate-limit by IP (5/15 min) using a small `rate_limits` table.
+- Inserts row; on duplicate returns friendly message.
+- Invokes `send-transactional-email` with template `waitlist-welcome`.
 
-New RPC `public.list_day_slots(_business_id uuid, _date date, _duration_minutes int default 60)` returns `setof (slot_start timestamptz, slot_end timestamptz, capacity int, booked int)`. Same loop as `list_free_slots` but returns counts instead of filtering.
+**Email template** `waitlist-welcome.tsx`
+- React Email, white body, leopard-brown header band, gold accent rule, faint leopard-print watermark in the hero block, short thank-you copy, follow-us buttons (social URLs configurable later — placeholder `#` for now).
+- Subject: "You're on the list — BizOrder is almost here".
 
-## 3. Customer booking — automatic capacity respect
+**Prerequisite (flagged):** sending requires Lovable Emails infra + a verified sender domain. If not yet set up, I'll trigger the email-domain setup dialog as the first step; signups will still be saved in the meantime, and the auto-reply will start sending the moment DNS verifies.
 
-`CreateOrderPage.tsx` already calls `list_free_slots`. With the capacity-aware `is_slot_available`, fully booked slots will drop out automatically — no UI change needed beyond what's already there.
+## 5. Glossy email box
 
-Add a subtle "X of Y open" label under each slot button by switching the customer fetch from `list_free_slots` to `list_day_slots` and filtering `booked < capacity` client-side, so the customer sees realistic remaining capacity per slot.
+- Frosted-glass effect: `backdrop-blur-xl`, white/8% fill, gold 1px inner ring, soft gold glow on focus.
+- Inline "Notify me →" button uses the existing high-contrast gold CTA (no ghost).
+- Loading spinner inside the button while submitting; success state morphs to "✓ You're in".
 
-## 4. Auto-Busy status
+## 6. Social row
 
-Add an effective availability indicator on the customer-facing business profile:
+- Five circular icon buttons (Instagram, X, Facebook, TikTok, LinkedIn) with `href="#"` placeholders, `aria-label` set, gold hover glow + scale.
+- Centralized in `src/config/social-links.ts` so URLs are one-line swaps later.
 
-- Compute on the client when rendering the provider card: if `availability = 'available'` AND **today** has zero free slots for the rest of the day at the smallest service duration, show "Busy today" badge (existing manual `busy`/`away`/`closed` still wins).
+## 7. Hover-to-play marketing video
 
-No DB write — purely derived so it stays accurate without cron.
+- `<video muted loop playsInline preload="metadata">` with no controls, no border, rounded-2xl, soft gold ambient shadow.
+- `onMouseEnter` → `play()`, `onMouseLeave` → `pause()`. Touch devices: tap to toggle.
+- Source: `public/marketing/bizorder-teaser.mp4` placeholder (silent black frame) until you upload the real file. Poster image generated from the logo.
 
-## 5. Files touched
+## 8. Files
 
-- `supabase/migrations/<new>.sql` — replace `is_slot_available`, add `business_capacity`, add `list_day_slots`.
-- `src/lib/business/queries.ts` — `fetchBusinessSlotsForDay` + types.
-- `src/pages/business/BusinessAvailabilityPage.tsx` — new calendar + clock card, day indicators.
-- `src/pages/customer/CreateOrderPage.tsx` — swap to `list_day_slots`, show "X of Y open".
-- `src/pages/customer/BusinessProfilePage.tsx` — derived "Busy today" badge.
+**New**
+- `src/components/coming-soon/coming-soon-gate.tsx`
+- `src/components/coming-soon/coming-soon-page.tsx`
+- `src/components/coming-soon/leopard-mark.tsx`
+- `src/components/coming-soon/password-dialog.tsx`
+- `src/components/coming-soon/waitlist-form.tsx`
+- `src/components/coming-soon/social-row.tsx`
+- `src/components/coming-soon/hover-video.tsx`
+- `src/config/social-links.ts`
+- `src/assets/bon-leopard.png` (+ ear/tail layers, extracted from zip)
+- `supabase/functions/waitlist-subscribe/index.ts`
+- `supabase/functions/_shared/transactional-email-templates/waitlist-welcome.tsx`
+- Migration: `waitlist_signups` + `rate_limits` tables, RLS, unique index.
 
-## Technical notes
+**Edited**
+- `src/App.tsx` — wrap `<Routes>` in `<ComingSoonGate>`.
+- `_shared/transactional-email-templates/registry.ts` — register new template.
 
-- All RPCs `SECURITY DEFINER`, `STABLE`, `search_path = public`.
-- Capacity is read fresh on each call; no caching needed.
-- Day indicator colours use existing semantic tokens (`bg-emerald-500`, `bg-amber-500`, `bg-destructive`) via Tailwind — no new tokens.
-- Date format stays DD/MM/YYYY; times in 24h `HH:mm`.
+## 9. Out of scope / assumptions
+
+- Social URLs left as `#` until you provide them.
+- Video file is a placeholder; drop the real `.mp4` into `public/marketing/` to replace.
+- Password is hardcoded as requested (`BizOrder2026`). For a public launch I'd recommend moving this to a secret; happy to do that on a follow-up.
+- Logged-in app users behind the gate are unaffected once they unlock once on a device.
+
