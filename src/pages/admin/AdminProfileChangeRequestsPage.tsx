@@ -123,6 +123,9 @@ const AdminProfileChangeRequestsPage = () => {
                 const who = isBusiness
                   ? r.businesses?.name ?? "Unknown business"
                   : r.submitter?.full_name || r.submitter?.email || "Unknown user";
+                const submitterLine = r.submitter
+                  ? `${r.submitter.full_name ?? "Unknown"} · ${r.submitter.email ?? "no email"}`
+                  : "Submitter unknown";
                 return (
                   <li key={r.id} className="grid gap-3 py-4 md:grid-cols-[1fr_auto] md:items-center">
                     <div className="min-w-0">
@@ -136,12 +139,15 @@ const AdminProfileChangeRequestsPage = () => {
                           {isBusiness ? "Business" : "Customer"} · {r.field}
                         </span>
                       </div>
+                      <p className="mt-1 text-xs text-muted-foreground">Requested by {submitterLine}</p>
                       <p className="mt-1 text-sm">
                         <span className="text-muted-foreground line-through">{r.current_value || "—"}</span>{" "}
                         <span className="mx-1 text-muted-foreground">→</span>
                         <span className="font-semibold">{r.requested_value}</span>
                       </p>
-                      {r.reason ? <p className="mt-1 text-xs text-muted-foreground">Reason: {r.reason}</p> : null}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Reason: {r.reason?.trim() ? r.reason : <span className="italic">No reason provided</span>}
+                      </p>
                       {r.decision_reason ? (
                         <p className="mt-1 text-xs text-muted-foreground">Admin note: {r.decision_reason}</p>
                       ) : null}
