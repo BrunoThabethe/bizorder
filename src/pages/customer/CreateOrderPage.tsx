@@ -65,8 +65,10 @@ const CreateOrderPage = () => {
   const [notes, setNotes] = useState("");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledSlot, setScheduledSlot] = useState<string>(""); // ISO timestamp
-
   const scheduledFor = scheduledSlot;
+  const [submitting, setSubmitting] = useState(false);
+  const [refFile, setRefFile] = useState<File | null>(null);
+  const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [distanceLoading, setDistanceLoading] = useState(false);
   const [distanceError, setDistanceError] = useState<string | null>(null);
