@@ -21,15 +21,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { sb, type ProfileChangeRequest } from "@/lib/business/queries";
 
 type RequestRow = ProfileChangeRequest & {
-  businesses?: { name: string | null } | null;
   target_user_id?: string | null;
   submitter?: { full_name: string | null; email: string | null } | null;
+  business?: { name: string | null } | null;
 };
 
 const fetchAllRequests = async (): Promise<RequestRow[]> => {
   const { data, error } = await sb
     .from("profile_change_requests")
-    .select("*, businesses(name)")
+    .select("*")
     .order("created_at", { ascending: false });
   if (error) throw error;
   const rows = (data ?? []) as RequestRow[];
@@ -42,17 +42,27 @@ const fetchAllRequests = async (): Promise<RequestRow[]> => {
         .filter((v): v is string => !!v),
     ),
   );
-  if (userIds.length === 0) return rows;
+  const businessIds = Array.from(new Set(rows.map((r) => r.business_id).filter((v): v is string => !!v)));
 
-  const { data: profiles } = await sb
-    .from("profiles")
-    .select("id, full_name, email")
-    .in("id", userIds);
+  const [{ data: profiles }, { data: businesses }] = await Promise.all([
+    userIds.length
+      ? sb.from("profiles").select("id, full_name, email").in("id", userIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; full_name: string | null; email: string | null }> }),
+    businessIds.length
+      ? sb.from("businesses").select("id, name").in("id", businessIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string | null }> }),
+  ]);
   const list = (profiles ?? []) as Array<{ id: string; full_name: string | null; email: string | null }>;
   const byId = new Map(list.map((p) => [p.id, p]));
+  const businessById = new Map(((businesses ?? []) as Array<{ id: string; name: string | null }>).map((b) => [b.id, b]));
   return rows.map((r) => {
     const p = byId.get(r.submitted_by) ?? (r.target_user_id ? byId.get(r.target_user_id) : undefined);
-    return { ...r, submitter: p ? { full_name: p.full_name, email: p.email } : null };
+    const business = r.business_id ? businessById.get(r.business_id) : undefined;
+    return {
+      ...r,
+      business: business ? { name: business.name } : null,
+      submitter: p ? { full_name: p.full_name, email: p.email } : null,
+    };
   });
 };
 
@@ -89,6 +99,7 @@ const AdminProfileChangeRequestsPage = () => {
       setReason("");
       qc.invalidateQueries({ queryKey: ["admin-change-requests"] });
       qc.invalidateQueries({ queryKey: ["admin-change-requests-count"] });
+      qc.invalidateQueries({ queryKey: ["admin-change-requests-preview"] });
     },
     onError: (e: Error) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
   });
@@ -121,7 +132,7 @@ const AdminProfileChangeRequestsPage = () => {
               {requests.map((r) => {
                 const isBusiness = !!r.business_id;
                 const who = isBusiness
-                  ? r.businesses?.name ?? "Unknown business"
+                  ? r.business?.name ?? r.submitter?.full_name ?? r.submitter?.email ?? "Unknown business"
                   : r.submitter?.full_name || r.submitter?.email || "Unknown user";
                 const submitterLine = r.submitter
                   ? `${r.submitter.full_name ?? "Unknown"} · ${r.submitter.email ?? "no email"}`
