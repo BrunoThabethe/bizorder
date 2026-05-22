@@ -40,6 +40,7 @@ import OrdersQueuePage from "./pages/business/OrdersQueuePage.tsx";
 import BusinessOrderDetailPage from "./pages/business/BusinessOrderDetailPage.tsx";
 import ServicesManagerPage from "./pages/business/ServicesManagerPage.tsx";
 import BusinessSettingsPage from "./pages/business/BusinessSettingsPage.tsx";
+import BusinessAvailabilityPage from "./pages/business/BusinessAvailabilityPage.tsx";
 import BusinessReviewsPage from "./pages/business/BusinessReviewsPage.tsx";
 import PayoutsPage from "./pages/business/PayoutsPage.tsx";
 import BusinessNotificationsPage from "./pages/business/BusinessNotificationsPage.tsx";
