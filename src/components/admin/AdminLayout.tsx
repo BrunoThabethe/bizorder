@@ -36,31 +36,45 @@ type PendingPreview = {
   id: string;
   field: string;
   requested_value: string;
+  current_value: string | null;
   business_id: string | null;
   target_user_id: string | null;
   submitted_by: string;
   reason: string | null;
   created_at: string;
-  businesses?: { name: string | null } | null;
-  submitterName?: string | null;
+  who: string;
 };
 
 const fetchPendingChangeRequestsPreview = async (): Promise<PendingPreview[]> => {
   const { data, error } = await supabase
     .from("profile_change_requests")
-    .select("id, field, requested_value, business_id, target_user_id, submitted_by, reason, created_at, businesses(name)")
+    .select("id, field, requested_value, current_value, business_id, target_user_id, submitted_by, reason, created_at")
     .eq("status", "pending")
     .order("created_at", { ascending: false })
     .limit(8);
   if (error || !data) return [];
-  const rows = data as PendingPreview[];
-  const ids = Array.from(new Set(rows.map((r) => r.submitted_by).filter(Boolean)));
-  if (!ids.length) return rows;
-  const { data: profiles } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
-  const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const rows = data as Array<Omit<PendingPreview, "who">>;
+
+  const userIds = Array.from(new Set(rows.map((r) => r.submitted_by).filter(Boolean)));
+  const bizIds = Array.from(new Set(rows.map((r) => r.business_id).filter((v): v is string => !!v)));
+
+  const [{ data: profiles }, { data: businesses }] = await Promise.all([
+    userIds.length
+      ? supabase.from("profiles").select("id, full_name, email").in("id", userIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; full_name: string | null; email: string | null }> }),
+    bizIds.length
+      ? supabase.from("businesses").select("id, name").in("id", bizIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string | null }> }),
+  ]);
+
+  const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const bizById = new Map((businesses ?? []).map((b) => [b.id, b]));
+
   return rows.map((r) => {
-    const p = byId.get(r.submitted_by);
-    return { ...r, submitterName: p?.full_name ?? p?.email ?? null };
+    const biz = r.business_id ? bizById.get(r.business_id) : undefined;
+    const p = profileById.get(r.submitted_by);
+    const who = biz?.name ?? p?.full_name ?? p?.email ?? "Unknown";
+    return { ...r, who };
   });
 };
 
