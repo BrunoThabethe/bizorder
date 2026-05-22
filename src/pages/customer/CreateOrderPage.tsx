@@ -100,6 +100,10 @@ const CreateOrderPage = () => {
   });
 
   useEffect(() => {
+    if (!serviceId && services[0]) setServiceId(services[0].id);
+  }, [services, serviceId]);
+
+  useEffect(() => {
     if (!addressId && addresses[0]) setAddressId(addresses[0].id);
   }, [addresses, addressId]);
 
