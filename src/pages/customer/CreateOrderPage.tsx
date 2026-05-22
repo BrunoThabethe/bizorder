@@ -123,11 +123,12 @@ const CreateOrderPage = () => {
 
   const slotDuration = Number(selectedService?.duration_minutes ?? 60);
   const dateKey = scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : "";
-  const { data: freeSlots = [], isFetching: slotsLoading } = useQuery({
-    queryKey: ["free-slots", businessId, dateKey, slotDuration],
-    queryFn: () => listFreeSlots(businessId, dateKey, slotDuration),
+  const { data: daySlots = [], isFetching: slotsLoading } = useQuery<DaySlot[]>({
+    queryKey: ["day-slots", businessId, dateKey, slotDuration],
+    queryFn: () => listDaySlots(businessId, dateKey, slotDuration),
     enabled: !!businessId && !!dateKey && isService,
   });
+  const freeSlots = useMemo(() => daySlots.filter((s) => s.booked < s.capacity), [daySlots]);
 
   // Reset slot when date or service duration changes
   useEffect(() => {
