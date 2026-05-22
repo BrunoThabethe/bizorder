@@ -93,10 +93,11 @@ const CreateOrderPage = () => {
     queryFn: () => fetchBusinessSettings(businessId),
     enabled: !!businessId,
   });
-
-  useEffect(() => {
-    if (!serviceId && services[0]) setServiceId(services[0].id);
-  }, [services, serviceId]);
+  const { data: providerHours = [] } = useQuery({
+    queryKey: ["business-hours", businessId],
+    queryFn: () => fetchBusinessHours(businessId),
+    enabled: !!businessId,
+  });
 
   useEffect(() => {
     if (!addressId && addresses[0]) setAddressId(addresses[0].id);
