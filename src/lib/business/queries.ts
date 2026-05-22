@@ -516,3 +516,20 @@ export const fetchBusinessUpcomingScheduled = async (businessId: string, fromIso
   if (error) throw error;
   return data ?? [];
 };
+
+export type DaySlot = { slot_start: string; slot_end: string; capacity: number; booked: number };
+
+export const listDaySlots = async (
+  businessId: string,
+  date: string, // YYYY-MM-DD
+  durationMinutes: number,
+): Promise<DaySlot[]> => {
+  const { data, error } = await sb.rpc("list_day_slots", {
+    _business_id: businessId,
+    _date: date,
+    _duration_minutes: durationMinutes,
+  });
+  if (error) throw error;
+  return (data ?? []) as DaySlot[];
+};
+
