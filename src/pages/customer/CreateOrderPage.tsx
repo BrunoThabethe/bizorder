@@ -458,15 +458,80 @@ const CreateOrderPage = () => {
             <h2 className="font-display text-base font-bold">Details</h2>
             <div className="mt-3 grid gap-3">
               <div className="space-y-2">
-                <Label htmlFor="scheduledFor">Preferred date and time {isService && availability !== "available" ? "(required)" : "(optional)"}</Label>
-                <Input
-                  id="scheduledFor"
-                  type="datetime-local"
-                  value={scheduledFor}
-                  onChange={(e) => setScheduledFor(e.target.value)}
-                  className="h-11 rounded-2xl border-0 bg-muted"
-                />
+                <Label>Preferred date {isService && availability !== "available" ? "(required)" : "(optional)"}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className={cn(
+                        "h-11 w-full justify-start rounded-2xl border-0 bg-muted font-normal",
+                        !scheduledDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {scheduledDate ? format(scheduledDate, "dd/MM/yyyy") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={scheduledDate}
+                      onSelect={setScheduledDate}
+                      disabled={(d) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (d < today) return true;
+                        if (awayUntil && d < awayUntil) return true;
+                        if (openWeekdays.size > 0 && !openWeekdays.has(d.getDay())) return true;
+                        return false;
+                      }}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {isService && scheduledDate ? (
+                  <div className="space-y-2 pt-1">
+                    <Label className="text-xs text-muted-foreground">Available time slots</Label>
+                    {slotsLoading ? (
+                      <p className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Checking the provider's calendar…
+                      </p>
+                    ) : freeSlots.length === 0 ? (
+                      <p className="rounded-2xl bg-muted/40 p-3 text-xs text-muted-foreground">
+                        No free slots on this day. Try another date — the provider may be fully booked or closed.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                        {freeSlots.map((iso) => {
+                          const time = new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+                          const active = scheduledSlot === iso;
+                          return (
+                            <button
+                              type="button"
+                              key={iso}
+                              onClick={() => setScheduledSlot(iso)}
+                              className={cn(
+                                "rounded-xl px-2 py-2 text-xs font-semibold transition-colors",
+                                active
+                                  ? "bg-primary text-primary-foreground shadow-glow"
+                                  : "bg-muted text-foreground hover:bg-primary/15 hover:text-primary",
+                              )}
+                            >
+                              {time}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      Slots are {slotDuration} minutes long and only show times that aren't already booked.
+                    </p>
+                  </div>
+                ) : null}
               </div>
+
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes for the provider</Label>
