@@ -31,14 +31,52 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { BrandMark } from "@/components/BrandMark";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-const fetchPendingChangeRequestsCount = async (): Promise<number> => {
-  const { count, error } = await supabase
+type PendingPreview = {
+  id: string;
+  field: string;
+  requested_value: string;
+  current_value: string | null;
+  business_id: string | null;
+  target_user_id: string | null;
+  submitted_by: string;
+  reason: string | null;
+  created_at: string;
+  who: string;
+};
+
+const fetchPendingChangeRequestsPreview = async (): Promise<PendingPreview[]> => {
+  const { data, error } = await supabase
     .from("profile_change_requests")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pending");
-  if (error) return 0;
-  return count ?? 0;
+    .select("id, field, requested_value, current_value, business_id, target_user_id, submitted_by, reason, created_at")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(8);
+  if (error || !data) return [];
+  const rows = data as Array<Omit<PendingPreview, "who">>;
+
+  const userIds = Array.from(new Set(rows.map((r) => r.submitted_by).filter(Boolean)));
+  const bizIds = Array.from(new Set(rows.map((r) => r.business_id).filter((v): v is string => !!v)));
+
+  const [{ data: profiles }, { data: businesses }] = await Promise.all([
+    userIds.length
+      ? supabase.from("profiles").select("id, full_name, email").in("id", userIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; full_name: string | null; email: string | null }> }),
+    bizIds.length
+      ? supabase.from("businesses").select("id, name").in("id", bizIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string | null }> }),
+  ]);
+
+  const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const bizById = new Map((businesses ?? []).map((b) => [b.id, b]));
+
+  return rows.map((r) => {
+    const biz = r.business_id ? bizById.get(r.business_id) : undefined;
+    const p = profileById.get(r.submitted_by);
+    const who = biz?.name ?? p?.full_name ?? p?.email ?? "Unknown";
+    return { ...r, who };
+  });
 };
 
 
@@ -69,11 +107,12 @@ export const AdminLayout = ({ children }: Props) => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { data: pendingChangeRequests = 0 } = useQuery({
-    queryKey: ["admin-change-requests-count"],
-    queryFn: fetchPendingChangeRequestsCount,
+  const { data: pendingRequests = [] } = useQuery({
+    queryKey: ["admin-change-requests-preview"],
+    queryFn: fetchPendingChangeRequestsPreview,
     refetchInterval: 30_000,
   });
+  const pendingCount = pendingRequests.length;
 
   const fullName = (user?.user_metadata?.full_name as string | undefined) ?? "Admin";
   const initials = fullName
@@ -138,20 +177,56 @@ export const AdminLayout = ({ children }: Props) => {
                 className="h-11 rounded-2xl border-0 bg-muted pl-11 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-foreground/20"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => navigate("/admin/change-requests")}
-              className="relative grid h-10 w-10 place-items-center rounded-xl bg-muted text-foreground hover:bg-primary/15 hover:text-primary"
-              aria-label={`Change requests${pendingChangeRequests > 0 ? `, ${pendingChangeRequests} pending` : ""}`}
-              title={pendingChangeRequests > 0 ? `${pendingChangeRequests} pending change request${pendingChangeRequests === 1 ? "" : "s"}` : "No pending change requests"}
-            >
-              <Bell className="h-5 w-5" />
-              {pendingChangeRequests > 0 ? (
-                <span className="absolute -right-1 -top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-glow">
-                  {pendingChangeRequests > 9 ? "9+" : pendingChangeRequests}
-                </span>
-              ) : null}
-            </button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="relative grid h-10 w-10 place-items-center rounded-xl bg-muted text-foreground hover:bg-primary/15 hover:text-primary"
+                  aria-label={`Notifications${pendingCount > 0 ? `, ${pendingCount} pending change requests` : ""}`}
+                >
+                  <Bell className="h-5 w-5" />
+                  {pendingCount > 0 ? (
+                    <span className="absolute -right-1 -top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-glow">
+                      {pendingCount > 9 ? "9+" : pendingCount}
+                    </span>
+                  ) : null}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-0">
+                <div className="flex items-center justify-between border-b px-4 py-3">
+                  <p className="text-sm font-semibold">Pending change requests</p>
+                  <span className="text-xs text-muted-foreground">{pendingCount} open</span>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {pendingCount === 0 ? (
+                    <p className="px-4 py-6 text-center text-sm text-muted-foreground">You're all caught up.</p>
+                  ) : (
+                    pendingRequests.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => navigate("/admin/change-requests")}
+                        className="block w-full border-b px-4 py-3 text-left last:border-b-0 hover:bg-primary/10"
+                      >
+                        <p className="truncate text-sm font-semibold">{r.who}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Wants to change <span className="font-semibold text-foreground">{r.field}</span> →{" "}
+                          <span className="text-foreground">{r.requested_value}</span>
+                        </p>
+                        <p className="mt-0.5 truncate text-xs italic text-muted-foreground">
+                          {r.reason?.trim() ? `“${r.reason}”` : "No reason provided"}
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
+                <div className="border-t p-2">
+                  <Button variant="secondary" className="w-full justify-center" onClick={() => navigate("/admin/change-requests")}>
+                    View all
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <div className="hidden items-center gap-3 rounded-2xl bg-muted px-2 py-1.5 sm:flex">
               <Avatar className="h-8 w-8">
