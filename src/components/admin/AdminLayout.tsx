@@ -32,13 +32,36 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { BrandMark } from "@/components/BrandMark";
 
-const fetchPendingChangeRequestsCount = async (): Promise<number> => {
-  const { count, error } = await supabase
+type PendingPreview = {
+  id: string;
+  field: string;
+  requested_value: string;
+  business_id: string | null;
+  target_user_id: string | null;
+  submitted_by: string;
+  reason: string | null;
+  created_at: string;
+  businesses?: { name: string | null } | null;
+  submitterName?: string | null;
+};
+
+const fetchPendingChangeRequestsPreview = async (): Promise<PendingPreview[]> => {
+  const { data, error } = await supabase
     .from("profile_change_requests")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pending");
-  if (error) return 0;
-  return count ?? 0;
+    .select("id, field, requested_value, business_id, target_user_id, submitted_by, reason, created_at, businesses(name)")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(8);
+  if (error || !data) return [];
+  const rows = data as PendingPreview[];
+  const ids = Array.from(new Set(rows.map((r) => r.submitted_by).filter(Boolean)));
+  if (!ids.length) return rows;
+  const { data: profiles } = await supabase.from("profiles").select("id, full_name, email").in("id", ids);
+  const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+  return rows.map((r) => {
+    const p = byId.get(r.submitted_by);
+    return { ...r, submitterName: p?.full_name ?? p?.email ?? null };
+  });
 };
 
 
