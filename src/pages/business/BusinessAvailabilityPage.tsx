@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import {
   AVAILABILITY_LABEL,
   AVAILABILITY_TONE,
@@ -26,11 +28,13 @@ import {
   fetchBusinessSettings,
   fetchBusinessUpcomingScheduled,
   fetchMyBusiness,
+  listDaySlots,
   replaceBusinessHours,
   upsertBusinessSettings,
   type Availability,
   type BusinessHourRow,
 } from "@/lib/business/queries";
+import { cn } from "@/lib/utils";
 
 type DraftRange = { id: string; opens_at: string; closes_at: string };
 type DraftDay = { is_open: boolean; ranges: DraftRange[] };
