@@ -115,6 +115,16 @@ const BusinessAvailabilityPage = () => {
     enabled: !!businessId,
   });
 
+  const [selectedDay, setSelectedDay] = useState<Date>(() => new Date());
+  const selectedDayKey = format(selectedDay, "yyyy-MM-dd");
+  const { data: daySlots = [], isFetching: daySlotsLoading } = useQuery({
+    queryKey: ["day-slots", businessId, selectedDayKey, 60],
+    queryFn: () => listDaySlots(businessId, selectedDayKey, 60),
+    enabled: !!businessId,
+  });
+
+
+
   const [availability, setAvailability] = useState<Availability>("available");
   const [awayUntil, setAwayUntil] = useState<string>("");
   const [week, setWeek] = useState<DraftDay[]>(emptyWeek);
