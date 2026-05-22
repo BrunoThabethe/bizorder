@@ -116,6 +116,10 @@ const BusinessProfilePage = () => {
                 <Badge className={cn("font-semibold", AVAILABILITY_TONE[availability])}>
                   {AVAILABILITY_LABEL[availability]}
                 </Badge>
+                {busyToday ? (
+                  <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 font-semibold">Busy today</Badge>
+                ) : null}
+
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{business.tagline ?? business.category}</p>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
