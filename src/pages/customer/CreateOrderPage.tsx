@@ -120,6 +120,26 @@ const CreateOrderPage = () => {
   const basePrice = Number(selectedService?.price ?? 0);
   const total = basePrice + deliveryFee;
 
+  const slotDuration = Number(selectedService?.duration_minutes ?? 60);
+  const dateKey = scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : "";
+  const { data: freeSlots = [], isFetching: slotsLoading } = useQuery({
+    queryKey: ["free-slots", businessId, dateKey, slotDuration],
+    queryFn: () => listFreeSlots(businessId, dateKey, slotDuration),
+    enabled: !!businessId && !!dateKey && isService,
+  });
+
+  // Reset slot when date or service duration changes
+  useEffect(() => {
+    setScheduledSlot("");
+  }, [dateKey, slotDuration]);
+
+  const openWeekdays = useMemo(() => {
+    const s = new Set<number>();
+    for (const h of providerHours) if (h.is_open) s.add(h.day_of_week);
+    return s;
+  }, [providerHours]);
+  const awayUntil = settings?.away_until ? new Date(settings.away_until) : null;
+
   // Availability gating: services need provider available OR a future scheduled time
   const scheduledFuture = scheduledFor && new Date(scheduledFor).getTime() > Date.now() + 30 * 60 * 1000;
   const blockedByAvailability = isService && availability !== "available" && !scheduledFuture;
