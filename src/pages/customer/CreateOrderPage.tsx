@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ImageIcon, Loader2, MapPin, ShieldCheck, Truck, Store, X } from "lucide-react";
+import { ArrowLeft, CalendarIcon, ImageIcon, Loader2, MapPin, ShieldCheck, Truck, Store, X } from "lucide-react";
 import { z } from "zod";
+import { format } from "date-fns";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +24,13 @@ import {
   type Address,
   type Service,
 } from "@/lib/customer/queries";
-import { AVAILABILITY_LABEL, fetchBusinessSettings, type Availability } from "@/lib/business/queries";
+import {
+  AVAILABILITY_LABEL,
+  fetchBusinessHours,
+  fetchBusinessSettings,
+  listFreeSlots,
+  type Availability,
+} from "@/lib/business/queries";
 
 const orderSchema = z.object({
   serviceId: z.string().uuid(),
