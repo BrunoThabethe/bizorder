@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { ComingSoonGate } from "@/components/coming-soon/coming-soon-gate";
 import Index from "./pages/Index.tsx";
 import HowItWorksPage from "./pages/HowItWorksPage.tsx";
 import ForBusinessesPage from "./pages/ForBusinessesPage.tsx";
@@ -79,6 +80,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <ComingSoonGate>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
@@ -153,6 +155,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </ComingSoonGate>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
