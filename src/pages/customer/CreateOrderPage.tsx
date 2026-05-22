@@ -28,7 +28,8 @@ import {
   AVAILABILITY_LABEL,
   fetchBusinessHours,
   fetchBusinessSettings,
-  listFreeSlots,
+  listDaySlots,
+  type DaySlot,
   type Availability,
 } from "@/lib/business/queries";
 
