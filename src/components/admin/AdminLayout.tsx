@@ -106,11 +106,12 @@ export const AdminLayout = ({ children }: Props) => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { data: pendingChangeRequests = 0 } = useQuery({
-    queryKey: ["admin-change-requests-count"],
-    queryFn: fetchPendingChangeRequestsCount,
+  const { data: pendingRequests = [] } = useQuery({
+    queryKey: ["admin-change-requests-preview"],
+    queryFn: fetchPendingChangeRequestsPreview,
     refetchInterval: 30_000,
   });
+  const pendingCount = pendingRequests.length;
 
   const fullName = (user?.user_metadata?.full_name as string | undefined) ?? "Admin";
   const initials = fullName
