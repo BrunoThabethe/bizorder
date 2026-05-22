@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { BrandMark } from "@/components/BrandMark";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type PendingPreview = {
   id: string;
