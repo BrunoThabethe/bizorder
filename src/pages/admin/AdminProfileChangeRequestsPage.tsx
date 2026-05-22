@@ -34,12 +34,11 @@ const fetchAllRequests = async (): Promise<RequestRow[]> => {
   if (error) throw error;
   const rows = (data ?? []) as RequestRow[];
 
-  // Hydrate submitter profile for user-scoped requests
+  // Hydrate submitter profile for every request so admins always see who asked.
   const userIds = Array.from(
     new Set(
       rows
-        .filter((r) => !r.business_id)
-        .map((r) => r.target_user_id ?? r.submitted_by)
+        .flatMap((r) => [r.submitted_by, r.target_user_id])
         .filter((v): v is string => !!v),
     ),
   );
@@ -52,11 +51,9 @@ const fetchAllRequests = async (): Promise<RequestRow[]> => {
   const list = (profiles ?? []) as Array<{ id: string; full_name: string | null; email: string | null }>;
   const byId = new Map(list.map((p) => [p.id, p]));
   return rows.map((r) => {
-    const key = r.target_user_id ?? r.submitted_by;
-    const p = key ? byId.get(key) : undefined;
+    const p = byId.get(r.submitted_by) ?? (r.target_user_id ? byId.get(r.target_user_id) : undefined);
     return { ...r, submitter: p ? { full_name: p.full_name, email: p.email } : null };
   });
-
 };
 
 const STATUS_TONE: Record<ProfileChangeRequest["status"], string> = {
