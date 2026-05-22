@@ -236,6 +236,75 @@ const BusinessAvailabilityPage = () => {
         </CardContent>
       </Card>
 
+      {/* Calendar + clock */}
+      <Card className="mt-5 rounded-3xl border-0 shadow-card">
+        <CardContent className="space-y-4 p-5">
+          <div>
+            <h2 className="font-display text-base font-bold">Calendar & live slots</h2>
+            <p className="text-xs text-muted-foreground">
+              Pick a day to see every 60-min slot, your crew capacity, and how many bookings are already taken.
+            </p>
+          </div>
+          <div className="grid gap-5 md:grid-cols-[auto,1fr]">
+            <div className="rounded-2xl bg-muted/40 p-2">
+              <Calendar
+                mode="single"
+                selected={selectedDay}
+                onSelect={(d) => d && setSelectedDay(d)}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">{format(selectedDay, "EEEE, dd/MM/yyyy")}</p>
+                {daySlots.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] uppercase">
+                    Capacity {daySlots[0].capacity} / slot
+                  </Badge>
+                )}
+              </div>
+              {daySlotsLoading ? (
+                <p className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Loading slots…
+                </p>
+              ) : daySlots.length === 0 ? (
+                <p className="rounded-2xl bg-muted/40 p-4 text-center text-xs text-muted-foreground">
+                  Closed on this day — adjust working hours below to take bookings.
+                </p>
+              ) : (
+                <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {daySlots.map((s) => {
+                    const start = new Date(s.slot_start).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+                    const end = new Date(s.slot_end).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+                    const full = s.booked >= s.capacity;
+                    const some = s.booked > 0 && !full;
+                    const tone = full
+                      ? "bg-destructive/15 text-destructive border-destructive/30"
+                      : some
+                      ? "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300"
+                      : "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300";
+                    return (
+                      <li
+                        key={s.slot_start}
+                        className={cn("flex flex-col rounded-xl border p-2 text-xs", tone)}
+                      >
+                        <span className="font-semibold">{start} – {end}</span>
+                        <span className="text-[11px] opacity-80">
+                          {s.booked}/{s.capacity} booked {full ? "· Full" : some ? "· Partial" : "· Free"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                Capacity is based on your active crew (or 1 if you work alone). Once all crew are booked for a slot, customers can't book it.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Weekly hours */}
       <Card className="mt-5 rounded-3xl border-0 shadow-card">
         <CardContent className="space-y-4 p-5">
