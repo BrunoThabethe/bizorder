@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Bell,
   Briefcase,
+  CalendarClock,
   Home,
   Inbox,
   LogOut,
@@ -14,7 +15,6 @@ import {
   Users,
   Wallet,
   X,
-  
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
