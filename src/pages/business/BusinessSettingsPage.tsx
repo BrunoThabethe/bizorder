@@ -422,98 +422,18 @@ const BusinessSettingsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Availability */}
+      {/* Availability & hours moved to dedicated page */}
       <Card className="mt-5 rounded-3xl border-0 shadow-card">
-        <CardContent className="space-y-4 p-5">
+        <CardContent className="flex flex-col items-start gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="font-display text-base font-bold">Availability</h2>
-            <p className="text-xs text-muted-foreground">A live status badge shown next to your name on the customer side.</p>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Current status</Label>
-              <Select value={form.availability} onValueChange={(v) => setForm({ ...form, availability: v as Availability })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(AVAILABILITY_LABEL) as Availability[]).map((a) => (
-                    <SelectItem key={a} value={a}>
-                      {AVAILABILITY_LABEL[a]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {form.availability === "away" && (
-              <div className="space-y-2">
-                <Label htmlFor="away_until">Back on</Label>
-                <Input
-                  id="away_until"
-                  type="date"
-                  value={form.away_until}
-                  onChange={(e) => setForm({ ...form, away_until: e.target.value })}
-                />
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Schedule */}
-      <Card className="mt-5 rounded-3xl border-0 shadow-card">
-        <CardContent className="space-y-4 p-5">
-          <div>
-            <h2 className="font-display text-base font-bold">Weekly availability</h2>
+            <h2 className="font-display text-base font-bold">Availability & working hours</h2>
             <p className="text-xs text-muted-foreground">
-              Customers can only book service slots inside these ranges. Add one or more time windows per day — leave a day closed and bookings won't be allowed.
+              Status, weekly hours, and booked slots now live on the Availability page.
             </p>
           </div>
-          <div className="space-y-3">
-            {DAY_LABELS.map((label, dow) => {
-              const day = week[dow];
-              return (
-                <div key={label} className="rounded-2xl bg-muted/40 p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold">{label}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{day.is_open ? "Open" : "Closed"}</span>
-                      <Switch checked={day.is_open} onCheckedChange={(v) => toggleDay(dow, v)} />
-                    </div>
-                  </div>
-                  {day.is_open && (
-                    <div className="mt-3 space-y-2">
-                      {day.ranges.map((r) => (
-                        <div key={r.id} className="flex items-center gap-2">
-                          <Input
-                            type="time"
-                            value={r.opens_at}
-                            onChange={(e) => updateRange(dow, r.id, "opens_at", e.target.value)}
-                            className="max-w-[140px]"
-                          />
-                          <span className="text-xs text-muted-foreground">to</span>
-                          <Input
-                            type="time"
-                            value={r.closes_at}
-                            onChange={(e) => updateRange(dow, r.id, "closes_at", e.target.value)}
-                            className="max-w-[140px]"
-                          />
-                          {day.ranges.length > 1 && (
-                            <Button type="button" variant="secondary" size="icon" onClick={() => removeRange(dow, r.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      <Button type="button" variant="secondary" size="sm" onClick={() => addRange(dow)}>
-                        <Plus className="h-3.5 w-3.5" /> Add range
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <Button asChild>
+            <a href="/business/availability">Open availability</a>
+          </Button>
         </CardContent>
       </Card>
 
