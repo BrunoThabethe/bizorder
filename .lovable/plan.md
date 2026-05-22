@@ -1,58 +1,47 @@
-# Dark Dashboard Redesign
+## Goal
 
-Apply the look & feel of the reference dashboards (near-black surfaces, soft rounded cards, gold accents replacing orange, subtle gradients, pill chips, sidebar shell) across the entire site — public marketing pages and the customer / business / admin / crew portals — without changing any functionality, routes, queries, or data flow.
+Give providers a dedicated **Availability** page to manage working hours, and make the customer booking flow only accept dates/times that fall inside those hours AND are not already booked.
 
-## Visual language (from references)
+## Provider portal — new Availability page
 
-- **Surfaces**: near-black canvas (`#0F0F0F`), elevated cards (`#171717` → `#1C1C1C`), soft inner borders (`#262626`), generous 16–20px radius.
-- **Accent**: Gold `#D9A957` everywhere orange appears in the refs — primary buttons, active nav, key numbers, chart highlights, focus rings.
-- **Typography**: keep Space Grotesk display + Inter body; tighten weights — large bold numbers for stats, muted gray labels above them.
-- **Cards**: dark card with subtle top-edge highlight, soft shadow, rounded-2xl. Inline pill badges (`+8%`, status chips) with translucent backgrounds.
-- **Buttons**: solid gold primary (dark text), solid dark secondary (light text), pill or rounded-xl. No ghost / no outline-only.
-- **Charts/visuals**: dark bars with one gold highlighted bar, gold line accents, subtle grid.
-- **Light mode**: keep functional but mirror the structure (off-white canvas, warm beige cards, gold accent stays).
+Add `/business/availability` route + sidebar entry ("Availability", Clock icon) in `BusinessLayout`.
 
-## Scope of changes (presentation only)
+Page `src/pages/business/BusinessAvailabilityPage.tsx`:
+- Status card (reuses `business_settings`): availability dropdown (Available / Busy / Away / Closed) + optional "Back on" date when Away.
+- **Weekly working hours** editor: per-day toggle (open/closed) with one or more `opens_at`–`closes_at` ranges. Same shape currently embedded in `BusinessSettingsPage` — move that block here so settings page focuses on profile only.
+- **Upcoming bookings preview**: read-only list of next 7 days of accepted/in-progress orders with `scheduled_for`, so the provider can see what's already taken.
+- Save uses existing `upsertBusinessSettings` + `replaceBusinessHours` helpers.
 
-1. **Design tokens** (`src/index.css`)
-   - Refine dark tokens: card / popover / muted / border / sidebar values to match dashboard palette.
-   - Add `--card-elevated`, `--ring-gold`, refined shadow tokens (`--shadow-card`, `--shadow-glow`).
-   - Update gradients (`--gradient-hero`, `--gradient-card`, `--gradient-cta`) to dark + gold.
+Remove the duplicate Weekly availability block from `BusinessSettingsPage.tsx` and link to the new page.
 
-2. **Primitives**
-   - `components/ui/card.tsx` — default to elevated dark surface, rounded-2xl, soft border + shadow.
-   - `components/ui/button.tsx` — refine variants (gold primary, dark secondary, destructive, link). Remove ghost/outline visual weakness; keep variant names so call-sites don't change.
-   - `components/ui/badge.tsx`, `input.tsx`, `tabs.tsx`, `table.tsx` — minor token swaps for the dashboard look.
+## Customer booking — respect hours and free slots
 
-3. **Marketing shell** (public pages: `/`, `/how-it-works`, `/for-businesses`, `/for-customers`, `/contact`, legal)
-   - `Navbar.tsx`: dark translucent pill with gold logo mark, gold active link, solid gold CTA.
-   - `Footer.tsx`: dark surface, gold wordmark accent, lighter dividers.
-   - `sections/Hero.tsx`, `Pains.tsx`, `SocialProof.tsx`, `CtaForm.tsx`: dark cards, gold stat chips, dashboard-style stat tiles in hero, bar/line motif in social proof.
+In `src/pages/customer/CreateOrderPage.tsx`:
 
-4. **Portal layouts** (sidebar shells)
-   - `components/customer/CustomerLayout.tsx`, `business/BusinessLayout.tsx`, `admin/AdminLayout.tsx`, `crew/CrewLayout.tsx`: restyle the sidebar to match the reference (dark sidebar, rounded gold pill on active item, muted icons, section labels in uppercase tracked-wide).
-   - `components/customer/PageHeader.tsx`: title + subtitle stack, gold accent underline.
-
-5. **Page polish (token-only, no markup changes)**
-   - Dashboard pages (`*DashboardPage.tsx`): swap stat-card visuals to dashboard-style tiles (large number, label above, % chip).
-   - Order detail / queue / settings pages: cards adopt new elevated style automatically via token updates.
-
-## What does NOT change
-
-- No route changes, no new pages, no removed pages.
-- No query/mutation/edge-function/migration changes.
-- No business logic, role-gating, validation, or copy rewrites (unless a heading needs sentence-case fix).
-- No component prop changes; all variant names preserved so consuming pages don't need edits.
-- ThemeProvider / theme toggle untouched.
-
-## Verification
-
-- Visit `/`, `/how-it-works`, `/login`, `/customer`, `/business`, `/admin` (already-styled portals will pick up new tokens).
-- Confirm contrast (WCAG AA) for gold-on-dark text, gold buttons, muted labels.
-- Check mobile (Navbar collapse, sidebar Sheet) at 375px.
+1. Fetch provider's `business_hours` (already exposed via RLS to authenticated users for published businesses).
+2. Fetch the provider's upcoming `orders` rows for the selected date (status not in cancelled/completed) with `scheduled_for` and joined service `duration_minutes`.
+3. Replace the free-form `datetime-local` input with:
+   - A **date picker** (shadcn Calendar in a Popover) — disable days where `business_hours.is_open = false` for that weekday, days fully booked, and days before today / after Away-until.
+   - A **time slot grid** generated from the day's open ranges, stepped by the selected service `duration_minutes` (default 60 min). Each candidate slot is filtered out if it overlaps an existing order (same logic as `is_slot_available`).
+   - Show "No slots available — try another day" when empty.
+4. Keep server-side `is_slot_available` RPC check on submit as the final guard.
+5. Update the availability/away gating message to reference the new picker.
 
 ## Technical notes
 
-- All colors stay HSL in `index.css`; component files use semantic Tailwind classes (`bg-card`, `text-primary`, `border-border`) — no hex literals in components.
-- Button variants keep their current names (`default`, `secondary`, `outline`, `destructive`, `link`, `lime`, `bright`) but `outline` becomes a high-contrast bordered solid (per "no ghost buttons" rule).
-- Light mode receives the same structural treatment with the warm-beige palette so toggling stays coherent.
+- New file: `src/pages/business/BusinessAvailabilityPage.tsx`. Route added in `src/App.tsx` under `RoleGuard allow={["business"]}`.
+- Reuse existing helpers in `src/lib/business/queries.ts` (`fetchBusinessSettings`, `upsertBusinessSettings`, `fetchBusinessHours`, `replaceBusinessHours`). Add `fetchBusinessUpcomingOrders(businessId, fromIso, toIso)` returning `{ scheduled_for, services: { duration_minutes } }[]` (RLS already allows owners to read their own orders; for the customer-side overlap check we'll rely on the existing `is_slot_available` RPC — we don't need to read other customers' orders client-side).
+- Customer slot rendering computes available slots purely from `business_hours` ranges + provider's own published "busy" set. Because customers cannot read others' orders due to RLS, the slot grid will instead call `is_slot_available` lazily as the user picks a slot (slot button shows loading → disabled if not free), OR we expose a SECURITY DEFINER RPC `list_free_slots(_business_id, _date, _duration_minutes)` that returns the list of free start times for that date. **Recommended:** add this RPC so the grid renders only truly-free slots in one round trip.
+- Migration: add `public.list_free_slots(_business_id uuid, _date date, _duration_minutes int)` returning `setof timestamptz`. It iterates open ranges for that weekday and excludes any slot whose `[start, start+duration)` overlaps an existing non-cancelled/non-completed order (mirroring `is_slot_available`).
+- Honour `business_settings.availability` ("busy"/"closed" → no slots) and `away_until` (no slots before that date).
+- Keep date format DD/MM/YYYY in the UI per project conventions.
+
+## Files touched
+
+- `supabase/migrations/<new>.sql` — `list_free_slots` RPC.
+- `src/App.tsx` — new route.
+- `src/components/business/BusinessLayout.tsx` — sidebar item.
+- `src/pages/business/BusinessAvailabilityPage.tsx` — new page.
+- `src/pages/business/BusinessSettingsPage.tsx` — remove weekly availability block, add link to new page.
+- `src/lib/business/queries.ts` — add `listFreeSlots` helper.
+- `src/pages/customer/CreateOrderPage.tsx` — new date + slot picker UI.
