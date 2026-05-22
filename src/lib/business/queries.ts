@@ -488,3 +488,31 @@ export const uploadBusinessImage = async (
 };
 
 export const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+
+export const listFreeSlots = async (
+  businessId: string,
+  date: string, // YYYY-MM-DD
+  durationMinutes: number,
+): Promise<string[]> => {
+  const { data, error } = await sb.rpc("list_free_slots", {
+    _business_id: businessId,
+    _date: date,
+    _duration_minutes: durationMinutes,
+  });
+  if (error) throw error;
+  return (data ?? []) as string[];
+};
+
+export const fetchBusinessUpcomingScheduled = async (businessId: string, fromIso: string, toIso: string) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id, scheduled_for, status, services(title, duration_minutes)")
+    .eq("business_id", businessId)
+    .not("scheduled_for", "is", null)
+    .gte("scheduled_for", fromIso)
+    .lte("scheduled_for", toIso)
+    .not("status", "in", "(cancelled,completed)")
+    .order("scheduled_for");
+  if (error) throw error;
+  return data ?? [];
+};
