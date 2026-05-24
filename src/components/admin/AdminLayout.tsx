@@ -12,7 +12,6 @@ import {
   Inbox,
   LogOut,
   Mail,
-  Megaphone,
   Menu,
   Search,
   Settings,
