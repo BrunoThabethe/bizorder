@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.compute-distance]
 verify_jwt = false
+
+[functions.send-waitlist-welcome]
+verify_jwt = false
