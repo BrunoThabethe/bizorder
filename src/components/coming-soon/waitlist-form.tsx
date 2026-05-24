@@ -52,15 +52,9 @@ export const WaitlistForm = () => {
       .from("newsletter_subscribers")
       .insert({ email: cleanEmail, source: "coming_soon" });
 
-    // Fire-and-forget welcome email.
+    // Fire-and-forget Brevo welcome email.
     void supabase.functions
-      .invoke("send-transactional-email", {
-        body: {
-          templateName: "waitlist-welcome",
-          recipientEmail: cleanEmail,
-          idempotencyKey: `waitlist-welcome-${cleanEmail}`,
-        },
-      })
+      .invoke("send-waitlist-welcome", { body: { email: cleanEmail } })
       .catch(() => undefined);
 
     setStatus("done");
