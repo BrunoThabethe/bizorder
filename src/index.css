@@ -92,8 +92,8 @@
     --secondary: 38 63% 60%;
     --secondary-foreground: 0 0% 7%;
 
-    --muted: 0 0% 90%;
-    --muted-foreground: 33 21% 35%;
+    --muted: 40 50% 90%;
+    --muted-foreground: 38 50% 32%;
 
     --accent: 38 63% 60%;
     --accent-foreground: 0 0% 7%;
@@ -107,8 +107,8 @@
     --info: 210 79% 46%;
     --info-foreground: 0 0% 98%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 38 40% 82%;
+    --input: 38 40% 82%;
     --ring: 28 31% 18%;
 
     --surface-elevated: 40 60% 89%;

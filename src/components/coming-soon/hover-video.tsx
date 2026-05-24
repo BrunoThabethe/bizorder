@@ -25,7 +25,7 @@ export const HoverVideo = () => {
 
   return (
     <div
-      className="group relative mx-auto aspect-video w-full overflow-hidden rounded-3xl border border-border/60 bg-card-gradient shadow-card-lift"
+      className="group relative mx-auto aspect-video w-full max-w-full overflow-hidden rounded-2xl border border-border bg-card-gradient shadow-card-lift md:rounded-3xl"
       onMouseEnter={start}
       onMouseLeave={stop}
       onTouchStart={() => (playing ? stop() : start())}
@@ -56,9 +56,9 @@ export const HoverVideo = () => {
 
       {!playing && !hasError && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-primary/10 opacity-100 transition-opacity duration-500 group-hover:opacity-0">
-          <div className="flex items-center gap-3 rounded-full border border-border/60 bg-card px-5 py-2 shadow-card-lift">
-            <Play className="h-4 w-4 text-primary" fill="currentColor" />
-            <span className="text-sm font-medium text-foreground">Hover to play</span>
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 shadow-card-lift">
+            <Play className="h-3.5 w-3.5 text-primary" fill="currentColor" />
+            <span className="text-xs font-medium text-foreground md:text-sm">Hover to play</span>
           </div>
         </div>
       )}

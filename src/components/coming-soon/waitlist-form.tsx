@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, PartyPopper } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,33 +32,60 @@ export const WaitlistForm = () => {
     }
 
     setStatus("submitting");
+    const cleanEmail = parsed.data;
+
     const { error } = await supabase.from("waitlist_signups").insert({
-      email: parsed.data,
+      email: cleanEmail,
       source: "coming_soon",
       user_agent: navigator.userAgent.slice(0, 240),
     });
 
-    if (error) {
-      if (error.code === "23505") {
-        setStatus("done");
-        setMessage("You're already on the list. We'll be in touch soon.");
-        return;
-      }
+    if (error && error.code !== "23505") {
       setStatus("error");
       setMessage("Something went wrong. Please try again.");
       return;
     }
 
+    // Mirror into newsletter_subscribers so it appears in Admin → Newsletter.
+    // Silently ignore unique-conflict errors.
+    await supabase
+      .from("newsletter_subscribers")
+      .insert({ email: cleanEmail, source: "coming_soon" });
+
+    // Fire-and-forget welcome email.
+    void supabase.functions
+      .invoke("send-transactional-email", {
+        body: {
+          templateName: "waitlist-welcome",
+          recipientEmail: cleanEmail,
+          idempotencyKey: `waitlist-welcome-${cleanEmail}`,
+        },
+      })
+      .catch(() => undefined);
+
     setStatus("done");
-    setMessage("You're in. Watch your inbox for launch news.");
     setEmail("");
   };
 
-  const isDone = status === "done";
+  if (status === "done") {
+    return (
+      <div className="mx-auto w-full max-w-md rounded-2xl border border-primary/30 bg-card-gradient p-6 text-center shadow-card-lift">
+        <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-primary/15 text-primary">
+          <PartyPopper className="h-6 w-6" />
+        </div>
+        <p className="font-display text-xl font-bold text-primary">
+          Thank you for joining the pack.
+        </p>
+        <p className="mt-2 text-sm text-secondary">
+          A welcome email is on its way — keep an eye on your inbox for launch news.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto w-full max-w-md">
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card-gradient p-3 shadow-card-lift sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card-gradient p-3 shadow-card-lift sm:flex-row sm:items-center">
         <Input
           type="email"
           value={email}
@@ -66,28 +93,19 @@ export const WaitlistForm = () => {
             setEmail(e.target.value);
             if (status === "error") setStatus("idle");
           }}
-          disabled={status === "submitting" || isDone}
+          disabled={status === "submitting"}
           required
           maxLength={160}
           autoComplete="email"
           placeholder="you@email.com"
           aria-label="Email address"
-          className="h-12 flex-1 border-0 bg-background/60 text-base"
+          className="h-12 flex-1 border-0 bg-background/80 text-base"
         />
-        <Button
-          type="submit"
-          size="lg"
-          disabled={status === "submitting" || isDone}
-          className="h-12 shrink-0"
-        >
+        <Button type="submit" size="lg" disabled={status === "submitting"} className="h-12 shrink-0">
           {status === "submitting" ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Joining…
-            </>
-          ) : isDone ? (
-            <>
-              <Check className="h-4 w-4" /> You're in
             </>
           ) : (
             <>
