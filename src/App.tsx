@@ -64,7 +64,7 @@ import AdminPayoutsPage from "./pages/admin/AdminPayoutsPage.tsx";
 import AdminUploadsPage from "./pages/admin/AdminUploadsPage.tsx";
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage.tsx";
 import AdminAiAssistantPage from "./pages/admin/AdminAiAssistantPage.tsx";
-import AdminCampaignsPage from "./pages/admin/AdminCampaignsPage.tsx";
+
 import AdminNewsletterPage from "./pages/admin/AdminNewsletterPage.tsx";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage.tsx";
 import AdminAuditPage from "./pages/admin/AdminAuditPage.tsx";
@@ -147,7 +147,7 @@ const App = () => (
             <Route path="/admin/uploads" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminUploadsPage /></AdminOtpGate></RoleGuard>} />
             <Route path="/admin/analytics" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminAnalyticsPage /></AdminOtpGate></RoleGuard>} />
             <Route path="/admin/ai-assistant" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminAiAssistantPage /></AdminOtpGate></RoleGuard>} />
-            <Route path="/admin/campaigns" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminCampaignsPage /></AdminOtpGate></RoleGuard>} />
+            
             <Route path="/admin/newsletter" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminNewsletterPage /></AdminOtpGate></RoleGuard>} />
             <Route path="/admin/settings" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminSettingsPage /></AdminOtpGate></RoleGuard>} />
             <Route path="/admin/audit" element={<RoleGuard allow={["admin"]}><AdminOtpGate><AdminAuditPage /></AdminOtpGate></RoleGuard>} />

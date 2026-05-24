@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.send-waitlist-welcome]
 verify_jwt = false
+
+[functions.ai-draft-newsletter]
+verify_jwt = false
+
+[functions.send-newsletter-broadcast]
+verify_jwt = false
