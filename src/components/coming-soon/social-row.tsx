@@ -21,9 +21,9 @@ export const SocialRow = () => {
             target="_blank"
             rel="noreferrer noopener"
             aria-label={link.label}
-            className="group grid h-11 w-11 place-items-center rounded-full border border-white/15 bg-white/[0.05] text-foreground/80 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-primary/60 hover:bg-primary/15 hover:text-primary hover:shadow-[0_8px_24px_-8px_hsl(38_70%_60%/0.6)]"
+            className="grid h-11 w-11 place-items-center rounded-full border border-border/60 bg-card text-primary transition-all duration-300 hover:scale-110 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-card-lift"
           >
-            <Icon className="h-4 w-4 transition-transform group-hover:scale-110" />
+            <Icon className="h-4 w-4" />
           </a>
         );
       })}

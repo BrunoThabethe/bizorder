@@ -2,6 +2,8 @@ import { useState } from "react";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const emailSchema = z
@@ -56,19 +58,8 @@ export const WaitlistForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto w-full max-w-md">
-      <div
-        className={cn(
-          "group relative flex items-center overflow-hidden rounded-2xl border border-white/15 bg-white/[0.06] p-1.5 backdrop-blur-xl transition-all",
-          "shadow-[0_8px_40px_-12px_rgba(217,169,87,0.35),inset_0_1px_0_0_rgba(255,255,255,0.08)]",
-          "focus-within:border-primary/60 focus-within:shadow-[0_8px_60px_-10px_hsl(38_70%_60%/0.55),inset_0_1px_0_0_rgba(255,255,255,0.12)]",
-        )}
-      >
-        {/* Glossy highlight */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-2xl bg-gradient-to-b from-white/15 to-transparent"
-        />
-        <input
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card-gradient p-3 shadow-card-lift sm:flex-row sm:items-center">
+        <Input
           type="email"
           value={email}
           onChange={(e) => {
@@ -81,16 +72,13 @@ export const WaitlistForm = () => {
           autoComplete="email"
           placeholder="you@email.com"
           aria-label="Email address"
-          className="relative z-10 h-12 flex-1 bg-transparent px-4 text-base text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-60"
+          className="h-12 flex-1 border-0 bg-background/60 text-base"
         />
-        <button
+        <Button
           type="submit"
+          size="lg"
           disabled={status === "submitting" || isDone}
-          className={cn(
-            "relative z-10 inline-flex h-12 items-center gap-2 rounded-xl px-5 text-sm font-semibold transition-all",
-            "bg-cta text-primary-foreground shadow-glow hover:scale-[1.03] active:scale-[0.98]",
-            "disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100",
-          )}
+          className="h-12 shrink-0"
         >
           {status === "submitting" ? (
             <>
@@ -106,7 +94,7 @@ export const WaitlistForm = () => {
               Notify me <ArrowRight className="h-4 w-4" />
             </>
           )}
-        </button>
+        </Button>
       </div>
       {message && (
         <p
