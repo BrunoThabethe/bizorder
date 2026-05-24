@@ -1,38 +1,55 @@
-## Redesign Coming Soon Page to Match Homepage
+# Coming-soon polish, gold accents, newsletter wiring, welcome email
 
-Rebuild the gate page so it inherits the homepage's look and feel (light theme, brand layout, same typography and colors) instead of the dark leopard concept.
+## 1. Coming-soon page — mobile + logo + copy
 
-### Changes
+**`coming-soon-page.tsx`**
+- Shrink logo from `size={180}` → `size={126}` (~30% smaller). Wrap the logo in a `div` with `onDoubleClick={() => setPwOpen(true)}` and `cursor-pointer`. Remove the global `window.dblclick` listener.
+- Delete the "Team? Double-click anywhere to enter." footer line so customers don't see the gate hint.
+- Tighten mobile spacing: reduce top padding (`pt-8 md:pt-20`), headline `text-3xl md:text-6xl`, body `text-sm md:text-lg`, section gaps `mt-6 md:mt-10`. Constrain widths so logo/form/video stay centered (`mx-auto w-full`).
+- Replace remaining `text-muted-foreground` chrome on this page with `text-primary/80` or `text-secondary` for the gold/warm-brown accent feel.
 
-**1. Swap the logo**
-- Remove `bon-leopard.png` usage from `LeopardMark`.
-- Use the existing brand logo `src/assets/bon-logo.png` (the one rendered via `BrandMark` in the homepage nav) at the top center.
-- Keep the interactive hover/mouse-tracking behavior (subtle tilt, breathe, gold glow halo) — just applied to the real logo.
-- Rename component to `InteractiveLogo` and delete the leopard ear/tail flicker overlays (they were specific to the leopard art).
+**`hover-video.tsx`** — keep aspect-video, ensure `max-w-full` and remove fixed paddings that overflow on 384px. Pill overlay font shrinks on small screens.
 
-**2. Match the homepage shell**
-- Wrap the page in `SiteLayout` so it gets the same `Navbar` + `Footer` + background as `/index`.
-- Use the same light background, container widths, and section rhythm as `Hero` / `CtaForm`.
-- Replace dark `#0d0a07` gradient + grain with the homepage's light surface (semantic tokens `bg-background`, `bg-card-gradient`, `shadow-card-lift`).
+**`waitlist-form.tsx`** — stack vertically on mobile (already does), bump tap targets to `h-12`. After success, render a prominent two-line confirmation card: "🎉 Thank you for joining the pack." + "A welcome email is on its way — keep an eye on your inbox." (replacing the small inline message).
 
-**3. Keep the existing copy and structure**
-- Headline + sub: "Something bold is about to prowl the market." / "Be first in line — get the launch date, early-access perks, and a head start over the pack." (unchanged text)
-- Email capture (`WaitlistForm`): same logic and Supabase insert, restyled to match homepage CTA card (high-contrast gold button, beige card, no glassmorphism, no ghost styling).
-- Social row: same icons + links, restyled as solid pill buttons with brand colors instead of frosted glass.
-- Hover-to-play video: kept, restyled with `rounded-3xl border border-border/60 shadow-card-lift` to match homepage cards.
+## 2. Remove gray app-wide → gold accent
 
-**4. Gate behavior — unchanged**
-- `ComingSoonGate` still wraps the app, double-click opens `PasswordDialog`, password `BizOrder2026`, 5-attempts/15-min rate limit, `localStorage["bo_unlocked"]` persistence.
+In `src/index.css` `.light` block:
+- `--muted-foreground: 33 21% 35%;` → `38 50% 38%;` (warm gold-brown instead of gray) so every `text-muted-foreground` across homepage, coming soon, admin, etc. picks up the gold accent automatically.
+- `--muted: 0 0% 90%;` → `40 50% 90%;` (warm beige surface instead of flat gray).
+- `--border: 0 0% 90%;` / `--input: 0 0% 90%;` → `38 40% 82%;` for a subtle gold-tinted border.
 
-### Files touched
+This is one token change that propagates to every page using semantic tokens — no per-component refactor needed.
 
-- `src/components/coming-soon/coming-soon-page.tsx` — full rewrite around `SiteLayout` and homepage tokens.
-- `src/components/coming-soon/leopard-mark.tsx` — replace with `interactive-logo.tsx` using `bon-logo.png`; delete old file.
-- `src/components/coming-soon/waitlist-form.tsx` — restyle to match `CtaForm` card (light, high-contrast).
-- `src/components/coming-soon/social-row.tsx` — restyle pills for light background.
-- `src/components/coming-soon/hover-video.tsx` — restyle frame to match homepage cards.
-- No DB, no routing, no gate-logic changes.
+## 3. Newsletter admin shows waitlist signups
 
-### Out of scope
-- No changes to `App.tsx`, gate logic, password, or `waitlist_signups` table.
-- No copy rewrite beyond removing the dark-theme "Follow the pack" eyebrow if it reads off in light theme (kept as is unless it clashes).
+The admin page reads `newsletter_subscribers`, but the coming-soon form writes to `waitlist_signups`. Fix by writing to **both** in `waitlist-form.tsx`:
+- Keep the existing `waitlist_signups` insert (unique source-of-truth, has rate-limit policy).
+- Additionally upsert into `newsletter_subscribers` with `source: 'coming_soon'` so it appears in the existing Admin → Newsletter list and CSV export.
+- Treat unique-constraint conflicts as success (already subscribed).
+
+No schema change needed — both tables exist with `INSERT` policies open to anon.
+
+## 4. Welcome / thank-you email
+
+Currently no email is sent on signup, so the user gets nothing in their inbox. To fix this we need an email sender domain (none is configured yet). Setup flow:
+
+1. User completes the email domain setup dialog.
+2. Scaffold transactional emails.
+3. Create a `waitlist-welcome` React Email template (BizOrder gold + leopard-brown brand, white body) with subject "Welcome to the BizOrder pack 🐾".
+4. From `waitlist-form.tsx`, after a successful insert, invoke `send-transactional-email` with `templateName: 'waitlist-welcome'`, `recipientEmail`, and `idempotencyKey: \`waitlist-welcome-${email}\``.
+
+Since no domain exists, the first step of build mode will surface the email setup dialog. Everything else (steps 1-3) ships immediately and doesn't depend on email being live.
+
+## Files touched
+
+- `src/components/coming-soon/coming-soon-page.tsx` (logo size, dblclick scope, remove hint, mobile spacing)
+- `src/components/coming-soon/waitlist-form.tsx` (dual insert, success state, welcome-email invoke)
+- `src/components/coming-soon/hover-video.tsx` (mobile polish)
+- `src/index.css` (light-theme muted/border tokens → gold-tinted)
+- New: `supabase/functions/_shared/transactional-email-templates/waitlist-welcome.tsx` + registry entry (after email infra setup)
+
+## Out of scope
+
+- No changes to password (`BizOrder2026`), gate logic, or `waitlist_signups` schema.
+- No homepage layout changes beyond the global token swap.
