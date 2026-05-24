@@ -1,55 +1,45 @@
-# Coming-soon polish, gold accents, newsletter wiring, welcome email
+## Goal
+Turn the Admin AI Assistant page into an AI-powered newsletter composer that sends bulk emails (via Brevo) to all active newsletter subscribers. Remove the Campaigns page.
 
-## 1. Coming-soon page — mobile + logo + copy
+## Changes
 
-**`coming-soon-page.tsx`**
-- Shrink logo from `size={180}` → `size={126}` (~30% smaller). Wrap the logo in a `div` with `onDoubleClick={() => setPwOpen(true)}` and `cursor-pointer`. Remove the global `window.dblclick` listener.
-- Delete the "Team? Double-click anywhere to enter." footer line so customers don't see the gate hint.
-- Tighten mobile spacing: reduce top padding (`pt-8 md:pt-20`), headline `text-3xl md:text-6xl`, body `text-sm md:text-lg`, section gaps `mt-6 md:mt-10`. Constrain widths so logo/form/video stay centered (`mx-auto w-full`).
-- Replace remaining `text-muted-foreground` chrome on this page with `text-primary/80` or `text-secondary` for the gold/warm-brown accent feel.
+### 1. Remove Campaigns page
+- Delete `src/pages/admin/AdminCampaignsPage.tsx`.
+- Remove its route and import from `src/App.tsx`.
+- Remove the Campaigns link from the admin sidebar (`src/components/admin/AdminLayout.tsx`).
+- Leave the `ai_campaigns` table in place (history of past sends will reuse it as a send log). Existing `fetchCampaigns` / `createCampaign` helpers stay; unused ones get removed.
 
-**`hover-video.tsx`** — keep aspect-video, ensure `max-w-full` and remove fixed paddings that overflow on 384px. Pill overlay font shrinks on small screens.
+### 2. Rebuild AI Assistant page (`src/pages/admin/AdminAiAssistantPage.tsx`)
+New single-page composer with three stacked sections:
 
-**`waitlist-form.tsx`** — stack vertically on mobile (already does), bump tap targets to `h-12`. After success, render a prominent two-line confirmation card: "🎉 Thank you for joining the pack." + "A welcome email is on its way — keep an eye on your inbox." (replacing the small inline message).
+**a. Brief / draft mode**
+- Tabs: "Write myself" | "Draft with AI".
+- AI mode: textarea for the brief ("What is this email about?"), tone selector (Friendly / Professional / Promotional), optional CTA field, "Generate draft" button.
+- Calls a new edge function `ai-draft-newsletter` that uses Lovable AI Gateway (`google/gemini-2.5-flash`) and returns `{ subject, html, text }`.
 
-## 2. Remove gray app-wide → gold accent
+**b. Editor**
+- Subject input + rich textarea (plain HTML body) populated from the AI draft or empty for manual mode.
+- Fully editable; user can add/remove anything.
+- Live recipient counter ("Will send to N active subscribers").
+- "Send test to me" button (sends only to the admin's email).
 
-In `src/index.css` `.light` block:
-- `--muted-foreground: 33 21% 35%;` → `38 50% 38%;` (warm gold-brown instead of gray) so every `text-muted-foreground` across homepage, coming soon, admin, etc. picks up the gold accent automatically.
-- `--muted: 0 0% 90%;` → `40 50% 90%;` (warm beige surface instead of flat gray).
-- `--border: 0 0% 90%;` / `--input: 0 0% 90%;` → `38 40% 82%;` for a subtle gold-tinted border.
+**c. Send**
+- "Send to newsletter" button with a confirmation dialog showing recipient count.
+- Calls new edge function `send-newsletter-broadcast` which:
+  - Verifies caller is admin via `has_role`.
+  - Loads all `newsletter_subscribers` where `is_active = true`.
+  - Sends through Brevo (same `BREVO_API_KEY` + sender used by `send-waitlist-welcome`) in batches of 50 using Brevo's `to` array with `messageVersions` so each recipient gets their own envelope (no leaking addresses).
+  - Logs the send into `ai_campaigns` as `status='sent'` with `recipients_count` filled.
+- Rate-limited (max 3 broadcasts per admin per hour) and input-validated (subject ≤ 200 chars, body ≤ 100k chars).
 
-This is one token change that propagates to every page using semantic tokens — no per-component refactor needed.
+### 3. Sidebar / nav
+- In `AdminLayout`, rename the "AI assistant" item to "AI newsletter" and drop the Campaigns item.
 
-## 3. Newsletter admin shows waitlist signups
+### 4. Settings page kept
+- Existing `ai_assistant_settings` (model, system prompt, temperature) stays and is reused by the draft function. A small collapsible "Assistant settings" panel stays at the bottom of the AI Assistant page so admins can still tweak the model/prompt.
 
-The admin page reads `newsletter_subscribers`, but the coming-soon form writes to `waitlist_signups`. Fix by writing to **both** in `waitlist-form.tsx`:
-- Keep the existing `waitlist_signups` insert (unique source-of-truth, has rate-limit policy).
-- Additionally upsert into `newsletter_subscribers` with `source: 'coming_soon'` so it appears in the existing Admin → Newsletter list and CSV export.
-- Treat unique-constraint conflicts as success (already subscribed).
-
-No schema change needed — both tables exist with `INSERT` policies open to anon.
-
-## 4. Welcome / thank-you email
-
-Currently no email is sent on signup, so the user gets nothing in their inbox. To fix this we need an email sender domain (none is configured yet). Setup flow:
-
-1. User completes the email domain setup dialog.
-2. Scaffold transactional emails.
-3. Create a `waitlist-welcome` React Email template (BizOrder gold + leopard-brown brand, white body) with subject "Welcome to the BizOrder pack 🐾".
-4. From `waitlist-form.tsx`, after a successful insert, invoke `send-transactional-email` with `templateName: 'waitlist-welcome'`, `recipientEmail`, and `idempotencyKey: \`waitlist-welcome-${email}\``.
-
-Since no domain exists, the first step of build mode will surface the email setup dialog. Everything else (steps 1-3) ships immediately and doesn't depend on email being live.
-
-## Files touched
-
-- `src/components/coming-soon/coming-soon-page.tsx` (logo size, dblclick scope, remove hint, mobile spacing)
-- `src/components/coming-soon/waitlist-form.tsx` (dual insert, success state, welcome-email invoke)
-- `src/components/coming-soon/hover-video.tsx` (mobile polish)
-- `src/index.css` (light-theme muted/border tokens → gold-tinted)
-- New: `supabase/functions/_shared/transactional-email-templates/waitlist-welcome.tsx` + registry entry (after email infra setup)
-
-## Out of scope
-
-- No changes to password (`BizOrder2026`), gate logic, or `waitlist_signups` schema.
-- No homepage layout changes beyond the global token swap.
+## Technical notes
+- New edge functions: `supabase/functions/ai-draft-newsletter/index.ts`, `supabase/functions/send-newsletter-broadcast/index.ts`, both with `verify_jwt = false` + in-code JWT validation + admin role check, CORS, Zod input validation.
+- Brevo call uses `https://api.brevo.com/v3/smtp/email` with header `api-key: BREVO_API_KEY` (same as existing `send-waitlist-welcome`).
+- Frontend uses `supabase.functions.invoke(...)`, React Query for subscriber count, shadcn `Tabs`, `Textarea`, `Dialog`.
+- No DB schema changes required.
