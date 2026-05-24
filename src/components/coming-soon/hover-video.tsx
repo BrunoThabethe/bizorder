@@ -25,7 +25,7 @@ export const HoverVideo = () => {
 
   return (
     <div
-      className="group relative mx-auto aspect-video w-full max-w-4xl overflow-hidden rounded-3xl"
+      className="group relative mx-auto aspect-video w-full overflow-hidden rounded-3xl border border-border/60 bg-card-gradient shadow-card-lift"
       onMouseEnter={start}
       onMouseLeave={stop}
       onTouchStart={() => (playing ? stop() : start())}
@@ -42,32 +42,23 @@ export const HoverVideo = () => {
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="grid h-full w-full place-items-center bg-gradient-to-br from-[#2a1f15] via-[#3a2c1f] to-[#1a130c]">
+        <div className="grid h-full w-full place-items-center">
           <div className="text-center">
-            <p className="font-display text-2xl font-bold text-primary">Teaser coming soon</p>
+            <p className="font-display text-2xl font-bold text-primary">
+              Teaser coming soon
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Drop your video at <code className="text-primary">public/marketing/bizorder-teaser.mp4</code>
+              Watch this space for the launch trailer.
             </p>
           </div>
         </div>
       )}
 
-      {/* Soft ambient gold glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -inset-10 -z-10 rounded-[40px] opacity-60 blur-3xl"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, hsl(38 70% 60% / 0.35) 0%, transparent 70%)",
-        }}
-      />
-
-      {/* Hover-to-play hint */}
       {!playing && !hasError && (
-        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/30 opacity-100 transition-opacity duration-500 group-hover:opacity-0">
-          <div className="flex items-center gap-3 rounded-full border border-white/20 bg-black/40 px-5 py-2 backdrop-blur-md">
+        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-primary/10 opacity-100 transition-opacity duration-500 group-hover:opacity-0">
+          <div className="flex items-center gap-3 rounded-full border border-border/60 bg-card px-5 py-2 shadow-card-lift">
             <Play className="h-4 w-4 text-primary" fill="currentColor" />
-            <span className="text-sm font-medium text-white">Hover to play</span>
+            <span className="text-sm font-medium text-foreground">Hover to play</span>
           </div>
         </div>
       )}
