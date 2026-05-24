@@ -70,9 +70,9 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await sb.auth.getClaims(token);
-    if (claimsErr || !claims?.claims) return json(401, { error: "Unauthorized" });
-    const userId = claims.claims.sub as string;
+    const { data: userData, error: userErr } = await sb.auth.getUser(token);
+    if (userErr || !userData?.user) return json(401, { error: "Unauthorized" });
+    const userId = userData.user.id;
 
     const { data: isAdmin } = await sb.rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) return json(403, { error: "Admin only" });
