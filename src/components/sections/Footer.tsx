@@ -36,6 +36,14 @@ export const Footer = () => {
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
               The simplest way to take orders, get paid, and grow your business online.
             </p>
+            <div className="mt-5">
+              <Button asChild variant="default" size="sm">
+                <Link to="/coming-soon">
+                  <Rocket className="mr-2 h-4 w-4" />
+                  Coming soon
+                </Link>
+              </Button>
+            </div>
           </div>
 
           <FooterColumn title="Product" links={productLinks} />
