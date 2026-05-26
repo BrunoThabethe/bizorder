@@ -1,10 +1,13 @@
 import { BrandMark } from "@/components/BrandMark";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Rocket } from "lucide-react";
 
 const productLinks = [
   { label: "How it works", to: "/how-it-works" },
   { label: "For businesses", to: "/for-businesses" },
   { label: "For customers", to: "/for-customers" },
+  { label: "Coming soon", to: "/coming-soon" },
 ];
 
 const supportLinks = [
