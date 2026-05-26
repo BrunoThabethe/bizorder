@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ComingSoonGate } from "@/components/coming-soon/coming-soon-gate";
+import { ComingSoonPage } from "@/components/coming-soon/coming-soon-page";
 import Index from "./pages/Index.tsx";
 import HowItWorksPage from "./pages/HowItWorksPage.tsx";
 import ForBusinessesPage from "./pages/ForBusinessesPage.tsx";
@@ -83,6 +84,7 @@ const App = () => (
           <ComingSoonGate>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/coming-soon" element={<ComingSoonPage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/for-businesses" element={<ForBusinessesPage />} />
             <Route path="/for-customers" element={<ForCustomersPage />} />

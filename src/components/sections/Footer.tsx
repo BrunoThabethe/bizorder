@@ -1,10 +1,13 @@
 import { BrandMark } from "@/components/BrandMark";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Rocket } from "lucide-react";
 
 const productLinks = [
   { label: "How it works", to: "/how-it-works" },
   { label: "For businesses", to: "/for-businesses" },
   { label: "For customers", to: "/for-customers" },
+  { label: "Coming soon", to: "/coming-soon" },
 ];
 
 const supportLinks = [
@@ -33,6 +36,14 @@ export const Footer = () => {
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
               The simplest way to take orders, get paid, and grow your business online.
             </p>
+            <div className="mt-5">
+              <Button asChild variant="default" size="sm">
+                <Link to="/coming-soon">
+                  <Rocket className="mr-2 h-4 w-4" />
+                  Coming soon
+                </Link>
+              </Button>
+            </div>
           </div>
 
           <FooterColumn title="Product" links={productLinks} />
