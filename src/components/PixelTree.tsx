@@ -191,12 +191,12 @@ export const PixelTree = () => {
       }
 
       const styles = getComputedStyle(document.documentElement);
-      const fg = styles.getPropertyValue("--foreground").trim() || "0 0% 100%";
+      const treeColor = styles.getPropertyValue("--primary").trim() || "38 63% 60%";
 
       ctx.clearRect(0, 0, cssSize, cssSize);
 
       const groundY = GRID - 5;
-      ctx.fillStyle = `hsl(${fg} / 0.35)`;
+      ctx.fillStyle = `hsl(${treeColor} / 0.35)`;
       for (let x = 6; x < GRID - 6; x += 2) {
         ctx.fillRect(x * cell, groundY * cell, cell, cell);
       }
@@ -210,7 +210,7 @@ export const PixelTree = () => {
         const appear = Math.min(1, age / 220);
         let alpha = appear * fadeOut;
         if (p.kind === "leaf") alpha *= 0.9;
-        ctx.fillStyle = `hsl(${fg} / ${alpha.toFixed(3)})`;
+        ctx.fillStyle = `hsl(${treeColor} / ${alpha.toFixed(3)})`;
         ctx.fillRect(p.x * cell, p.y * cell, cell, cell);
       }
 
