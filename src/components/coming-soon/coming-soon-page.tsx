@@ -224,9 +224,9 @@ const KraftHalf = ({ side, clip, edgePath, transform, children }: KraftHalfProps
         WebkitClipPath: clip,
         transform,
         transition: "transform 0.25s cubic-bezier(0.22,1,0.36,1)",
-        filter: isTop
-          ? "drop-shadow(0 10px 14px rgba(0,0,0,0.55))"
-          : "drop-shadow(0 -10px 14px rgba(0,0,0,0.55))",
+      filter: isTop
+          ? "drop-shadow(0 14px 22px rgba(0,0,0,0.7)) drop-shadow(0 4px 6px rgba(0,0,0,0.45))"
+          : "drop-shadow(0 -14px 22px rgba(0,0,0,0.7)) drop-shadow(0 -4px 6px rgba(0,0,0,0.45))",
       }}
     >
       {/* Kraft texture base */}
@@ -239,61 +239,86 @@ const KraftHalf = ({ side, clip, edgePath, transform, children }: KraftHalfProps
         }}
       />
 
-      {/* Inner shadow along the inside of the torn edge → curl/recess */}
+      {/* Lighter "paper interior" band fading inward from the torn edge.
+          Real torn paper exposes the lighter fibres just under the printed
+          surface, so the kraft brightens for ~5% before returning to normal. */}
       <div
         className="absolute inset-x-0"
         style={{
-          top: isTop ? `${CY - 6}%` : `${CY - 0.5}%`,
-          height: "6.5%",
+          top: isTop ? `${CY - 7}%` : `${CY - 0.2}%`,
+          height: "7.2%",
           background: isTop
-            ? "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.28) 80%, rgba(0,0,0,0.55) 100%)"
-            : "linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,0.28) 80%, rgba(0,0,0,0.55) 100%)",
+            ? "linear-gradient(to bottom, rgba(255,243,220,0) 0%, rgba(255,243,220,0.35) 70%, rgba(255,248,232,0.75) 100%)"
+            : "linear-gradient(to top, rgba(255,243,220,0) 0%, rgba(255,243,220,0.35) 70%, rgba(255,248,232,0.75) 100%)",
+          mixBlendMode: "screen",
+        }}
+      />
+
+      {/* Subtle inner crease shadow just beside the bright band — the
+          curl/lip catches a thin shadow on the printed surface. */}
+      <div
+        className="absolute inset-x-0"
+        style={{
+          top: isTop ? `${CY - 9}%` : `${CY + 1.8}%`,
+          height: "2.2%",
+          background: isTop
+            ? "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 100%)"
+            : "linear-gradient(to top, rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 100%)",
           mixBlendMode: "multiply",
         }}
       />
 
-      {/* Painted torn edge: bright cream "paper core" + fine white fibres.
-          The SVG paints both sides of the edge, but the half's clip-path
-          hides the half facing the void, leaving only the inside half
-          visible — which reads as a real torn paper core. */}
+      {/* Painted torn edge: cream halo + bright white fibre core + grit. */}
       <svg
         className="pointer-events-none absolute inset-0 h-full w-full"
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden
       >
-        {/* Soft warm-cream halo (paper interior, slightly blown out) */}
+        {/* Wide soft cream halo (paper bulk showing through) */}
+        <path
+          d={edgePath}
+          fill="none"
+          stroke="#fbf1d8"
+          strokeWidth={5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={0.45}
+          vectorEffect="non-scaling-stroke"
+          style={{ filter: "blur(1.2px)" }}
+        />
+        {/* Mid cream layer */}
         <path
           d={edgePath}
           fill="none"
           stroke="#f7ecd6"
-          strokeWidth={3.2}
+          strokeWidth={2.6}
           strokeLinecap="round"
           strokeLinejoin="round"
-          opacity={0.55}
+          opacity={0.85}
           vectorEffect="non-scaling-stroke"
-          style={{ filter: "blur(0.6px)" }}
+          style={{ filter: "blur(0.4px)" }}
         />
-        {/* Bright off-white core */}
+        {/* Bright off-white fibre core */}
         <path
           d={edgePath}
           fill="none"
-          stroke="#fffaf0"
-          strokeWidth={1.4}
+          stroke="#fffdf5"
+          strokeWidth={1.1}
           strokeLinecap="round"
           strokeLinejoin="round"
-          opacity={0.95}
+          opacity={0.98}
           vectorEffect="non-scaling-stroke"
         />
-        {/* Fine darker fibre flecks for grit */}
+        {/* Dashed darker fibre flecks for grit */}
         <path
           d={edgePath}
           fill="none"
-          stroke="#7a4a25"
-          strokeWidth={0.4}
-          strokeDasharray="0.6 1.4"
+          stroke="#6b3d1d"
+          strokeWidth={0.45}
+          strokeDasharray="0.5 1.6"
           strokeLinecap="round"
-          opacity={0.55}
+          opacity={0.5}
           vectorEffect="non-scaling-stroke"
         />
       </svg>
