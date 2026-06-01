@@ -196,7 +196,7 @@ export const PixelTree = () => {
       ctx.clearRect(0, 0, cssSize, cssSize);
 
       const groundY = GRID - 5;
-      ctx.fillStyle = `hsl(${fg} / 0.35)`;
+      ctx.fillStyle = `hsl(${treeColor} / 0.35)`;
       for (let x = 6; x < GRID - 6; x += 2) {
         ctx.fillRect(x * cell, groundY * cell, cell, cell);
       }
