@@ -1,24 +1,20 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ComingSoonPage } from "./coming-soon-page";
-import { isUnlocked } from "./password-dialog";
 
 interface ComingSoonGateProps {
   children: ReactNode;
 }
 
+/**
+ * Always shows the Coming Soon page on a fresh page load.
+ * Unlocking via the hidden password dialog is in-memory only — a reload
+ * (or new tab) returns the visitor to the Coming Soon page.
+ */
 export const ComingSoonGate = ({ children }: ComingSoonGateProps) => {
-  const [unlocked, setUnlocked] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    setUnlocked(isUnlocked());
-  }, []);
-
-  if (unlocked === null) {
-    return <div className="min-h-screen bg-background" />;
-  }
+  const [unlocked, setUnlocked] = useState(false);
 
   if (!unlocked) {
-    return <ComingSoonPage />;
+    return <ComingSoonPage onUnlock={() => setUnlocked(true)} />;
   }
 
   return <>{children}</>;
