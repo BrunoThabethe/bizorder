@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 
 const PASSWORD = "BizOrder2026";
-const STORAGE_KEY = "bo_unlocked";
 const ATTEMPTS_KEY = "bo_unlock_attempts";
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000;
@@ -36,9 +35,10 @@ const writeAttempts = (rec: AttemptsRecord) => {
 interface PasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUnlock?: () => void;
 }
 
-export const PasswordDialog = ({ open, onOpenChange }: PasswordDialogProps) => {
+export const PasswordDialog = ({ open, onOpenChange, onUnlock }: PasswordDialogProps) => {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
@@ -52,9 +52,10 @@ export const PasswordDialog = ({ open, onOpenChange }: PasswordDialogProps) => {
     }
 
     if (value === PASSWORD) {
-      localStorage.setItem(STORAGE_KEY, "1");
       localStorage.removeItem(ATTEMPTS_KEY);
-      window.location.reload();
+      onUnlock?.();
+      onOpenChange(false);
+      setValue("");
       return;
     }
 
@@ -79,7 +80,7 @@ export const PasswordDialog = ({ open, onOpenChange }: PasswordDialogProps) => {
             Team access
           </DialogTitle>
           <DialogDescription className="text-center">
-            Enter the password to preview the full BizOrder app.
+            Enter the password to preview the full BizOrder app for this session.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -106,12 +107,4 @@ export const PasswordDialog = ({ open, onOpenChange }: PasswordDialogProps) => {
       </DialogContent>
     </Dialog>
   );
-};
-
-export const isUnlocked = (): boolean => {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === "1";
-  } catch {
-    return false;
-  }
 };
