@@ -210,7 +210,7 @@ export const PixelTree = () => {
         const appear = Math.min(1, age / 220);
         let alpha = appear * fadeOut;
         if (p.kind === "leaf") alpha *= 0.9;
-        ctx.fillStyle = `hsl(${fg} / ${alpha.toFixed(3)})`;
+        ctx.fillStyle = `hsl(${treeColor} / ${alpha.toFixed(3)})`;
         ctx.fillRect(p.x * cell, p.y * cell, cell, cell);
       }
 
