@@ -145,9 +145,6 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
             </div>
 
             <div className="absolute inset-x-0 top-[14%] flex flex-col items-center px-6 text-center md:top-[16%]">
-              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.36em] text-[#5a3920]">
-                BizOrder · Vol I — 2026
-              </p>
               <h1 className="font-display text-[clamp(2.6rem,12vw,6rem)] font-bold leading-[0.92] tracking-tight text-[#2a160a]">
                 COMING SOON
               </h1>
