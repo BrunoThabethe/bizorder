@@ -191,7 +191,7 @@ export const PixelTree = () => {
       }
 
       const styles = getComputedStyle(document.documentElement);
-      const fg = styles.getPropertyValue("--foreground").trim() || "0 0% 100%";
+      const treeColor = styles.getPropertyValue("--primary").trim() || "38 63% 60%";
 
       ctx.clearRect(0, 0, cssSize, cssSize);
 
