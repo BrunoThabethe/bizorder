@@ -14,8 +14,8 @@ import { PasswordDialog } from "./password-dialog";
 const HOLE_TOP_Y = 30; // % from top — where the tear starts (under headline)
 const HOLE_END_Y = 96; // % — fully torn
 const CX = 50; // centre of rip, %
-const HALF_TOP = 30; // % — half-width of rip at the top
-const HALF_BOT = 24; // % — half-width at the very bottom
+const HALF_TOP = 38; // % — half-width of rip at the top
+const HALF_BOT = 32; // % — half-width at the very bottom
 const SEAM = 0.6; // % — tiny overlap so the two halves meet without a seam
 const SEGS = 26;
 
