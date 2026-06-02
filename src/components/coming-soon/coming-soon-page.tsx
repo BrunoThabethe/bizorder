@@ -69,29 +69,40 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
   const [pwOpen, setPwOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastProgressRef = useRef(0);
 
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
     const onScroll = () => {
-      const p = Math.max(0, Math.min(1, el.scrollTop / SCROLL_RANGE));
-      setProgress(p);
+      if (rafRef.current !== null) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        const p = Math.max(0, Math.min(1, el.scrollTop / SCROLL_RANGE));
+        if (Math.abs(p - lastProgressRef.current) < 0.002) return;
+        lastProgressRef.current = p;
+        setProgress(p);
+      });
     };
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   const sep = MAX_SEP * progress; // in vh%
-  const topTransform = `translateY(-${sep}%)`;
-  const bottomTransform = `translateY(${sep}%)`;
+  const topTransform = `translate3d(0, -${sep}%, 0)`;
+  const bottomTransform = `translate3d(0, ${sep}%, 0)`;
   const revealOpacity = Math.min(1, Math.max(0, (progress - 0.25) / 0.45));
 
   return (
     <div className="light">
       <div
         ref={scrollerRef}
-        className="relative h-[100dvh] w-screen overflow-x-hidden overflow-y-auto bg-[#1a0e06]"
-        style={{ scrollbarWidth: "none" }}
+        className="relative h-[100dvh] w-screen overflow-x-hidden overflow-y-auto overscroll-none bg-[#1a0e06]"
+        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
       >
         {/* Hidden scroll spacer drives the rip animation */}
         <div style={{ height: `calc(100dvh + ${SCROLL_RANGE}px)` }} />
@@ -124,8 +135,9 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
               clipPath: CLIP_TOP,
               WebkitClipPath: CLIP_TOP,
               transform: topTransform,
-              transition: "transform 0.25s cubic-bezier(0.22,1,0.36,1)",
+              willChange: "transform",
               filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.45))",
+              backfaceVisibility: "hidden",
             }}
           >
             <div className="pointer-events-auto absolute right-4 top-4 md:right-8 md:top-6">
@@ -164,8 +176,9 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
               clipPath: CLIP_BOTTOM,
               WebkitClipPath: CLIP_BOTTOM,
               transform: bottomTransform,
-              transition: "transform 0.25s cubic-bezier(0.22,1,0.36,1)",
+              willChange: "transform",
               filter: "drop-shadow(0 -8px 18px rgba(0,0,0,0.45))",
+              backfaceVisibility: "hidden",
             }}
           >
             <div className="absolute inset-x-0 bottom-[10%] flex flex-col items-center px-6 text-center md:bottom-[12%]">
