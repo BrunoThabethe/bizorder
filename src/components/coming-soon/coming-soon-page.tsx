@@ -176,8 +176,9 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
               clipPath: CLIP_BOTTOM,
               WebkitClipPath: CLIP_BOTTOM,
               transform: bottomTransform,
-              transition: "transform 0.25s cubic-bezier(0.22,1,0.36,1)",
+              willChange: "transform",
               filter: "drop-shadow(0 -8px 18px rgba(0,0,0,0.45))",
+              backfaceVisibility: "hidden",
             }}
           >
             <div className="absolute inset-x-0 bottom-[10%] flex flex-col items-center px-6 text-center md:bottom-[12%]">
