@@ -69,16 +69,27 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
   const [pwOpen, setPwOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastProgressRef = useRef(0);
 
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
     const onScroll = () => {
-      const p = Math.max(0, Math.min(1, el.scrollTop / SCROLL_RANGE));
-      setProgress(p);
+      if (rafRef.current !== null) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        const p = Math.max(0, Math.min(1, el.scrollTop / SCROLL_RANGE));
+        if (Math.abs(p - lastProgressRef.current) < 0.002) return;
+        lastProgressRef.current = p;
+        setProgress(p);
+      });
     };
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   const sep = MAX_SEP * progress; // in vh%
