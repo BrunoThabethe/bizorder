@@ -93,16 +93,16 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
   }, []);
 
   const sep = MAX_SEP * progress; // in vh%
-  const topTransform = `translateY(-${sep}%)`;
-  const bottomTransform = `translateY(${sep}%)`;
+  const topTransform = `translate3d(0, -${sep}%, 0)`;
+  const bottomTransform = `translate3d(0, ${sep}%, 0)`;
   const revealOpacity = Math.min(1, Math.max(0, (progress - 0.25) / 0.45));
 
   return (
     <div className="light">
       <div
         ref={scrollerRef}
-        className="relative h-[100dvh] w-screen overflow-x-hidden overflow-y-auto bg-[#1a0e06]"
-        style={{ scrollbarWidth: "none" }}
+        className="relative h-[100dvh] w-screen overflow-x-hidden overflow-y-auto overscroll-none bg-[#1a0e06]"
+        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
       >
         {/* Hidden scroll spacer drives the rip animation */}
         <div style={{ height: `calc(100dvh + ${SCROLL_RANGE}px)` }} />
