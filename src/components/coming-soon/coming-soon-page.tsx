@@ -135,8 +135,9 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
               clipPath: CLIP_TOP,
               WebkitClipPath: CLIP_TOP,
               transform: topTransform,
-              transition: "transform 0.25s cubic-bezier(0.22,1,0.36,1)",
+              willChange: "transform",
               filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.45))",
+              backfaceVisibility: "hidden",
             }}
           >
             <div className="pointer-events-auto absolute right-4 top-4 md:right-8 md:top-6">
