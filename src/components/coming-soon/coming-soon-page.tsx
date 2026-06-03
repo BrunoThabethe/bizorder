@@ -189,7 +189,19 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
             </div>
           </div>
 
-          {/* Scroll hint */}
+          {/* Top scroll hint */}
+          <div
+            className="absolute inset-x-0 top-6 flex flex-col items-center text-[#f3e9d3]"
+            style={{
+              opacity: Math.max(0, 1 - progress * 2.4),
+              transition: "opacity 0.25s",
+            }}
+          >
+            <ChevronUp className="mb-1 h-4 w-4 animate-bounce" />
+            <span className="text-[20px] font-semibold uppercase tracking-[0.32em]">Scroll to tear open</span>
+          </div>
+
+          {/* Bottom scroll hint */}
           <div
             className="absolute inset-x-0 bottom-6 flex flex-col items-center text-[#f3e9d3]"
             style={{
