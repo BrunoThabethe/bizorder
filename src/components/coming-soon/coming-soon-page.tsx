@@ -185,9 +185,7 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
               <h2 className="font-display text-[clamp(1.4rem,5.5vw,2.5rem)] font-bold tracking-[0.22em] text-[#2a160a]">
                 EXCLUSIVE
               </h2>
-              <p className="mt-2 text-xs uppercase tracking-[0.28em] text-[#5a3920]">
-                Join the pack
-              </p>
+              <p className="mt-2 text-xs uppercase tracking-[0.28em] text-[#5a3920]">Join the pack</p>
             </div>
           </div>
 
@@ -199,18 +197,12 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
               transition: "opacity 0.25s",
             }}
           >
-            <span className="text-[10px] font-semibold uppercase tracking-[0.32em]">
-              Scroll to tear open
-            </span>
+            <span className="text-[20px] font-semibold uppercase tracking-[0.32em]">Scroll to tear open</span>
             <ChevronDown className="mt-1 h-4 w-4 animate-bounce" />
           </div>
         </div>
 
-        <PasswordDialog
-          open={pwOpen}
-          onOpenChange={setPwOpen}
-          onUnlock={onUnlock}
-        />
+        <PasswordDialog open={pwOpen} onOpenChange={setPwOpen} onUnlock={onUnlock} />
       </div>
     </div>
   );
