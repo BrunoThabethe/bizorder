@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import kraftTex from "@/assets/kraft-texture.jpg";
 import logoSrc from "@/assets/bon-logo.png";
 import { WaitlistForm } from "./waitlist-form";
