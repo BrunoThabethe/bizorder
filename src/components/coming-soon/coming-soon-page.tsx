@@ -191,9 +191,9 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
             </div>
           </div>
 
-          {/* Scroll hint */}
+          {/* Scroll hint — sits right at the tear line */}
           <div
-            className="absolute inset-x-0 bottom-6 flex flex-col items-center text-[#f3e9d3]"
+            className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center text-[#f3e9d3]"
             style={{
               opacity: Math.max(0, 1 - progress * 2.4),
               transition: "opacity 0.25s",
