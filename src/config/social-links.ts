@@ -19,6 +19,6 @@ export const socialLinks: ReadonlyArray<SocialLink> = [
   {
     platform: "linkedin",
     label: "LinkedIn",
-    href: "https://www.linkedin.com/in/bizorder-nexus-b68582413?utm_source=share_via&utm_content=profile&utm_medium=member_ios",
+    href: "https://www.linkedin.com/in/bizorder-nexus-b68582413/",
   },
 ];
