@@ -127,7 +127,7 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
 
           {/* Top kraft half */}
           <div
-            className="absolute inset-0"
+            className="pointer-events-none absolute inset-0"
             style={{
               backgroundImage: `url(${kraftTex})`,
               backgroundSize: "cover",
@@ -168,7 +168,7 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
 
           {/* Bottom kraft half */}
           <div
-            className="absolute inset-0"
+            className="pointer-events-none absolute inset-0"
             style={{
               backgroundImage: `url(${kraftTex})`,
               backgroundSize: "cover",
