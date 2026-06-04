@@ -198,7 +198,7 @@ export const ComingSoonPage = ({ onUnlock }: ComingSoonPageProps) => {
             }}
           >
             <span className="text-[20px] font-semibold uppercase tracking-[0.32em]">Scroll to tear open</span>
-            <ChevronDown className="mt-1 h-4 w-4 animate-bounce" />
+            <ChevronUp className="mt-1 h-4 w-4 animate-bounce" />
           </div>
         </div>
 
