@@ -1322,6 +1322,16 @@ export type Database = {
         }
         Returns: string[]
       }
+      notify_user: {
+        Args: {
+          _body?: string
+          _link?: string
+          _title: string
+          _type: string
+          _user_id: string
+        }
+        Returns: string
+      }
       open_dispute: {
         Args: { _details: string; _order_id: string; _reason: string }
         Returns: string

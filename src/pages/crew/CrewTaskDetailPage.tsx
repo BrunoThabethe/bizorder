@@ -80,12 +80,12 @@ const CrewTaskDetailPage = () => {
             .eq("id", t.business_id)
             .maybeSingle();
           if (biz?.owner_id) {
-            await supabase.from("notifications").insert({
-              user_id: biz.owner_id,
-              type: "tasks_complete",
-              title: "All crew tasks completed",
-              body: `Order #${t.order_id.slice(0, 8)} is ready to be marked as ready for the customer.`,
-              link: `/business/orders/${t.order_id}`,
+            await sb.rpc("notify_user", {
+              _user_id: biz.owner_id,
+              _type: "tasks_complete",
+              _title: "All crew tasks completed",
+              _body: `Order #${t.order_id.slice(0, 8)} is ready to be marked as ready for the customer.`,
+              _link: `/business/orders/${t.order_id}`,
             });
           }
         }

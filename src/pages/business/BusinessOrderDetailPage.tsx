@@ -188,12 +188,12 @@ const BusinessOrderDetailPage = () => {
       if (taskCrew) {
         const member = crew.find((c) => c.id === taskCrew);
         if (member?.user_id) {
-          await supabase.from("notifications").insert({
-            user_id: member.user_id,
-            type: "task_assigned",
-            title: "New task assigned",
-            body: `"${taskTitle}" — open to view instructions.`,
-            link: inserted?.id ? `/crew/tasks/${inserted.id}` : "/crew/tasks",
+          await sb.rpc("notify_user", {
+            _user_id: member.user_id,
+            _type: "task_assigned",
+            _title: "New task assigned",
+            _body: `"${taskTitle}" — open to view instructions.`,
+            _link: inserted?.id ? `/crew/tasks/${inserted.id}` : "/crew/tasks",
           });
         }
       }
