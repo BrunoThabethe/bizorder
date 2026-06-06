@@ -229,7 +229,7 @@ const CreateOrderPage = () => {
       order_id: order.id,
       actor_id: user.id,
       type: "created",
-      message: fulfillment === "delivery" ? `Delivery requested · ${km} km` : "Pickup / in-store",
+      message: fulfillment === "delivery" ? "Delivery requested" : "Pickup / in-store",
     });
 
     setSubmitting(false);
