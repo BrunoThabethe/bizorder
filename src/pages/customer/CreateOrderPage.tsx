@@ -554,15 +554,12 @@ const CreateOrderPage = () => {
               <Row label="Item">{selectedService?.title ?? "—"}</Row>
               <Row label="Provider">{business?.name ?? "—"}</Row>
               <Row label="Fulfilment">{fulfillment === "delivery" ? "Delivery" : "Pickup / in-store"}</Row>
-              {fulfillment === "delivery" && (
-                <Row label="Distance">{km > 0 ? `${km} km × ${formatPrice(perKm, selectedService?.currency)}` : "—"}</Row>
-              )}
               <Row label="Address">{fulfillment === "delivery" ? selectedAddress?.label ?? "Not set" : "Not needed"}</Row>
               <Row label="When">{scheduledFor ? new Date(scheduledFor).toLocaleString("en-GB") : "As soon as possible"}</Row>
               <div className="my-3 h-px bg-border" />
               <Row label="Item price">{selectedService ? formatPrice(basePrice, selectedService.currency) : "—"}</Row>
-              {deliveryFee > 0 && (
-                <Row label="Delivery fee">{formatPrice(deliveryFee, selectedService?.currency)}</Row>
+              {fulfillment === "delivery" && (
+                <Row label="Delivery fee">Confirmed by provider</Row>
               )}
               <Row label="Total">
                 <span className="font-display text-lg font-bold">
