@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CalendarIcon, ImageIcon, Loader2, MapPin, ShieldCheck, Truck, Store, X } from "lucide-react";
+import { ArrowLeft, CalendarIcon, ImageIcon, Loader2, ShieldCheck, Truck, Store, X } from "lucide-react";
 import { z } from "zod";
 import { format } from "date-fns";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
@@ -50,7 +50,6 @@ const fetchBusiness = async (id: string) => {
 type ServiceWithDelivery = Service & {
   kind?: string;
   delivery_available?: boolean;
-  delivery_price_per_km?: number;
 };
 
 const CreateOrderPage = () => {
@@ -70,9 +69,6 @@ const CreateOrderPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [refFile, setRefFile] = useState<File | null>(null);
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
-  const [distanceKm, setDistanceKm] = useState<number | null>(null);
-  const [distanceLoading, setDistanceLoading] = useState(false);
-  const [distanceError, setDistanceError] = useState<string | null>(null);
 
   const { data: business } = useQuery({
     queryKey: ["business-by-id", businessId],
@@ -115,11 +111,8 @@ const CreateOrderPage = () => {
   const isService = itemKind === "service";
 
   const deliveryAvailable = !!selectedService?.delivery_available;
-  const perKm = Number(selectedService?.delivery_price_per_km ?? 0);
-  const km = distanceKm ?? 0;
-  const deliveryFee = fulfillment === "delivery" ? Math.max(0, perKm * km) : 0;
   const basePrice = Number(selectedService?.price ?? 0);
-  const total = basePrice + deliveryFee;
+  const total = basePrice;
 
   const slotDuration = Number(selectedService?.duration_minutes ?? 60);
   const dateKey = scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : "";
@@ -146,48 +139,6 @@ const CreateOrderPage = () => {
   const scheduledFuture = scheduledFor && new Date(scheduledFor).getTime() > Date.now() + 30 * 60 * 1000;
   const blockedByAvailability = isService && availability !== "available" && !scheduledFuture;
 
-  // Auto-calculate distance between provider address and selected delivery address
-  useEffect(() => {
-    if (fulfillment !== "delivery" || !selectedAddress || !business) {
-      setDistanceKm(null);
-      setDistanceError(null);
-      return;
-    }
-    const from = [business.address, business.city, business.country].filter(Boolean).join(", ");
-    const to = [
-      selectedAddress.line1,
-      selectedAddress.line2,
-      selectedAddress.city,
-      selectedAddress.postal_code,
-      selectedAddress.country,
-    ]
-      .filter(Boolean)
-      .join(", ");
-    if (!from || !to) {
-      setDistanceError("Provider or your address is incomplete.");
-      setDistanceKm(null);
-      return;
-    }
-    let cancelled = false;
-    setDistanceLoading(true);
-    setDistanceError(null);
-    supabase.functions
-      .invoke("compute-distance", { body: { from, to } })
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error || !data || typeof (data as { km?: number }).km !== "number") {
-          setDistanceError((error as Error | null)?.message ?? "Could not calculate distance.");
-          setDistanceKm(null);
-        } else {
-          setDistanceKm((data as { km: number }).km);
-        }
-      })
-      .finally(() => !cancelled && setDistanceLoading(false));
-    return () => {
-      cancelled = true;
-    };
-  }, [fulfillment, selectedAddress, business]);
-
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user || !business || !selectedService) return;
@@ -200,8 +151,8 @@ const CreateOrderPage = () => {
       });
       return;
     }
-    if (fulfillment === "delivery" && (!km || km <= 0)) {
-      toast({ title: "Delivery distance not ready", description: distanceError ?? "Pick an address so we can calculate the distance.", variant: "destructive" });
+    if (fulfillment === "delivery" && !addressId) {
+      toast({ title: "Pick a delivery address", description: "Choose where the provider should deliver.", variant: "destructive" });
       return;
     }
 
@@ -249,8 +200,8 @@ const CreateOrderPage = () => {
       notes: notes || null,
       scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
       fulfillment_type: fulfillment,
-      delivery_distance_km: fulfillment === "delivery" ? km : null,
-      delivery_fee: deliveryFee,
+      delivery_distance_km: null,
+      delivery_fee: 0,
     };
 
     const { data: order, error } = await supabase.from("orders").insert(payload).select("id").single();
@@ -278,7 +229,7 @@ const CreateOrderPage = () => {
       order_id: order.id,
       actor_id: user.id,
       type: "created",
-      message: fulfillment === "delivery" ? `Delivery requested · ${km} km` : "Pickup / in-store",
+      message: fulfillment === "delivery" ? "Delivery requested" : "Pickup / in-store",
     });
 
     setSubmitting(false);
@@ -404,7 +355,7 @@ const CreateOrderPage = () => {
                   <p className="font-display text-sm font-bold">Delivery</p>
                   <p className="text-xs text-muted-foreground">
                     {deliveryAvailable
-                      ? `${formatPrice(perKm, selectedService?.currency)} / km`
+                      ? "Fee confirmed by the provider."
                       : "Not offered for this item."}
                   </p>
                 </div>
@@ -433,24 +384,8 @@ const CreateOrderPage = () => {
                     </Button>
                   ) : null}
                 </div>
-                <div className="flex items-start gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="font-semibold">Distance</p>
-                    {distanceLoading ? (
-                      <p className="mt-0.5 inline-flex items-center gap-2 text-xs text-muted-foreground">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Calculating from your address to the provider…
-                      </p>
-                    ) : distanceError ? (
-                      <p className="mt-0.5 text-xs text-destructive">{distanceError}</p>
-                    ) : km > 0 ? (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {km} km · {formatPrice(perKm, selectedService?.currency)} per km
-                      </p>
-                    ) : (
-                      <p className="mt-0.5 text-xs text-muted-foreground">Pick an address to calculate.</p>
-                    )}
-                  </div>
+                <div className="rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
+                  Delivery cost will be confirmed by the provider — you'll pay the item and delivery together once the work is approved.
                 </div>
               </div>
             ) : null}
@@ -619,15 +554,12 @@ const CreateOrderPage = () => {
               <Row label="Item">{selectedService?.title ?? "—"}</Row>
               <Row label="Provider">{business?.name ?? "—"}</Row>
               <Row label="Fulfilment">{fulfillment === "delivery" ? "Delivery" : "Pickup / in-store"}</Row>
-              {fulfillment === "delivery" && (
-                <Row label="Distance">{km > 0 ? `${km} km × ${formatPrice(perKm, selectedService?.currency)}` : "—"}</Row>
-              )}
               <Row label="Address">{fulfillment === "delivery" ? selectedAddress?.label ?? "Not set" : "Not needed"}</Row>
               <Row label="When">{scheduledFor ? new Date(scheduledFor).toLocaleString("en-GB") : "As soon as possible"}</Row>
               <div className="my-3 h-px bg-border" />
               <Row label="Item price">{selectedService ? formatPrice(basePrice, selectedService.currency) : "—"}</Row>
-              {deliveryFee > 0 && (
-                <Row label="Delivery fee">{formatPrice(deliveryFee, selectedService?.currency)}</Row>
+              {fulfillment === "delivery" && (
+                <Row label="Delivery fee">Confirmed by provider</Row>
               )}
               <Row label="Total">
                 <span className="font-display text-lg font-bold">

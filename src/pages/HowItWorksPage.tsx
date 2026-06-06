@@ -41,7 +41,7 @@ const businessFlow: Flow[] = [
       { text: "From the sidebar, open 'Products & services'.", targetIndex: 0 },
       { text: "Click 'Add new' to create a service or product.", targetIndex: 1 },
       { text: "Upload a clear photo and set your pickup price.", targetIndex: 2 },
-      { text: "Toggle 'Enable delivery' and set your price per km if you offer delivery.", targetIndex: 4 },
+      { text: "Toggle 'Enable delivery' if you offer delivery — you'll arrange the fee directly with the customer.", targetIndex: 4 },
       { text: "Click 'Save and publish' to make it live.", targetIndex: 5 },
     ],
     animTitle: "Listing an item with delivery",
