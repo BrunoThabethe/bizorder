@@ -100,7 +100,6 @@ const ServicesManagerPage = () => {
       setDescription("");
       setImageUrl("");
       setDeliveryAvailable(false);
-      setDeliveryPerKm("");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
     },
