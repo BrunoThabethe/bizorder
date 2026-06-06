@@ -384,24 +384,8 @@ const CreateOrderPage = () => {
                     </Button>
                   ) : null}
                 </div>
-                <div className="flex items-start gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="font-semibold">Distance</p>
-                    {distanceLoading ? (
-                      <p className="mt-0.5 inline-flex items-center gap-2 text-xs text-muted-foreground">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Calculating from your address to the provider…
-                      </p>
-                    ) : distanceError ? (
-                      <p className="mt-0.5 text-xs text-destructive">{distanceError}</p>
-                    ) : km > 0 ? (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {km} km · {formatPrice(perKm, selectedService?.currency)} per km
-                      </p>
-                    ) : (
-                      <p className="mt-0.5 text-xs text-muted-foreground">Pick an address to calculate.</p>
-                    )}
-                  </div>
+                <div className="rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
+                  Delivery cost will be confirmed by the provider — you'll pay the item and delivery together once the work is approved.
                 </div>
               </div>
             ) : null}
