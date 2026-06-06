@@ -1,5 +1,8 @@
 // Auto-distance edge function: geocodes business + customer addresses via
 // OpenStreetMap Nominatim (no API key) and returns the haversine distance in km.
+// Requires an authenticated caller — protects Nominatim quota from anonymous abuse.
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,9 +37,31 @@ const haversineKm = (a: { lat: number; lon: number }, b: { lat: number; lon: num
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // Require an authenticated caller
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!authHeader.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+  );
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claims, error: authErr } = await supabase.auth.getClaims(token);
+  if (authErr || !claims?.claims?.sub) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const { from, to } = (await req.json()) as { from?: string; to?: string };
-    if (!from || !to || from.length < 4 || to.length < 4) {
+    if (!from || !to || from.length < 4 || to.length < 4 || from.length > 500 || to.length > 500) {
       return new Response(JSON.stringify({ error: "Both addresses required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
