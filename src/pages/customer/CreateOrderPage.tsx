@@ -50,7 +50,6 @@ const fetchBusiness = async (id: string) => {
 type ServiceWithDelivery = Service & {
   kind?: string;
   delivery_available?: boolean;
-  delivery_price_per_km?: number;
 };
 
 const CreateOrderPage = () => {
