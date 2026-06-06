@@ -88,7 +88,7 @@ const ServicesManagerPage = () => {
         ...({
           kind,
           delivery_available: deliveryAvailable,
-          delivery_price_per_km: deliveryAvailable ? Number(deliveryPerKm) || 0 : 0,
+          delivery_price_per_km: 0,
         } as Record<string, unknown>),
       });
       if (error) throw error;
