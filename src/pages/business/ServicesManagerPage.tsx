@@ -56,7 +56,6 @@ const ServicesManagerPage = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [deliveryAvailable, setDeliveryAvailable] = useState(false);
-  const [deliveryPerKm, setDeliveryPerKm] = useState("");
 
   const onUploadProductImage = async (file: File) => {
     if (!business) {
