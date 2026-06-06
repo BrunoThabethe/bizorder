@@ -1,4 +1,5 @@
 import { z } from "https://esm.sh/zod@3.23.8";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,6 +77,20 @@ Deno.serve(async (req) => {
     const parsed = BodySchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return json(400, { error: "Invalid email" });
     const { email } = parsed.data;
+
+    // Only send a welcome email to addresses that actually signed up.
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: signup, error: lookupErr } = await admin
+      .from("waitlist_signups")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    if (lookupErr) return json(500, { error: "Lookup failed" });
+    if (!signup) return json(404, { error: "Not signed up" });
+
 
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
