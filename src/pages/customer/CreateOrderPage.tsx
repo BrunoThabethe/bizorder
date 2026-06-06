@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CalendarIcon, ImageIcon, Loader2, MapPin, ShieldCheck, Truck, Store, X } from "lucide-react";
+import { ArrowLeft, CalendarIcon, ImageIcon, Loader2, ShieldCheck, Truck, Store, X } from "lucide-react";
 import { z } from "zod";
 import { format } from "date-fns";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
