@@ -200,8 +200,8 @@ const CreateOrderPage = () => {
       notes: notes || null,
       scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
       fulfillment_type: fulfillment,
-      delivery_distance_km: fulfillment === "delivery" ? km : null,
-      delivery_fee: deliveryFee,
+      delivery_distance_km: null,
+      delivery_fee: 0,
     };
 
     const { data: order, error } = await supabase.from("orders").insert(payload).select("id").single();
