@@ -355,7 +355,7 @@ const CreateOrderPage = () => {
                   <p className="font-display text-sm font-bold">Delivery</p>
                   <p className="text-xs text-muted-foreground">
                     {deliveryAvailable
-                      ? `${formatPrice(perKm, selectedService?.currency)} / km`
+                      ? "Fee confirmed by the provider."
                       : "Not offered for this item."}
                   </p>
                 </div>
