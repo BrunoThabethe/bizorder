@@ -111,11 +111,8 @@ const CreateOrderPage = () => {
   const isService = itemKind === "service";
 
   const deliveryAvailable = !!selectedService?.delivery_available;
-  const perKm = Number(selectedService?.delivery_price_per_km ?? 0);
-  const km = distanceKm ?? 0;
-  const deliveryFee = fulfillment === "delivery" ? Math.max(0, perKm * km) : 0;
   const basePrice = Number(selectedService?.price ?? 0);
-  const total = basePrice + deliveryFee;
+  const total = basePrice;
 
   const slotDuration = Number(selectedService?.duration_minutes ?? 60);
   const dateKey = scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : "";
