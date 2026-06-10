@@ -105,6 +105,9 @@ const App = () => (
             <Route path="/payment/success" element={<PaymentCallbackPage variant="success" />} />
             <Route path="/payment/error" element={<PaymentCallbackPage variant="error" />} />
 
+            {/* OAuth callback (public) */}
+            <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+
             {/* Customer portal */}
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/admin/verify" element={<AdminVerifyPage />} />
