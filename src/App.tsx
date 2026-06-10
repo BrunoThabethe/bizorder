@@ -23,6 +23,7 @@ import RefundPage from "./pages/RefundPage.tsx";
 import PlatformRulesPage from "./pages/PlatformRulesPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import PaymentCallbackPage from "./pages/PaymentCallbackPage.tsx";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage.tsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.tsx";
 import AdminVerifyPage from "./pages/admin/AdminVerifyPage.tsx";
 import { RoleGuard } from "@/components/customer/RoleGuard";
@@ -103,6 +104,9 @@ const App = () => (
             {/* TradeSafe buyer return pages (public) */}
             <Route path="/payment/success" element={<PaymentCallbackPage variant="success" />} />
             <Route path="/payment/error" element={<PaymentCallbackPage variant="error" />} />
+
+            {/* OAuth callback (public) */}
+            <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
             {/* Customer portal */}
             <Route path="/verify-email" element={<VerifyEmailPage />} />
