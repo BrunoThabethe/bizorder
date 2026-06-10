@@ -24,7 +24,16 @@ export const RoleGuard = ({ allow, children }: RoleGuardProps) => {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (role && !allow.includes(role)) {
+  // Fail-closed: if role hasn't loaded or isn't allowed, redirect.
+  if (!role) {
+    return (
+      <div className="grid min-h-screen place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!allow.includes(role)) {
     const home =
       role === "admin"
         ? "/admin"
