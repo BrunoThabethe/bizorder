@@ -723,6 +723,77 @@ export type Database = {
           },
         ]
       }
+      order_payments: {
+        Row: {
+          amount: number
+          checkout_url: string | null
+          created_at: string
+          currency: string
+          fee_business: number
+          fee_customer: number
+          funded_at: string | null
+          id: string
+          last_error: string | null
+          order_id: string
+          provider: string
+          raw: Json | null
+          refunded_at: string | null
+          released_at: string | null
+          status: string
+          tradesafe_allocation_id: string | null
+          tradesafe_transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          checkout_url?: string | null
+          created_at?: string
+          currency?: string
+          fee_business?: number
+          fee_customer?: number
+          funded_at?: string | null
+          id?: string
+          last_error?: string | null
+          order_id: string
+          provider?: string
+          raw?: Json | null
+          refunded_at?: string | null
+          released_at?: string | null
+          status?: string
+          tradesafe_allocation_id?: string | null
+          tradesafe_transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          checkout_url?: string | null
+          created_at?: string
+          currency?: string
+          fee_business?: number
+          fee_customer?: number
+          funded_at?: string | null
+          id?: string
+          last_error?: string | null
+          order_id?: string
+          provider?: string
+          raw?: Json | null
+          refunded_at?: string | null
+          released_at?: string | null
+          status?: string
+          tradesafe_allocation_id?: string | null
+          tradesafe_transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_progress: {
         Row: {
           author_id: string
@@ -882,6 +953,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_webhook_events: {
+        Row: {
+          created_at: string
+          event_type: string | null
+          external_event_id: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          provider: string
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string | null
+          external_event_id: string
+          id?: string
+          payload: Json
+          processed_at?: string | null
+          provider?: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string | null
+          external_event_id?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          provider?: string
+        }
+        Relationships: []
       }
       payouts: {
         Row: {
@@ -1278,6 +1379,7 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      expire_unpaid_orders: { Args: never; Returns: number }
       get_primary_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1402,6 +1504,7 @@ export type Database = {
     Enums: {
       app_role: "customer" | "business" | "admin" | "crew"
       order_status:
+        | "awaiting_payment"
         | "pending"
         | "accepted"
         | "in_progress"
@@ -1539,6 +1642,7 @@ export const Constants = {
     Enums: {
       app_role: ["customer", "business", "admin", "crew"],
       order_status: [
+        "awaiting_payment",
         "pending",
         "accepted",
         "in_progress",
