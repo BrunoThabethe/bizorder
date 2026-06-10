@@ -231,7 +231,7 @@ const AdminAiAssistantPage = () => {
                 <div
                   className="rounded-2xl border bg-muted/40 p-4 text-sm"
                   // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{ __html: body }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }}
                 />
               </div>
             )}
