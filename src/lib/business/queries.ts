@@ -74,6 +74,7 @@ export const isProofPhoto = (file: File) => {
 };
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
+  awaiting_payment: "Awaiting payment",
   pending: "New",
   accepted: "Accepted",
   in_progress: "In progress",
@@ -85,6 +86,7 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
 };
 
 export const STATUS_TONE: Record<OrderStatus, string> = {
+  awaiting_payment: "bg-accent/20 text-foreground",
   pending: "bg-foreground text-background",
   accepted: "bg-foreground/15 text-foreground",
   in_progress: "bg-foreground/85 text-background",
@@ -150,10 +152,12 @@ export const fetchOrCreateMyBusiness = async (user: User) => {
 };
 
 export const fetchBusinessOrders = async (businessId: string) => {
+  // Hide orders that haven't been paid yet — businesses only see funded orders.
   const { data, error } = await supabase
     .from("orders")
     .select("*, services(title)")
     .eq("business_id", businessId)
+    .neq("status", "awaiting_payment")
     .order("created_at", { ascending: false });
   if (error) throw error;
   const orders = data ?? [];

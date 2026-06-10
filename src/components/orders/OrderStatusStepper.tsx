@@ -11,6 +11,7 @@ const STEPS: { key: OrderStatus; label: string }[] = [
 ];
 
 const ORDER: Record<OrderStatus, number> = {
+  awaiting_payment: -2,
   pending: 0,
   accepted: 1,
   in_progress: 2,
@@ -28,6 +29,13 @@ export const OrderStatusStepper = ({ status }: Props) => {
     return (
       <div className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
         This order was cancelled.
+      </div>
+    );
+  }
+  if (status === "awaiting_payment") {
+    return (
+      <div className="rounded-2xl bg-accent/15 px-4 py-3 text-sm font-semibold text-foreground">
+        Awaiting payment — the provider will see this order once funds are secured in escrow.
       </div>
     );
   }

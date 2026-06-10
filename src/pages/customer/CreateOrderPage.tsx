@@ -202,6 +202,7 @@ const CreateOrderPage = () => {
       fulfillment_type: fulfillment,
       delivery_distance_km: null,
       delivery_fee: 0,
+      status: "awaiting_payment" as const,
     };
 
     const { data: order, error } = await supabase.from("orders").insert(payload).select("id").single();
@@ -232,9 +233,36 @@ const CreateOrderPage = () => {
       message: fulfillment === "delivery" ? "Delivery requested" : "Pickup / in-store",
     });
 
+    // Kick off TradeSafe escrow checkout. Returns 503 in scaffold mode (no API keys yet).
+    const returnUrl = `${window.location.origin}/customer/orders/${order.id}/payment-return`;
+    const { data: checkout, error: payErr } = await supabase.functions.invoke(
+      "tradesafe-create-checkout",
+      { body: { order_id: order.id, return_url: returnUrl } },
+    );
+
     setSubmitting(false);
-    toast({ title: "Order placed", description: "We've notified the provider." });
-    navigate(`/customer/orders/${order.id}`);
+
+    if (payErr || !checkout) {
+      toast({
+        title: "Payment setup unavailable",
+        description:
+          "Your order is saved but payment isn't configured yet. You can complete it from your orders page once payments are live.",
+      });
+      navigate(`/customer/orders/${order.id}`);
+      return;
+    }
+
+    if (checkout.configured === false || !checkout.checkout_url) {
+      toast({
+        title: "Payment not configured",
+        description: checkout.message ?? "TradeSafe will be enabled soon.",
+      });
+      navigate(`/customer/orders/${order.id}`);
+      return;
+    }
+
+    toast({ title: "Redirecting to secure checkout", description: "Pay via TradeSafe to confirm your order." });
+    window.location.href = checkout.checkout_url as string;
   };
 
   if (!businessId) {

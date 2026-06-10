@@ -1,0 +1,98 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Loader2, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { CustomerLayout } from "@/components/customer/CustomerLayout";
+import { PageHeader } from "@/components/customer/PageHeader";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+
+type PaymentStatus = "pending" | "funded" | "released" | "refunded" | "failed" | "expired";
+
+const PaymentReturnPage = () => {
+  const { orderId } = useParams<{ orderId: string }>();
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<PaymentStatus | null>(null);
+  const [tries, setTries] = useState(0);
+
+  useEffect(() => {
+    if (!orderId) return;
+    let cancelled = false;
+
+    const poll = async () => {
+      const { data } = await supabase
+        .from("order_payments")
+        .select("status")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      if (cancelled) return;
+      const s = (data?.status ?? "pending") as PaymentStatus;
+      setStatus(s);
+      if (s === "funded" || s === "released") {
+        setTimeout(() => navigate(`/customer/orders/${orderId}`), 1200);
+      }
+    };
+
+    poll();
+    const interval = setInterval(() => {
+      setTries((t) => t + 1);
+      poll();
+    }, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [orderId, navigate]);
+
+  const isWaiting = !status || status === "pending";
+  const isPaid = status === "funded" || status === "released";
+  const isFailed = status === "failed" || status === "expired" || status === "refunded";
+
+  return (
+    <CustomerLayout>
+      <PageHeader title="Finishing up your payment" description="Hang on a moment while TradeSafe confirms." />
+      <div className="mx-auto mt-8 max-w-md rounded-3xl bg-card p-8 text-center shadow-card">
+        {isWaiting ? (
+          <>
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+            <p className="mt-4 font-display text-lg font-bold">Confirming payment…</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              We&rsquo;re waiting for TradeSafe to confirm your payment. This usually takes under a minute.
+            </p>
+            {tries > 12 ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Still waiting? You can safely close this page — we&rsquo;ll email you when it&rsquo;s confirmed.
+              </p>
+            ) : null}
+          </>
+        ) : null}
+
+        {isPaid ? (
+          <>
+            <CheckCircle2 className="mx-auto h-10 w-10 text-primary" />
+            <p className="mt-4 font-display text-lg font-bold">Payment confirmed</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your order is now visible to the provider. Taking you there…
+            </p>
+          </>
+        ) : null}
+
+        {isFailed ? (
+          <>
+            <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
+            <p className="mt-4 font-display text-lg font-bold">Payment didn&rsquo;t go through</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              No money was taken. You can try again from your orders list.
+            </p>
+            <Button asChild className="mt-5">
+              <Link to="/customer/orders">
+                Back to my orders <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Link>
+            </Button>
+          </>
+        ) : null}
+      </div>
+    </CustomerLayout>
+  );
+};
+
+export default PaymentReturnPage;

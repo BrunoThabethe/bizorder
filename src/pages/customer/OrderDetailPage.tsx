@@ -106,9 +106,16 @@ const OrderDetailPage = () => {
     mutationFn: async () => {
       if (!user) throw new Error("Not signed in");
       await customerConfirmCompletion(orderId);
+      // Best-effort release of escrowed funds via TradeSafe. Failure here
+      // doesn't block the confirmation — the webhook / admin can retry.
+      try {
+        await supabase.functions.invoke("tradesafe-release", { body: { order_id: orderId } });
+      } catch {
+        // ignore — admin tools / webhook will reconcile
+      }
     },
     onSuccess: () => {
-      toast({ title: "Approved", description: "Thanks — payout queued. Leave a review below." });
+      toast({ title: "Approved", description: "Thanks — payout is being released. Leave a review below." });
       qc.invalidateQueries({ queryKey: ["order", orderId] });
       qc.invalidateQueries({ queryKey: ["order-events", orderId] });
     },
