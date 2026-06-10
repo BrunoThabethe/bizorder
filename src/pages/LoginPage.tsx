@@ -109,9 +109,10 @@ const LoginPage = () => {
     // Self-heal: promote seed accounts to their intended role on sign-in.
     if (data.user.email === "crew@test.bizorder") {
       await supabase.rpc("promote_test_crew");
-    } else if (data.user.email === "thabethebruno@legendarysolutions.co.za") {
+    } else if (data.user.email === "admin@test.bizorder") {
       await supabase.rpc("promote_test_admin");
     }
+
 
     const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });
     if ((roleData as string | null) === "admin") {
