@@ -46,6 +46,22 @@ const BusinessProfilePage = () => {
     enabled: !!business?.id,
   });
 
+  const availability = (settings?.availability ?? "available") as Availability;
+  const hoursByDay = DAY_LABELS.map((label, dow) => ({
+    label,
+    ranges: hours.filter((h) => h.day_of_week === dow && h.is_open),
+  }));
+
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const { data: todaySlots = [] } = useQuery({
+    queryKey: ["day-slots", business?.id, todayKey, 60],
+    queryFn: () => listDaySlots(business!.id, todayKey, 60),
+    enabled: !!business?.id && availability === "available",
+  });
+  const now = Date.now();
+  const remainingToday = todaySlots.filter((s) => new Date(s.slot_start).getTime() > now && s.booked < s.capacity);
+  const busyToday = availability === "available" && todaySlots.length > 0 && remainingToday.length === 0;
+
   if (isLoading) {
     return (
       <CustomerLayout>
@@ -69,21 +85,6 @@ const BusinessProfilePage = () => {
     );
   }
 
-  const availability = (settings?.availability ?? "available") as Availability;
-  const hoursByDay = DAY_LABELS.map((label, dow) => ({
-    label,
-    ranges: hours.filter((h) => h.day_of_week === dow && h.is_open),
-  }));
-
-  const todayKey = format(new Date(), "yyyy-MM-dd");
-  const { data: todaySlots = [] } = useQuery({
-    queryKey: ["day-slots", business?.id, todayKey, 60],
-    queryFn: () => listDaySlots(business!.id, todayKey, 60),
-    enabled: !!business?.id && availability === "available",
-  });
-  const now = Date.now();
-  const remainingToday = todaySlots.filter((s) => new Date(s.slot_start).getTime() > now && s.booked < s.capacity);
-  const busyToday = availability === "available" && todaySlots.length > 0 && remainingToday.length === 0;
 
 
   return (
