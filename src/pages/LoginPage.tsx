@@ -57,7 +57,7 @@ const testAccounts: {
   },
   {
     role: "Admin",
-    email: "thabethebruno@legendarysolutions.co.za",
+    email: "admin@test.bizorder",
     signupRole: "customer",
     finalRole: "admin",
     fullName: "Test Admin",
