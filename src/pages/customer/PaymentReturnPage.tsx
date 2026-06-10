@@ -49,7 +49,7 @@ const PaymentReturnPage = () => {
 
   return (
     <CustomerLayout>
-      <PageHeader title="Finishing up your payment" subtitle="Hang on a moment while TradeSafe confirms." />
+      <PageHeader title="Finishing up your payment" description="Hang on a moment while TradeSafe confirms." />
       <div className="mx-auto mt-8 max-w-md rounded-3xl bg-card p-8 text-center shadow-card">
         {isWaiting ? (
           <>

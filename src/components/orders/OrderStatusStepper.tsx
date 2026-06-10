@@ -11,6 +11,7 @@ const STEPS: { key: OrderStatus; label: string }[] = [
 ];
 
 const ORDER: Record<OrderStatus, number> = {
+  awaiting_payment: -2,
   pending: 0,
   accepted: 1,
   in_progress: 2,
