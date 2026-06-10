@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Loader2, Send, Sparkles, Eye, FlaskConical } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
