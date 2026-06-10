@@ -42,11 +42,10 @@ Deno.serve(async (req) => {
   const signature = req.headers.get("x-tradesafe-signature") ?? req.headers.get("x-signature");
   const secret = Deno.env.get("TRADESAFE_WEBHOOK_SECRET");
 
-  // Only enforce signature when a secret is configured (lets us scaffold safely).
-  if (secret) {
-    const ok = await verifySignature(rawBody, signature, secret);
-    if (!ok) return json({ error: "Bad signature" }, 401);
-  }
+  // Fail-closed: webhook secret MUST be configured in production.
+  if (!secret) return json({ error: "Webhook secret not configured" }, 503);
+  const ok = await verifySignature(rawBody, signature, secret);
+  if (!ok) return json({ error: "Bad signature" }, 401);
 
   let payload: Record<string, unknown> = {};
   try {

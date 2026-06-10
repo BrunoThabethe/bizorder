@@ -57,7 +57,7 @@ const testAccounts: {
   },
   {
     role: "Admin",
-    email: "thabethebruno@legendarysolutions.co.za",
+    email: "admin@test.bizorder",
     signupRole: "customer",
     finalRole: "admin",
     fullName: "Test Admin",
@@ -109,9 +109,10 @@ const LoginPage = () => {
     // Self-heal: promote seed accounts to their intended role on sign-in.
     if (data.user.email === "crew@test.bizorder") {
       await supabase.rpc("promote_test_crew");
-    } else if (data.user.email === "thabethebruno@legendarysolutions.co.za") {
+    } else if (data.user.email === "admin@test.bizorder") {
       await supabase.rpc("promote_test_admin");
     }
+
 
     const { data: roleData } = await supabase.rpc("get_primary_role", { _user_id: data.user.id });
     if ((roleData as string | null) === "admin") {
@@ -237,6 +238,7 @@ const LoginPage = () => {
             </p>
           </div>
 
+          {import.meta.env.DEV && (
           <div className="rounded-2xl bg-background/30 p-7 backdrop-blur-md md:p-8">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-foreground/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-foreground">
@@ -291,6 +293,7 @@ const LoginPage = () => {
               </p>
             </div>
           </div>
+          )}
         </div>
       </section>
     </SiteLayout>

@@ -13,6 +13,12 @@ const json = (body: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Guard: require shared cron secret for invocation.
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (!cronSecret) return json({ error: "CRON_SECRET not configured" }, 503);
+  const provided = req.headers.get("x-cron-secret") ?? "";
+  if (provided !== cronSecret) return json({ error: "Unauthorized" }, 401);
+
   const admin = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,

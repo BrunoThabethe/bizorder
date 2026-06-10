@@ -111,11 +111,11 @@ const AdminVerificationPage = () => {
                             <> · CIPC {sub.business.registration_number}</>
                           )}
                         </p>
-                        {sub.business.website_url && (
+                        {sub.business.website_url && /^https?:\/\//i.test(sub.business.website_url) && (
                           <a
                             href={sub.business.website_url}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noreferrer noopener"
                             className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline-offset-4 hover:underline"
                           >
                             {sub.business.website_url}
