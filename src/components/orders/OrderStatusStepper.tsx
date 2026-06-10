@@ -32,6 +32,13 @@ export const OrderStatusStepper = ({ status }: Props) => {
       </div>
     );
   }
+  if (status === "awaiting_payment") {
+    return (
+      <div className="rounded-2xl bg-accent/15 px-4 py-3 text-sm font-semibold text-foreground">
+        Awaiting payment — the provider will see this order once funds are secured in escrow.
+      </div>
+    );
+  }
   const current = ORDER[status];
   return (
     <ol className="flex items-center gap-2">
