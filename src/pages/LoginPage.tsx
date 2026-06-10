@@ -237,6 +237,7 @@ const LoginPage = () => {
             </p>
           </div>
 
+          {import.meta.env.DEV && (
           <div className="rounded-2xl bg-background/30 p-7 backdrop-blur-md md:p-8">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-foreground/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-foreground">
@@ -291,6 +292,7 @@ const LoginPage = () => {
               </p>
             </div>
           </div>
+          )}
         </div>
       </section>
     </SiteLayout>
