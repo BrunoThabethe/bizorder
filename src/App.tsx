@@ -22,6 +22,7 @@ import TermsPage from "./pages/TermsPage.tsx";
 import RefundPage from "./pages/RefundPage.tsx";
 import PlatformRulesPage from "./pages/PlatformRulesPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import PaymentCallbackPage from "./pages/PaymentCallbackPage.tsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.tsx";
 import AdminVerifyPage from "./pages/admin/AdminVerifyPage.tsx";
 import { RoleGuard } from "@/components/customer/RoleGuard";
@@ -98,6 +99,10 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/refunds" element={<RefundPage />} />
             <Route path="/rules" element={<PlatformRulesPage />} />
+
+            {/* TradeSafe buyer return pages (public) */}
+            <Route path="/payment/success" element={<PaymentCallbackPage variant="success" />} />
+            <Route path="/payment/error" element={<PaymentCallbackPage variant="error" />} />
 
             {/* Customer portal */}
             <Route path="/verify-email" element={<VerifyEmailPage />} />
