@@ -22,6 +22,7 @@ import TermsPage from "./pages/TermsPage.tsx";
 import RefundPage from "./pages/RefundPage.tsx";
 import PlatformRulesPage from "./pages/PlatformRulesPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import PaymentCallbackPage from "./pages/PaymentCallbackPage.tsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.tsx";
 import AdminVerifyPage from "./pages/admin/AdminVerifyPage.tsx";
 import { RoleGuard } from "@/components/customer/RoleGuard";
