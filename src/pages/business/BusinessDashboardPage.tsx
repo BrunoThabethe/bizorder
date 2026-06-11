@@ -16,6 +16,7 @@ import {
   type Order,
 } from "@/lib/business/queries";
 import { cn } from "@/lib/utils";
+import { useRealtimeInvalidate } from "@/lib/cache";
 
 const BusinessDashboardPage = () => {
   const { user } = useAuth();
@@ -38,6 +39,15 @@ const BusinessDashboardPage = () => {
     queryFn: () => fetchPayouts(business!.id),
     enabled: !!business?.id,
   });
+
+  useRealtimeInvalidate(
+    [
+      { table: "orders", filter: business?.id ? `business_id=eq.${business.id}` : undefined },
+      { table: "payouts", filter: business?.id ? `business_id=eq.${business.id}` : undefined },
+    ],
+    [["business-orders", business?.id], ["business-payouts", business?.id]],
+    { enabled: !!business?.id },
+  );
 
   const newOrders = orders.filter((o) => (o as Order).status === "pending").length;
   const inProgress = orders.filter((o) =>

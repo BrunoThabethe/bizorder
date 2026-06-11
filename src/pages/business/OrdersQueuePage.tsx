@@ -17,6 +17,7 @@ import {
   type OrderStatus,
 } from "@/lib/business/queries";
 import { cn } from "@/lib/utils";
+import { useRealtimeInvalidate } from "@/lib/cache";
 
 const FILTERS: { key: OrderStatus | "all"; label: string }[] = [
   { key: "all", label: "All" },
@@ -47,6 +48,12 @@ const OrdersQueuePage = () => {
     queryFn: () => fetchBusinessOrders(business!.id),
     enabled: !!business?.id,
   });
+
+  useRealtimeInvalidate(
+    { table: "orders", filter: business?.id ? `business_id=eq.${business.id}` : undefined },
+    [["business-orders", business?.id]],
+    { enabled: !!business?.id },
+  );
 
   const filtered = useMemo(() => {
     return orders.filter((row) => {
