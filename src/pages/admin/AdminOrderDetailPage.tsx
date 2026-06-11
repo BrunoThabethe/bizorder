@@ -129,7 +129,7 @@ const AdminOrderDetailPage = () => {
     );
   }
 
-  const { order, customer, events, progress, messages, tasks, dispute, actors } = data;
+  const { order, customer, events, progress, messages, tasks, dispute, payment, actors } = data;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const o = order as any;
   const business = o.businesses ?? null;
@@ -211,6 +211,9 @@ const AdminOrderDetailPage = () => {
               {String(o.status).replace(/_/g, " ")}
             </Badge>
             <span className="font-display text-2xl font-bold">{formatPrice(Number(o.total ?? 0), o.currency)}</span>
+            <span className="text-xs font-semibold text-muted-foreground">
+              {payment?.status === "funded" || payment?.status === "released" ? "Paid via TradeSafe" : "Payment not confirmed"}
+            </span>
           </div>
         </div>
 
