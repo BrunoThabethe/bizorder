@@ -33,7 +33,13 @@ Deno.serve(async (req) => {
 
   const rawBody = await req.text();
   if (rawBody.length > 100_000) return json({ error: "Payload too large" }, 413);
-  const parsed = CallbackSchema.safeParse(JSON.parse(rawBody || "{}"));
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(rawBody || "{}");
+  } catch {
+    return json({ error: "Invalid JSON" }, 400);
+  }
+  const parsed = CallbackSchema.safeParse(decoded);
   if (!parsed.success) return json({ error: "Invalid TradeSafe callback" }, 400);
   const payload = parsed.data;
   const transaction = payload.data;
