@@ -43,11 +43,6 @@ const PaymentReturnPage = () => {
     };
   }, [orderId, navigate]);
 
-  useEffect(() => {
-    if (tries < 24 || !orderId) return;
-    navigate(`/customer/orders/${orderId}`, { replace: true });
-  }, [tries, orderId, navigate]);
-
   const isWaiting = !status || status === "pending";
   const isPaid = status === "funded" || status === "released";
   const isFailed = status === "failed" || status === "expired" || status === "refunded";

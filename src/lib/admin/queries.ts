@@ -636,7 +636,6 @@ export const fetchAdminOrderDetail = async (orderId: string) => {
     { data: messages },
     { data: tasks },
     { data: dispute },
-    { data: payment },
   ] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email, avatar_url").eq("id", order.customer_id).maybeSingle(),
     sb.from("order_events").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
@@ -644,7 +643,6 @@ export const fetchAdminOrderDetail = async (orderId: string) => {
     sb.from("messages").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
     sb.from("order_tasks").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
     sb.from("disputes").select("*").eq("order_id", orderId).maybeSingle(),
-    sb.from("order_payments").select("status, funded_at, released_at, refunded_at, last_error").eq("order_id", orderId).maybeSingle(),
   ]);
 
   // Resolve actor profiles for events, progress and messages.
@@ -675,7 +673,6 @@ export const fetchAdminOrderDetail = async (orderId: string) => {
     messages: (messages ?? []) as AdminOrderMessage[],
     tasks: (tasks ?? []) as AdminOrderTask[],
     dispute: (dispute ?? null) as Dispute | null,
-    payment: payment ?? null,
     actors,
   };
 };

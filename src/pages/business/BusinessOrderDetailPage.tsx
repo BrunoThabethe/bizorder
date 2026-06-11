@@ -228,7 +228,6 @@ const BusinessOrderDetailPage = () => {
           country: string;
         } | null;
         profiles?: { full_name: string | null; email: string } | null;
-        payment?: { status: string; funded_at: string | null; released_at: string | null } | null;
       })
     | undefined;
 
@@ -286,11 +285,6 @@ const BusinessOrderDetailPage = () => {
                   {STATUS_LABEL[o.status]}
                 </span>
                 <span className="font-display text-xl font-bold">{formatPrice(Number(o.total), o.currency)}</span>
-                {o.payment?.status === "funded" || o.payment?.status === "released" ? (
-                  <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background">
-                    Paid via TradeSafe
-                  </span>
-                ) : null}
                 {o.estimated_completion_at ? (
                   <span className="text-xs text-muted-foreground">
                     ETA {new Date(o.estimated_completion_at).toLocaleString("en-ZA")}

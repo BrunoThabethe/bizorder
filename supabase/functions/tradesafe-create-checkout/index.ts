@@ -1,18 +1,18 @@
+// Creates a TradeSafe escrow transaction + allocation for an order
+// and returns a checkout URL the customer is redirected to.
+//
+// Scaffolded: if TRADESAFE_CLIENT_ID / TRADESAFE_CLIENT_SECRET are not set,
+// returns 503 with a friendly message so the UI can show "payment not
+// configured yet" during development.
+
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.23.8";
-import {
-  getTradeSafeAccessToken,
-  splitName,
-  tradeSafeGraphQl,
-} from "../_shared/tradesafe.ts";
 
 const BodySchema = z.object({
   order_id: z.string().uuid(),
+  return_url: z.string().url().optional(),
 });
-
-type TradeSafeToken = { id: string };
-type TradeSafeTransaction = { id: string; allocations: Array<{ id: string }> };
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -34,22 +34,23 @@ Deno.serve(async (req) => {
   const userClient = createClient(SUPABASE_URL, ANON, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: authData, error: authError } = await userClient.auth.getUser();
-  if (authError || !authData.user) return json({ error: "Unauthorized" }, 401);
-  const userId = authData.user.id;
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claims, error: claimsErr } = await userClient.auth.getClaims(token);
+  if (claimsErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
+  const userId = claims.claims.sub as string;
 
   const parsed = BodySchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
     return json({ error: parsed.error.flatten().fieldErrors }, 400);
   }
-  const { order_id } = parsed.data;
+  const { order_id, return_url } = parsed.data;
 
   const admin = createClient(SUPABASE_URL, SERVICE);
 
   // Confirm the order belongs to the caller and is awaiting payment
   const { data: order, error: orderErr } = await admin
     .from("orders")
-    .select("id, customer_id, business_id, total, currency, status, businesses(name, owner_id, email, tradesafe_token_id)")
+    .select("id, customer_id, business_id, total, currency, status, businesses(name, owner_id, email)")
     .eq("id", order_id)
     .maybeSingle();
 
@@ -72,110 +73,118 @@ Deno.serve(async (req) => {
   const feeCustomerPct = Number(settingsMap.tradesafe_fee_split_customer_pct ?? "50");
   const feeBusinessPct = Number(settingsMap.tradesafe_fee_split_business_pct ?? "50");
 
-  try {
-    const accessToken = await getTradeSafeAccessToken();
-    const business = order.businesses as unknown as {
-      name: string;
-      owner_id: string;
-      email: string | null;
-      tradesafe_token_id: string | null;
-    };
-    const { data: profile, error: profileError } = await admin
-      .from("profiles")
-      .select("full_name, email, phone, tradesafe_token_id")
-      .eq("id", userId)
-      .maybeSingle();
-    if (profileError || !profile) return json({ error: "Customer profile not found" }, 400);
+  const CLIENT_ID = Deno.env.get("TRADESAFE_CLIENT_ID");
+  const CLIENT_SECRET = Deno.env.get("TRADESAFE_CLIENT_SECRET");
+  const TS_API = Deno.env.get("TRADESAFE_API_URL") ?? "https://api-sit.tradesafe.co.za";
 
-    let buyerTokenId = profile.tradesafe_token_id;
-    if (!buyerTokenId) {
-      if (!profile.phone) {
-        return json({ error: "Add a mobile number to your profile before paying with TradeSafe." }, 400);
-      }
-      const { givenName, familyName } = splitName(profile.full_name || "BizOrder Customer");
-      const tokenData = await tradeSafeGraphQl<{ tokenCreate: TradeSafeToken }>(
-        accessToken,
-        `mutation CreateToken($input: TokenInput) {
-          tokenCreate(input: $input) { id }
-        }`,
+  // No creds yet: scaffold mode. Still create the payment row so the UI flow can be tested.
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    await admin
+      .from("order_payments")
+      .upsert(
         {
-          input: {
-            user: {
-              givenName,
-              familyName,
-              email: profile.email,
-              mobile: profile.phone,
-            },
-          },
+          order_id,
+          provider: "tradesafe",
+          status: "pending",
+          amount: order.total,
+          currency: order.currency,
+          fee_customer: (Number(order.total) * feeCustomerPct) / 100,
+          fee_business: (Number(order.total) * feeBusinessPct) / 100,
+          last_error: "TradeSafe not configured",
         },
+        { onConflict: "order_id" },
       );
-      buyerTokenId = tokenData.tokenCreate.id;
-      await admin.from("profiles").update({ tradesafe_token_id: buyerTokenId }).eq("id", userId);
-    }
-
-    let sellerTokenId = business.tradesafe_token_id;
-    if (!sellerTokenId) {
-      const tokensData = await tradeSafeGraphQl<{
-        tokens: { data: Array<{ id: string; organization?: { name?: string | null } | null }> };
-      }>(
-        accessToken,
-        `query Tokens { tokens { data { id organization { name } } } }`,
-        {},
-      );
-      sellerTokenId = tokensData.tokens.data.find((token) => token.organization)?.id ?? tokensData.tokens.data[0]?.id;
-      if (!sellerTokenId) return json({ error: "No TradeSafe seller token is available for this application." }, 503);
-      await admin.from("businesses").update({ tradesafe_token_id: sellerTokenId }).eq("id", order.business_id);
-    }
-
-    const description = `BizOrder #${order_id.slice(0, 8)} — ${business?.name ?? "Service"}`;
-    const transactionData = await tradeSafeGraphQl<{ transactionCreate: TradeSafeTransaction }>(
-      accessToken,
-      `mutation CreateTransaction($input: TransactionInput) {
-        transactionCreate(input: $input) { id allocations { id } }
-      }`,
+    return json(
       {
+        configured: false,
+        message:
+          "TradeSafe is not configured yet. Add TRADESAFE_CLIENT_ID and TRADESAFE_CLIENT_SECRET secrets to enable checkout.",
+      },
+      503,
+    );
+  }
+
+  try {
+    // 1. OAuth token
+    const tokenRes = await fetch(`${TS_API}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grant_type: "client_credentials",
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+      }),
+    });
+    if (!tokenRes.ok) {
+      const txt = await tokenRes.text();
+      return json({ error: "TradeSafe auth failed", detail: txt }, 502);
+    }
+    const tokenJson = await tokenRes.json();
+    const accessToken = tokenJson.access_token as string;
+
+    // 2. Create a transaction with allocation via GraphQL
+    // NOTE: This GraphQL document follows the TradeSafe public schema as of 2025.
+    // Adjust field names if your account's schema differs.
+    const business = (order as unknown as { businesses: { name: string; owner_id: string; email: string | null } }).businesses;
+    const description = `BizOrder #${order_id.slice(0, 8)} — ${business?.name ?? "Service"}`;
+
+    const gql = {
+      query: `
+        mutation CreateTx($input: TransactionInput!) {
+          transactionCreate(input: $input) {
+            id
+            allocations { id }
+          }
+        }
+      `,
+      variables: {
         input: {
           title: description,
           description,
           industry: "GENERAL_GOODS_SERVICES",
           currency: order.currency,
-          feeAllocation: "SELLER",
-          reference: order_id,
+          feeAllocation: "SELLER", // base fee — fine-tune later if needed
           allocations: {
             create: [
               {
                 title: description,
-                description,
                 value: Number(order.total),
                 daysToDeliver: 7,
                 daysToInspect: 1,
               },
             ],
           },
-          parties: {
-            create: [
-              { token: buyerTokenId, role: "BUYER" },
-              { token: sellerTokenId, role: "SELLER" },
-            ],
-          },
         },
       },
-    );
-    const tx = transactionData.transactionCreate;
-    const checkoutData = await tradeSafeGraphQl<{ checkoutLink: string }>(
-      accessToken,
-      `mutation CheckoutLink($transactionId: ID!) { checkoutLink(transactionId: $transactionId) }`,
-      { transactionId: tx.id },
-    );
-    const checkoutUrl = checkoutData.checkoutLink;
+    };
+
+    const gqlRes = await fetch(`${TS_API}/graphql`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(gql),
+    });
+    const gqlJson = await gqlRes.json();
+    if (!gqlRes.ok || gqlJson.errors) {
+      return json({ error: "TradeSafe transaction failed", detail: gqlJson.errors ?? gqlJson }, 502);
+    }
+
+    const tx = gqlJson.data?.transactionCreate;
+    const txId = tx?.id;
+    const allocId = tx?.allocations?.[0]?.id;
+    const checkoutUrl =
+      `https://app${TS_API.includes("sit") ? "-sit" : ""}.tradesafe.co.za/checkout/${txId}` +
+      (return_url ? `?return=${encodeURIComponent(return_url)}` : "");
 
     await admin.from("order_payments").upsert(
       {
         order_id,
         provider: "tradesafe",
         status: "pending",
-        tradesafe_transaction_id: tx.id,
-        tradesafe_allocation_id: tx.allocations[0]?.id ?? null,
+        tradesafe_transaction_id: txId,
+        tradesafe_allocation_id: allocId,
         checkout_url: checkoutUrl,
         amount: order.total,
         currency: order.currency,
@@ -185,19 +194,8 @@ Deno.serve(async (req) => {
       { onConflict: "order_id" },
     );
 
-    return json({ configured: true, checkout_url: checkoutUrl, transaction_id: tx.id });
+    return json({ configured: true, checkout_url: checkoutUrl, transaction_id: txId });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "TradeSafe checkout failed";
-    await admin.from("order_payments").upsert({
-      order_id,
-      provider: "tradesafe",
-      status: "failed",
-      amount: order.total,
-      currency: order.currency,
-      fee_customer: (Number(order.total) * feeCustomerPct) / 100,
-      fee_business: (Number(order.total) * feeBusinessPct) / 100,
-      last_error: message.slice(0, 500),
-    }, { onConflict: "order_id" });
-    return json({ error: message }, 502);
+    return json({ error: (e as Error).message }, 500);
   }
 });

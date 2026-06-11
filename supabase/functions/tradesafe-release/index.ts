@@ -4,7 +4,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.23.8";
-import { getTradeSafeAccessToken, tradeSafeGraphQl } from "../_shared/tradesafe.ts";
 
 const BodySchema = z.object({ order_id: z.string().uuid() });
 
@@ -27,9 +26,11 @@ Deno.serve(async (req) => {
   const userClient = createClient(SUPABASE_URL, ANON, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: authData, error: authError } = await userClient.auth.getUser();
-  if (authError || !authData.user) return json({ error: "Unauthorized" }, 401);
-  const userId = authData.user.id;
+  const { data: claims, error: claimsErr } = await userClient.auth.getClaims(
+    authHeader.replace("Bearer ", ""),
+  );
+  if (claimsErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
+  const userId = claims.claims.sub as string;
 
   const parsed = BodySchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return json({ error: parsed.error.flatten().fieldErrors }, 400);
@@ -70,16 +71,53 @@ Deno.serve(async (req) => {
     return json({ error: `Payment is ${payment.status}, cannot release` }, 409);
   }
 
-  try {
-    if (!payment.tradesafe_allocation_id) return json({ error: "TradeSafe allocation is missing" }, 409);
-    const accessToken = await getTradeSafeAccessToken();
-    await tradeSafeGraphQl<{ allocationAcceptDelivery: { id: string; state: string } }>(
-      accessToken,
-      `mutation AcceptDelivery($id: ID!) {
-        allocationAcceptDelivery(id: $id) { id state }
-      }`,
-      { id: payment.tradesafe_allocation_id },
+  const CLIENT_ID = Deno.env.get("TRADESAFE_CLIENT_ID");
+  const CLIENT_SECRET = Deno.env.get("TRADESAFE_CLIENT_SECRET");
+  const TS_API = Deno.env.get("TRADESAFE_API_URL") ?? "https://api-sit.tradesafe.co.za";
+
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    return json(
+      {
+        configured: false,
+        message: "TradeSafe is not configured yet — funds cannot be released.",
+      },
+      503,
     );
+  }
+
+  try {
+    const tokenRes = await fetch(`${TS_API}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grant_type: "client_credentials",
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+      }),
+    });
+    if (!tokenRes.ok) return json({ error: "TradeSafe auth failed" }, 502);
+    const { access_token } = await tokenRes.json();
+
+    const gql = {
+      query: `
+        mutation Release($id: ID!) {
+          allocationRelease(id: $id) { id state }
+        }
+      `,
+      variables: { id: payment.tradesafe_allocation_id },
+    };
+    const releaseRes = await fetch(`${TS_API}/graphql`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+      body: JSON.stringify(gql),
+    });
+    const releaseJson = await releaseRes.json();
+    if (!releaseRes.ok || releaseJson.errors) {
+      return json({ error: "TradeSafe release failed", detail: releaseJson.errors ?? releaseJson }, 502);
+    }
 
     // The webhook will also confirm; mark optimistically so the UI updates fast.
     await admin
@@ -89,6 +127,6 @@ Deno.serve(async (req) => {
 
     return json({ ok: true });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "TradeSafe release failed" }, 502);
+    return json({ error: (e as Error).message }, 500);
   }
 });

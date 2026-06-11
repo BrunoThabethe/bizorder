@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, CreditCard, Loader2, MessageSquare, Send, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, MessageSquare, Send, Star } from "lucide-react";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,7 @@ import {
   fetchOrderDisputes,
   fetchOrderEvents,
   fetchOrderMessages,
-  fetchOrderPayment,
   formatPrice,
-  startTradeSafeCheckout,
   DISPUTE_STATUS_LABEL,
   DISPUTE_STATUS_TONE,
   STATUS_LABEL,
@@ -70,11 +68,6 @@ const OrderDetailPage = () => {
     queryFn: () => fetchOrderDisputes(orderId),
     enabled: !!orderId,
   });
-  const { data: payment } = useQuery({
-    queryKey: ["order-payment", orderId],
-    queryFn: () => fetchOrderPayment(orderId),
-    enabled: !!orderId,
-  });
 
   // Realtime → cache: any new message, event, progress row, or status flip on
   // this order invalidates the matching cache so the screen updates live.
@@ -85,7 +78,6 @@ const OrderDetailPage = () => {
       { table: "messages", filter: `order_id=eq.${orderId}` },
       { table: "order_progress", filter: `order_id=eq.${orderId}` },
       { table: "disputes", filter: `order_id=eq.${orderId}` },
-      { table: "order_payments", filter: `order_id=eq.${orderId}` },
     ],
     [
       ["order", orderId],
@@ -93,7 +85,6 @@ const OrderDetailPage = () => {
       ["order-messages", orderId],
       ["order-progress", orderId],
       ["order-disputes", orderId],
-      ["order-payment", orderId],
     ],
     { enabled: !!orderId },
   );
@@ -129,16 +120,6 @@ const OrderDetailPage = () => {
       qc.invalidateQueries({ queryKey: ["order-events", orderId] });
     },
     onError: (e) => toast({ title: "Could not approve", description: (e as Error).message, variant: "destructive" }),
-  });
-
-  const retryPayment = useMutation({
-    mutationFn: () => startTradeSafeCheckout(orderId),
-    onSuccess: (checkoutUrl) => window.location.assign(checkoutUrl),
-    onError: (error: Error) => toast({
-      title: "Could not start payment",
-      description: error.message,
-      variant: "destructive",
-    }),
   });
 
   const submitReview = useMutation({
@@ -237,12 +218,6 @@ const OrderDetailPage = () => {
         ) : null}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {status === "awaiting_payment" ? (
-            <Button size="lg" onClick={() => retryPayment.mutate()} disabled={retryPayment.isPending}>
-              {retryPayment.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              Pay securely with TradeSafe
-            </Button>
-          ) : null}
           <Button asChild size="lg" variant="secondary">
             <Link to={`/customer/messages?order=${order.id}`}>
               <MessageSquare className="h-4 w-4" /> Message provider
@@ -346,7 +321,6 @@ const OrderDetailPage = () => {
               <dl className="mt-3 space-y-2 text-sm">
                 <Row label="Service">{order.services?.title ?? "—"}</Row>
                 <Row label="Total">{formatPrice(Number(order.total), order.currency)}</Row>
-                <Row label="Payment">{payment?.status === "funded" || payment?.status === "released" ? "Paid via TradeSafe" : "Awaiting payment"}</Row>
                 {order.scheduled_for && (
                   <Row label="Scheduled">{new Date(order.scheduled_for).toLocaleString("en-GB")}</Row>
                 )}

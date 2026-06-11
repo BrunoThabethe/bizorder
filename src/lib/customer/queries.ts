@@ -109,27 +109,6 @@ export const fetchOrderById = async (orderId: string) => {
   return data as (typeof data & { rejected_reason?: string | null; reference_image_url?: string | null; fulfillment_type?: string; delivery_distance_km?: number | null; delivery_fee?: number | null }) | null;
 };
 
-export const fetchOrderPayment = async (orderId: string) => {
-  const { data, error } = await supabase
-    .from("order_payments")
-    .select("status, checkout_url, funded_at, released_at, last_error")
-    .eq("order_id", orderId)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-};
-
-export const startTradeSafeCheckout = async (orderId: string) => {
-  const { data, error } = await supabase.functions.invoke<{
-    configured?: boolean;
-    checkout_url?: string;
-    error?: string;
-  }>("tradesafe-create-checkout", { body: { order_id: orderId } });
-  if (error) throw error;
-  if (!data?.checkout_url) throw new Error(data?.error ?? "TradeSafe checkout is unavailable");
-  return data.checkout_url;
-};
-
 export const fetchOrderEvents = async (orderId: string) => {
   const { data, error } = await supabase
     .from("order_events")

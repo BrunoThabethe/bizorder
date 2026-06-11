@@ -21,7 +21,7 @@ const loginSchema = z.object({
 const TEST_PASSWORD = "Test1234!";
 
 type SeedRole = "customer" | "business";
-type FinalRole = "customer" | "business" | "crew";
+type FinalRole = "customer" | "business" | "crew" | "admin";
 
 const testAccounts: {
   role: string;
@@ -54,6 +54,14 @@ const testAccounts: {
     finalRole: "crew",
     fullName: "Test Crew",
     color: "bg-foreground/10",
+  },
+  {
+    role: "Admin",
+    email: "admin@test.bizorder",
+    signupRole: "customer",
+    finalRole: "admin",
+    fullName: "Test Admin",
+    color: "bg-foreground/15",
   },
 ];
 
@@ -101,6 +109,8 @@ const LoginPage = () => {
     // Self-heal: promote seed accounts to their intended role on sign-in.
     if (data.user.email === "crew@test.bizorder") {
       await supabase.rpc("promote_test_crew");
+    } else if (data.user.email === "admin@test.bizorder") {
+      await supabase.rpc("promote_test_admin");
     }
 
 

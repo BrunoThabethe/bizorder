@@ -186,12 +186,7 @@ export const fetchBusinessOrderById = async (orderId: string) => {
     .select("full_name, email")
     .eq("id", data.customer_id)
     .maybeSingle();
-  const { data: payment } = await supabase
-    .from("order_payments")
-    .select("status, funded_at, released_at")
-    .eq("order_id", orderId)
-    .maybeSingle();
-  return { ...data, profiles: prof ?? null, payment: payment ?? null };
+  return { ...data, profiles: prof ?? null };
 };
 
 export const fetchBusinessServices = async (businessId: string) => {
