@@ -24,7 +24,10 @@ const FILTERS: { key: OrderStatus | "all"; label: string }[] = [
   { key: "accepted", label: "Accepted" },
   { key: "in_progress", label: "In progress" },
   { key: "ready", label: "Ready" },
+  { key: "out_for_delivery", label: "Out for delivery" },
+  { key: "ready_for_review", label: "Awaiting approval" },
   { key: "completed", label: "Completed" },
+  { key: "cancelled", label: "Cancelled" },
 ];
 
 const OrdersQueuePage = () => {

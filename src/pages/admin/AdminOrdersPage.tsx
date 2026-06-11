@@ -10,10 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { fetchAllOrders, formatPrice } from "@/lib/admin/queries";
 
 const STATUS_TONE: Record<string, string> = {
+  awaiting_payment: "bg-accent/20 text-foreground",
   pending: "bg-foreground text-background",
   accepted: "bg-foreground/15 text-foreground",
   in_progress: "bg-foreground/85 text-background",
   ready: "bg-foreground/20 text-foreground",
+  out_for_delivery: "bg-foreground/30 text-foreground",
+  ready_for_review: "bg-foreground text-background",
   completed: "bg-foreground/10 text-muted-foreground",
   cancelled: "bg-destructive/15 text-destructive",
 };
@@ -40,7 +43,7 @@ const AdminOrdersPage = () => {
     });
   }, [data, q, status]);
 
-  const statusOptions = ["all", "pending", "accepted", "in_progress", "ready", "completed", "cancelled"];
+  const statusOptions = ["all", "awaiting_payment", "pending", "accepted", "in_progress", "ready", "out_for_delivery", "ready_for_review", "completed", "cancelled"];
 
   return (
     <AdminLayout>
