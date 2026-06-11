@@ -410,6 +410,7 @@ export type Database = {
           registration_number: string | null
           slug: string
           tagline: string | null
+          tradesafe_token_id: string | null
           trading_address: string | null
           updated_at: string
           website_url: string | null
@@ -437,6 +438,7 @@ export type Database = {
           registration_number?: string | null
           slug: string
           tagline?: string | null
+          tradesafe_token_id?: string | null
           trading_address?: string | null
           updated_at?: string
           website_url?: string | null
@@ -464,6 +466,7 @@ export type Database = {
           registration_number?: string | null
           slug?: string
           tagline?: string | null
+          tradesafe_token_id?: string | null
           trading_address?: string | null
           updated_at?: string
           website_url?: string | null
@@ -1083,6 +1086,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          tradesafe_token_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1093,6 +1097,7 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
+          tradesafe_token_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1103,6 +1108,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          tradesafe_token_id?: string | null
           updated_at?: string
         }
         Relationships: []
