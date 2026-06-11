@@ -8,7 +8,7 @@ const PrivacyPage = () => (
     </section>
     <section>
       <h2 className="font-display text-2xl font-bold">Your rights</h2>
-      <p className="mt-3 text-muted-foreground">You can request a copy of your data, correct it, or ask us to delete your account at any time. Email <a className="font-semibold text-foreground underline" href="mailto:privacy@bizorder.app">privacy@bizorder.app</a>.</p>
+      <p className="mt-3 text-muted-foreground">You can request a copy of your data, correct it, or ask us to delete your account at any time. Email <a className="font-semibold text-foreground underline" href="mailto:info@bizorder.co.za">info@bizorder.co.za</a>.</p>
     </section>
   </LegalLayout>
 );

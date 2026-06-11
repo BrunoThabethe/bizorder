@@ -16,7 +16,7 @@ const contactSchema = z.object({
 });
 
 const channels = [
-  { icon: Mail, title: "Email us", text: "We reply within one business day.", value: "support@bizorder.app", href: "mailto:support@bizorder.app" },
+  { icon: Mail, title: "Email us", text: "We reply within one business day.", value: "info@bizorder.co.za", href: "mailto:info@bizorder.co.za" },
   { icon: MessageCircle, title: "WhatsApp", text: "Quickest for order issues.", value: "+27 60 000 0000", href: "https://wa.me/27600000000" },
   { icon: Phone, title: "Call", text: "Mon–Fri, 09:00–17:00.", value: "+27 11 000 0000", href: "tel:+27110000000" },
 ];
