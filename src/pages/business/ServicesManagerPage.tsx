@@ -81,11 +81,21 @@ const ServicesManagerPage = () => {
     mutationFn: async () => {
       if (!business) throw new Error("Create your business profile first");
       if (kind === "product" && !imageUrl) throw new Error("Add a product photo so customers can see it.");
-      const { error } = await supabase.from("services").insert({
+      const isRange = priceMode === "range";
+      const minVal = isRange ? Number(priceMin) : null;
+      const maxVal = isRange ? Number(priceMax) : null;
+      if (isRange) {
+        if (!priceMin || !priceMax) throw new Error("Add both a minimum and maximum price.");
+        if ((minVal ?? 0) < 0 || (maxVal ?? 0) < 0) throw new Error("Prices must be zero or more.");
+        if ((minVal ?? 0) > (maxVal ?? 0)) throw new Error("Minimum price must be lower than the maximum.");
+      } else if (!price) {
+        throw new Error("Add a price.");
+      }
+      const baseRow = {
         business_id: business.id,
         title,
         description: description || null,
-        price: Number(price) || 0,
+        price: isRange ? (minVal ?? 0) : Number(price) || 0,
         duration_minutes: kind === "service" && duration ? Number(duration) : null,
         image_url: kind === "product" ? imageUrl : null,
         is_active: true,
@@ -93,17 +103,23 @@ const ServicesManagerPage = () => {
           kind,
           delivery_available: deliveryAvailable,
           delivery_price_per_km: 0,
+          price_min: isRange ? minVal : null,
+          price_max: isRange ? maxVal : null,
         } as Record<string, unknown>),
-      });
+      };
+      const { error } = await supabase.from("services").insert(baseRow);
       if (error) throw error;
     },
     onSuccess: () => {
       setTitle("");
       setPrice("");
+      setPriceMin("");
+      setPriceMax("");
       setDuration("");
       setDescription("");
       setImageUrl("");
       setDeliveryAvailable(false);
+      setPriceMode("fixed");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
     },
