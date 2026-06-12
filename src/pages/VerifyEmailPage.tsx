@@ -41,10 +41,13 @@ const VerifyEmailPage = () => {
       return;
     }
     setResending(true);
-    const { error } = await supabase.auth.resend({ type: "signup", email });
+    const { data, error } = await supabase.functions.invoke("signup-otp", {
+      body: { action: "resend", email },
+    });
     setResending(false);
-    if (error) {
-      toast({ title: "Could not resend", description: error.message, variant: "destructive" });
+    const errMsg = (data as { error?: string } | null)?.error ?? error?.message;
+    if (errMsg) {
+      toast({ title: "Could not resend", description: errMsg, variant: "destructive" });
       return;
     }
     toast({ title: "New code sent", description: "Check your inbox." });
