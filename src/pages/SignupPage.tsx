@@ -92,11 +92,11 @@ const SignupPage = () => {
     }
 
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("signup-otp", {
-      body: {
-        action: "request",
-        email,
-        password,
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
           full_name: fullName,
           phone,
@@ -111,9 +111,8 @@ const SignupPage = () => {
     });
     setLoading(false);
 
-    if (error || (data && (data as { error?: string }).error)) {
-      const message = (data as { error?: string } | null)?.error ?? error?.message ?? "Sign up failed";
-      toast({ title: "Sign up failed", description: message, variant: "destructive" });
+    if (error) {
+      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
       return;
     }
     toast({
