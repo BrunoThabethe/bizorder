@@ -1175,6 +1175,8 @@ export type Database = {
           is_active: boolean
           kind: string
           price: number
+          price_max: number | null
+          price_min: number | null
           title: string
           updated_at: string
         }
@@ -1191,6 +1193,8 @@ export type Database = {
           is_active?: boolean
           kind?: string
           price?: number
+          price_max?: number | null
+          price_min?: number | null
           title: string
           updated_at?: string
         }
@@ -1207,6 +1211,8 @@ export type Database = {
           is_active?: boolean
           kind?: string
           price?: number
+          price_max?: number | null
+          price_min?: number | null
           title?: string
           updated_at?: string
         }

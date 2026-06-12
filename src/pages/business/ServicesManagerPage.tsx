@@ -48,9 +48,13 @@ const ServicesManagerPage = () => {
     enabled: !!business?.id,
   });
 
+  type PriceMode = "fixed" | "range";
   const [kind, setKind] = useState<CatalogKind>("service");
+  const [priceMode, setPriceMode] = useState<PriceMode>("fixed");
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
