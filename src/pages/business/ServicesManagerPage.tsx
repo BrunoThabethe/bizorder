@@ -48,9 +48,13 @@ const ServicesManagerPage = () => {
     enabled: !!business?.id,
   });
 
+  type PriceMode = "fixed" | "range";
   const [kind, setKind] = useState<CatalogKind>("service");
+  const [priceMode, setPriceMode] = useState<PriceMode>("fixed");
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -77,11 +81,21 @@ const ServicesManagerPage = () => {
     mutationFn: async () => {
       if (!business) throw new Error("Create your business profile first");
       if (kind === "product" && !imageUrl) throw new Error("Add a product photo so customers can see it.");
-      const { error } = await supabase.from("services").insert({
+      const isRange = priceMode === "range";
+      const minVal = isRange ? Number(priceMin) : null;
+      const maxVal = isRange ? Number(priceMax) : null;
+      if (isRange) {
+        if (!priceMin || !priceMax) throw new Error("Add both a minimum and maximum price.");
+        if ((minVal ?? 0) < 0 || (maxVal ?? 0) < 0) throw new Error("Prices must be zero or more.");
+        if ((minVal ?? 0) > (maxVal ?? 0)) throw new Error("Minimum price must be lower than the maximum.");
+      } else if (!price) {
+        throw new Error("Add a price.");
+      }
+      const baseRow = {
         business_id: business.id,
         title,
         description: description || null,
-        price: Number(price) || 0,
+        price: isRange ? (minVal ?? 0) : Number(price) || 0,
         duration_minutes: kind === "service" && duration ? Number(duration) : null,
         image_url: kind === "product" ? imageUrl : null,
         is_active: true,
@@ -89,17 +103,23 @@ const ServicesManagerPage = () => {
           kind,
           delivery_available: deliveryAvailable,
           delivery_price_per_km: 0,
+          price_min: isRange ? minVal : null,
+          price_max: isRange ? maxVal : null,
         } as Record<string, unknown>),
-      });
+      };
+      const { error } = await supabase.from("services").insert(baseRow);
       if (error) throw error;
     },
     onSuccess: () => {
       setTitle("");
       setPrice("");
+      setPriceMin("");
+      setPriceMax("");
       setDuration("");
       setDescription("");
       setImageUrl("");
       setDeliveryAvailable(false);
+      setPriceMode("fixed");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
     },
@@ -149,18 +169,52 @@ const ServicesManagerPage = () => {
               <Label htmlFor="title">{kind === "product" ? "Product name" : "Service name"}</Label>
               <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="priceMode">Price type</Label>
+              <Select value={priceMode} onValueChange={(v) => setPriceMode(v as PriceMode)}>
+                <SelectTrigger id="priceMode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Fixed price</SelectItem>
+                  <SelectItem value="range">Price range (from – to)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Use a range when the final price depends on the job (e.g. R350 – R600).
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-2">
-                <Label htmlFor="price">Price (ZAR)</Label>
-                <Input id="price" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
-              </div>
-              {kind === "service" && (
+              {priceMode === "fixed" ? (
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price (ZAR)</Label>
+                  <Input id="price" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="priceMin">From (ZAR)</Label>
+                    <Input id="priceMin" type="number" min={0} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="priceMax">To (ZAR)</Label>
+                    <Input id="priceMax" type="number" min={0} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} />
+                  </div>
+                </>
+              )}
+              {kind === "service" && priceMode === "fixed" && (
                 <div className="space-y-2">
                   <Label htmlFor="duration">Duration (min)</Label>
                   <Input id="duration" type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
                 </div>
               )}
             </div>
+            {kind === "service" && priceMode === "range" && (
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration (min)</Label>
+                <Input id="duration" type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="desc">Description</Label>
               <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={600} />
@@ -207,7 +261,15 @@ const ServicesManagerPage = () => {
                 <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
               </div>
             </div>
-            <Button className="w-full" onClick={() => create.mutate()} disabled={!title || !price || create.isPending}>
+            <Button
+              className="w-full"
+              onClick={() => create.mutate()}
+              disabled={
+                !title ||
+                (priceMode === "fixed" ? !price : !priceMin || !priceMax) ||
+                create.isPending
+              }
+            >
               {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {kind === "product" ? " Add product" : " Add service"}
             </Button>
@@ -225,6 +287,13 @@ const ServicesManagerPage = () => {
               <ul className="space-y-2">
                 {services.map((s: Service) => {
                   const itemKind = ((s as unknown as { kind?: string }).kind ?? "service") as CatalogKind;
+                  const extra = s as unknown as { price_min?: number | null; price_max?: number | null };
+                  const hasRange =
+                    extra.price_min !== null && extra.price_min !== undefined &&
+                    extra.price_max !== null && extra.price_max !== undefined;
+                  const priceLabel = hasRange
+                    ? `${formatPrice(Number(extra.price_min), s.currency)} – ${formatPrice(Number(extra.price_max), s.currency)}`
+                    : formatPrice(Number(s.price), s.currency);
                   return (
                     <li key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border p-3">
                       {s.image_url ? (
@@ -238,7 +307,7 @@ const ServicesManagerPage = () => {
                           <p className="truncate font-semibold">{s.title}</p>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {formatPrice(Number(s.price), s.currency)}
+                          {priceLabel}
                           {s.duration_minutes ? ` · ${s.duration_minutes} min` : ""}
                         </p>
                       </div>
