@@ -39,9 +39,19 @@ const SignupPage = () => {
   const [role, setRole] = useState<Role>("customer");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [consentData, setConsentData] = useState(false);
+  const [consentEmail, setConsentEmail] = useState(false);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!consentData) {
+      toast({
+        title: "Consent required",
+        description: "Please confirm you consent to BizOrder processing your information.",
+        variant: "destructive",
+      });
+      return;
+    }
     const form = new FormData(event.currentTarget);
     const fullName = String(form.get("fullName") ?? "");
     const email = String(form.get("email") ?? "");
