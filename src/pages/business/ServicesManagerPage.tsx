@@ -287,6 +287,13 @@ const ServicesManagerPage = () => {
               <ul className="space-y-2">
                 {services.map((s: Service) => {
                   const itemKind = ((s as unknown as { kind?: string }).kind ?? "service") as CatalogKind;
+                  const extra = s as unknown as { price_min?: number | null; price_max?: number | null };
+                  const hasRange =
+                    extra.price_min !== null && extra.price_min !== undefined &&
+                    extra.price_max !== null && extra.price_max !== undefined;
+                  const priceLabel = hasRange
+                    ? `${formatPrice(Number(extra.price_min), s.currency)} – ${formatPrice(Number(extra.price_max), s.currency)}`
+                    : formatPrice(Number(s.price), s.currency);
                   return (
                     <li key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border p-3">
                       {s.image_url ? (
@@ -300,7 +307,7 @@ const ServicesManagerPage = () => {
                           <p className="truncate font-semibold">{s.title}</p>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {formatPrice(Number(s.price), s.currency)}
+                          {priceLabel}
                           {s.duration_minutes ? ` · ${s.duration_minutes} min` : ""}
                         </p>
                       </div>
