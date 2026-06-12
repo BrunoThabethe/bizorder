@@ -261,7 +261,15 @@ const ServicesManagerPage = () => {
                 <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
               </div>
             </div>
-            <Button className="w-full" onClick={() => create.mutate()} disabled={!title || !price || create.isPending}>
+            <Button
+              className="w-full"
+              onClick={() => create.mutate()}
+              disabled={
+                !title ||
+                (priceMode === "fixed" ? !price : !priceMin || !priceMax) ||
+                create.isPending
+              }
+            >
               {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {kind === "product" ? " Add product" : " Add service"}
             </Button>
