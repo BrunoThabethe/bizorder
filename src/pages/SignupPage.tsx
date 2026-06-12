@@ -252,14 +252,43 @@ const SignupPage = () => {
               </div>
             </div>
 
+            <div className="space-y-3 rounded-xl bg-foreground/5 p-4">
+              <label className="flex cursor-pointer items-start gap-3 text-xs text-muted-foreground">
+                <Checkbox
+                  checked={consentData}
+                  onCheckedChange={(v) => setConsentData(v === true)}
+                  className="mt-0.5"
+                  aria-label="Consent to data processing"
+                />
+                <span>
+                  I consent to BizOrder collecting and processing the personal and business information provided herein, solely for the purposes of account verification, service provision, fraud prevention and lawful investigation, in accordance with the{" "}
+                  <Link to="/privacy" className="font-semibold text-foreground underline-offset-4 hover:underline">
+                    Privacy policy
+                  </Link>
+                  . <span className="font-semibold text-foreground">Read it before you tick this box.</span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-3 text-xs text-muted-foreground">
+                <Checkbox
+                  checked={consentEmail}
+                  onCheckedChange={(v) => setConsentEmail(v === true)}
+                  className="mt-0.5"
+                  aria-label="Consent to email communications"
+                />
+                <span>
+                  I agree that BizOrder may send notifications, newsletters and other helpful information to the email address provided above. You can unsubscribe at any time.
+                </span>
+              </label>
+            </div>
+
             <p className="text-xs text-muted-foreground">
-              By creating an account you agree to our{" "}
+              By creating an account you also agree to our{" "}
               <Link to="/terms" className="font-semibold text-foreground underline-offset-4 hover:underline">Terms</Link>{" "}
               and{" "}
               <Link to="/privacy" className="font-semibold text-foreground underline-offset-4 hover:underline">Privacy policy</Link>.
             </p>
 
-            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            <Button type="submit" size="lg" className="w-full" disabled={loading || !consentData}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Create account <ArrowRight className="h-4 w-4" /></>}
             </Button>
           </form>
