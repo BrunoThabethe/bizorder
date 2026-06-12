@@ -169,18 +169,52 @@ const ServicesManagerPage = () => {
               <Label htmlFor="title">{kind === "product" ? "Product name" : "Service name"}</Label>
               <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="priceMode">Price type</Label>
+              <Select value={priceMode} onValueChange={(v) => setPriceMode(v as PriceMode)}>
+                <SelectTrigger id="priceMode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Fixed price</SelectItem>
+                  <SelectItem value="range">Price range (from – to)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Use a range when the final price depends on the job (e.g. R350 – R600).
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-2">
-                <Label htmlFor="price">Price (ZAR)</Label>
-                <Input id="price" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
-              </div>
-              {kind === "service" && (
+              {priceMode === "fixed" ? (
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price (ZAR)</Label>
+                  <Input id="price" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="priceMin">From (ZAR)</Label>
+                    <Input id="priceMin" type="number" min={0} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="priceMax">To (ZAR)</Label>
+                    <Input id="priceMax" type="number" min={0} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} />
+                  </div>
+                </>
+              )}
+              {kind === "service" && priceMode === "fixed" && (
                 <div className="space-y-2">
                   <Label htmlFor="duration">Duration (min)</Label>
                   <Input id="duration" type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
                 </div>
               )}
             </div>
+            {kind === "service" && priceMode === "range" && (
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration (min)</Label>
+                <Input id="duration" type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="desc">Description</Label>
               <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={600} />
