@@ -104,6 +104,8 @@ const SignupPage = () => {
           business_name: businessName,
           business_category: category,
           business_address: address,
+          marketing_opt_in: consentEmail,
+          data_consent_accepted_at: new Date().toISOString(),
         },
       },
     });
