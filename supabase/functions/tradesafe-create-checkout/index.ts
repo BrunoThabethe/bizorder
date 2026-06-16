@@ -115,14 +115,21 @@ Deno.serve(async (req) => {
 
     let sellerTokenId = business.tradesafe_token_id;
     if (!sellerTokenId) {
-      const tokensData = await tradeSafeGraphQl<{
-        tokens: { data: Array<{ id: string; organization?: { name?: string | null } | null }> };
+      // Per TradeSafe Quick Start: the API owner's token comes from apiProfile.
+      const profileData = await tradeSafeGraphQl<{
+        apiProfile: {
+          token?: string | null;
+          organizations?: Array<{ name?: string | null; token?: string | null }> | null;
+        };
       }>(
         accessToken,
-        `query Tokens { tokens { data { id organization { name } } } }`,
+        `query ApiProfile { apiProfile { token organizations { name token } } }`,
         {},
       );
-      sellerTokenId = tokensData.tokens.data.find((token) => token.organization)?.id ?? tokensData.tokens.data[0]?.id;
+      sellerTokenId =
+        profileData.apiProfile.token ??
+        profileData.apiProfile.organizations?.find((org) => org?.token)?.token ??
+        null;
       if (!sellerTokenId) return json({ error: "No TradeSafe seller token is available for this application." }, 503);
       await admin.from("businesses").update({ tradesafe_token_id: sellerTokenId }).eq("id", order.business_id);
     }

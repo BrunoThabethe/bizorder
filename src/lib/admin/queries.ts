@@ -261,9 +261,12 @@ export const purgeBusiness = async (businessId: string) => {
 
 // ============= Orders =============
 export const fetchAllOrders = async () => {
+  // Only show orders that have been paid for — drafts in `awaiting_payment` are
+  // hidden until TradeSafe confirms funds.
   const { data, error } = await supabase
     .from("orders")
     .select("*, services(title), businesses(name, slug)")
+    .neq("status", "awaiting_payment")
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;

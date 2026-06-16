@@ -2,19 +2,32 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.23.8";
 
-const CallbackSchema = z.object({
-  data: z.object({
-    id: z.string().min(1).max(255),
-    reference: z.string().max(255).optional().nullable(),
-    state: z.string().min(1).max(64),
-    updated_at: z.string().max(64).optional(),
-    allocations: z.array(z.object({
-      id: z.string().min(1).max(255),
-      state: z.string().min(1).max(64),
-      updated_at: z.string().max(64).optional(),
-    })).max(50).default([]),
-  }),
-});
+// TradeSafe callbacks come in two shapes depending on account configuration:
+//   1. Flat:      { id, reference?, state, balance?, updated_at? }
+//   2. Wrapped:   { data: { id, reference?, state, allocations: [...], updated_at? } }
+// Accept both.
+const TxFields = {
+  id: z.string().min(1).max(255),
+  reference: z.string().max(255).optional().nullable(),
+  state: z.string().min(1).max(64),
+  updated_at: z.string().max(64).optional(),
+  balance: z.number().optional(),
+  allocations: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(255),
+        state: z.string().min(1).max(64),
+        updated_at: z.string().max(64).optional(),
+      }),
+    )
+    .max(50)
+    .optional()
+    .default([]),
+};
+
+const FlatSchema = z.object(TxFields);
+const WrappedSchema = z.object({ data: z.object(TxFields) });
+const CallbackSchema = z.union([WrappedSchema, FlatSchema]);
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -41,10 +54,9 @@ Deno.serve(async (req) => {
   }
   const parsed = CallbackSchema.safeParse(decoded);
   if (!parsed.success) return json({ error: "Invalid TradeSafe callback" }, 400);
-  const payload = parsed.data;
-  const transaction = payload.data;
+  const transaction = "data" in parsed.data ? parsed.data.data : parsed.data;
   const eventId = `${transaction.id}:${transaction.state}:${transaction.updated_at ?? "unknown"}`;
-  const eventType = transaction.state;
+  const eventType = transaction.state.toUpperCase();
 
   const admin = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -66,7 +78,7 @@ Deno.serve(async (req) => {
       provider: "tradesafe",
       external_event_id: eventId,
       event_type: eventType,
-      payload,
+      payload: decoded as Record<string, unknown>,
     });
   }
 
@@ -82,23 +94,25 @@ Deno.serve(async (req) => {
       .update({ processed_at: new Date().toISOString() })
       .eq("provider", "tradesafe")
       .eq("external_event_id", eventId);
-    return json({ ok: true, note: "Unknown allocation" });
+    return json({ ok: true, note: "Unknown transaction" });
   }
 
   const now = new Date().toISOString();
-  let paymentPatch: Record<string, unknown> = { raw: payload, updated_at: now, last_error: null };
+  let paymentPatch: Record<string, unknown> = { raw: decoded as Record<string, unknown>, updated_at: now, last_error: null };
   let orderPatch: Record<string, unknown> | null = null;
-  const allocationStates = transaction.allocations.map((allocation) => allocation.state);
+  const allocationStates = (transaction.allocations ?? []).map((a) => a.state.toUpperCase());
 
-  if (eventType === "FUNDS_RECEIVED") {
+  if (eventType === "FUNDS_RECEIVED" || eventType === "FUNDS_DEPOSITED") {
+    // Payment succeeded — promote the draft order so it becomes visible to the provider.
     paymentPatch = { ...paymentPatch, status: "funded", funded_at: now };
     orderPatch = { status: "pending" };
   } else if (eventType === "FUNDS_RELEASED" || allocationStates.includes("FUNDS_RELEASED")) {
     paymentPatch = { ...paymentPatch, status: "released", released_at: now };
   } else if (["CANCELED", "CANCELLED", "REFUNDED"].includes(eventType)) {
     paymentPatch = { ...paymentPatch, status: "refunded", refunded_at: now };
-    orderPatch = { status: "cancelled" };
-  } else if (["DECLINED", "FAILED"].includes(eventType)) {
+    // Failed/cancelled checkout — keep the draft order as awaiting_payment so the
+    // customer can retry. The expiry cron eventually cancels stale drafts.
+  } else if (["DECLINED", "FAILED", "EXPIRED"].includes(eventType)) {
     paymentPatch = { ...paymentPatch, status: "failed", last_error: eventType };
   } else {
     paymentPatch = { ...paymentPatch, status: payment.status };
