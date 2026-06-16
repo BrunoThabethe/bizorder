@@ -45,7 +45,7 @@ const AdminOrdersPage = () => {
     });
   }, [data, q, status]);
 
-  const statusOptions = ["all", "awaiting_payment", "pending", "accepted", "in_progress", "ready", "out_for_delivery", "ready_for_review", "completed", "cancelled"];
+  const statusOptions = ["all", "pending", "accepted", "in_progress", "ready", "out_for_delivery", "ready_for_review", "completed", "cancelled"];
 
   return (
     <AdminLayout>
