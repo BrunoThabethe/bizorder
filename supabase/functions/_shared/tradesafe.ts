@@ -3,13 +3,46 @@ export type GraphQlResult<T> = {
   errors?: Array<{ message?: string }>;
 };
 
-const getTradeSafeAuthUrl = () => {
+type TradeSafeEnv = "sandbox" | "production";
+
+const normalizeEnv = (value: string | undefined): TradeSafeEnv | null => {
+  if (!value) return null;
+  const v = value.trim().toLowerCase();
+  if (v === "sandbox" || v === "sbx" || v === "test" || v === "staging") return "sandbox";
+  if (v === "production" || v === "prod" || v === "live") return "production";
+  return null;
+};
+
+const inferEnvFromUrl = (url: string | undefined): TradeSafeEnv | null => {
+  if (!url) return null;
+  if (/sandbox|sbx|staging|test/i.test(url)) return "sandbox";
+  if (/api\.tradesafe\.co\.za|auth\.tradesafe\.co\.za/i.test(url)) return "production";
+  return null;
+};
+
+/**
+ * Resolve and validate the TradeSafe environment. Throws if the configured
+ * TRADESAFE_API_URL and the declared TRADESAFE_ENV disagree, so we fail fast
+ * instead of attempting auth with a credential/URL mismatch.
+ */
+export const getTradeSafeEnv = (): TradeSafeEnv => {
+  const apiUrl = Deno.env.get("TRADESAFE_API_URL");
+  const declared = normalizeEnv(Deno.env.get("TRADESAFE_ENV"));
+  const inferred = inferEnvFromUrl(apiUrl);
+
+  if (declared && inferred && declared !== inferred) {
+    throw new Error(
+      `TradeSafe environment mismatch: TRADESAFE_ENV=${declared} but TRADESAFE_API_URL points to ${inferred}. ` +
+        `Use ${declared} credentials with a ${declared} API URL (or vice versa).`,
+    );
+  }
+  return declared ?? inferred ?? "production";
+};
+
+const getTradeSafeAuthUrl = (env: TradeSafeEnv) => {
   const explicit = Deno.env.get("TRADESAFE_AUTH_URL");
   if (explicit) return explicit.replace(/\/$/, "");
-  // Derive auth host from the configured API URL so sandbox ↔ production stay aligned.
-  const apiUrl = Deno.env.get("TRADESAFE_API_URL") ?? "https://api.tradesafe.co.za";
-  const isSandbox = /sandbox/i.test(apiUrl);
-  return isSandbox
+  return env === "sandbox"
     ? "https://auth.sandbox.tradesafe.co.za/oauth/token"
     : "https://auth.tradesafe.co.za/oauth/token";
 };
@@ -19,13 +52,15 @@ export const getTradeSafeAccessToken = async () => {
   const clientSecret = Deno.env.get("TRADESAFE_CLIENT_SECRET");
   if (!clientId || !clientSecret) throw new Error("TradeSafe credentials are not configured");
 
+  const env = getTradeSafeEnv();
+  const authUrl = getTradeSafeAuthUrl(env);
+
   const body = new URLSearchParams({
     grant_type: "client_credentials",
     client_id: clientId,
     client_secret: clientSecret,
     scope: "auth",
   });
-  const authUrl = getTradeSafeAuthUrl();
   const response = await fetch(authUrl, {
     method: "POST",
     headers: {
@@ -36,9 +71,11 @@ export const getTradeSafeAccessToken = async () => {
   });
   const raw = await response.text();
   if (!response.ok) {
-    // Surface TradeSafe's error so we know whether it's invalid_client, invalid_scope, etc.
     const snippet = raw.slice(0, 300).replace(/\s+/g, " ");
-    throw new Error(`TradeSafe authentication failed (${response.status}) at ${authUrl}: ${snippet}`);
+    throw new Error(
+      `TradeSafe authentication failed (${response.status}) for env=${env} at ${authUrl}: ${snippet}. ` +
+        `Verify TRADESAFE_CLIENT_ID/SECRET are ${env} credentials.`,
+    );
   }
   const parsed = JSON.parse(raw) as { access_token?: unknown };
   if (typeof parsed.access_token !== "string") throw new Error("TradeSafe did not return an access token");
