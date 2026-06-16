@@ -1,18 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Loader2, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, ArrowRight, RefreshCw } from "lucide-react";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { startTradeSafeCheckout } from "@/lib/customer/queries";
+import { useToast } from "@/hooks/use-toast";
 
 type PaymentStatus = "pending" | "funded" | "released" | "refunded" | "failed" | "expired";
 
 const PaymentReturnPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [status, setStatus] = useState<PaymentStatus | null>(null);
   const [tries, setTries] = useState(0);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     if (!orderId) return;
@@ -43,14 +47,25 @@ const PaymentReturnPage = () => {
     };
   }, [orderId, navigate]);
 
-  useEffect(() => {
-    if (tries < 24 || !orderId) return;
-    navigate(`/customer/orders/${orderId}`, { replace: true });
-  }, [tries, orderId, navigate]);
-
   const isWaiting = !status || status === "pending";
   const isPaid = status === "funded" || status === "released";
   const isFailed = status === "failed" || status === "expired" || status === "refunded";
+
+  const handleRetry = async () => {
+    if (!orderId) return;
+    setRetrying(true);
+    try {
+      const checkoutUrl = await startTradeSafeCheckout(orderId);
+      window.location.assign(checkoutUrl);
+    } catch (error) {
+      setRetrying(false);
+      toast({
+        title: "Couldn't start a new payment",
+        description: error instanceof Error ? error.message : "Please try again in a moment.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <CustomerLayout>
@@ -86,13 +101,19 @@ const PaymentReturnPage = () => {
             <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
             <p className="mt-4 font-display text-lg font-bold">Payment didn&rsquo;t go through</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              No money was taken. You can try again from your orders list.
+              No money was taken and your order hasn&rsquo;t been sent to the provider yet. You can try paying again.
             </p>
-            <Button asChild className="mt-5">
-              <Link to="/customer/orders">
-                Back to my orders <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <Button onClick={handleRetry} disabled={retrying}>
+                {retrying ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1.5 h-4 w-4" />}
+                Try payment again
+              </Button>
+              <Button asChild variant="secondary">
+                <Link to="/customer/orders">
+                  Back to my orders <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </>
         ) : null}
       </div>
