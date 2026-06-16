@@ -1,8 +1,17 @@
-const AUTH_URL = "https://auth.tradesafe.co.za/oauth/token";
-
 export type GraphQlResult<T> = {
   data?: T;
   errors?: Array<{ message?: string }>;
+};
+
+const getTradeSafeAuthUrl = () => {
+  const explicit = Deno.env.get("TRADESAFE_AUTH_URL");
+  if (explicit) return explicit.replace(/\/$/, "");
+  // Derive auth host from the configured API URL so sandbox ↔ production stay aligned.
+  const apiUrl = Deno.env.get("TRADESAFE_API_URL") ?? "https://api.tradesafe.co.za";
+  const isSandbox = /sandbox/i.test(apiUrl);
+  return isSandbox
+    ? "https://auth.sandbox.tradesafe.co.za/oauth/token"
+    : "https://auth.tradesafe.co.za/oauth/token";
 };
 
 export const getTradeSafeAccessToken = async () => {
@@ -14,14 +23,23 @@ export const getTradeSafeAccessToken = async () => {
     grant_type: "client_credentials",
     client_id: clientId,
     client_secret: clientSecret,
+    scope: "auth",
   });
-  const response = await fetch(AUTH_URL, {
+  const authUrl = getTradeSafeAuthUrl();
+  const response = await fetch(authUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
+    },
     body,
   });
   const raw = await response.text();
-  if (!response.ok) throw new Error(`TradeSafe authentication failed (${response.status})`);
+  if (!response.ok) {
+    // Surface TradeSafe's error so we know whether it's invalid_client, invalid_scope, etc.
+    const snippet = raw.slice(0, 300).replace(/\s+/g, " ");
+    throw new Error(`TradeSafe authentication failed (${response.status}) at ${authUrl}: ${snippet}`);
+  }
   const parsed = JSON.parse(raw) as { access_token?: unknown };
   if (typeof parsed.access_token !== "string") throw new Error("TradeSafe did not return an access token");
   return parsed.access_token;
