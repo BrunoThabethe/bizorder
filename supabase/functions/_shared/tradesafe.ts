@@ -83,7 +83,9 @@ export const getTradeSafeAccessToken = async () => {
 };
 
 export const getTradeSafeGraphQlUrl = () => {
-  const configured = Deno.env.get("TRADESAFE_API_URL") ?? "https://api.tradesafe.co.za";
+  const env = getTradeSafeEnv();
+  const fallback = env === "sandbox" ? "https://api.sandbox.tradesafe.co.za" : "https://api.tradesafe.co.za";
+  const configured = Deno.env.get("TRADESAFE_API_URL") ?? fallback;
   return configured.replace(/\/$/, "").replace(/\/graphql$/, "") + "/graphql";
 };
 
