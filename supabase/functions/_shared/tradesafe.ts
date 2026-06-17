@@ -56,23 +56,31 @@ export const getTradeSafeAccessToken = async () => {
   const authUrl = getTradeSafeAuthUrl(env);
 
   // TradeSafe's accepted scope differs between tenants/environments.
-  // Default to no scope (server picks the default). Override with TRADESAFE_SCOPE if needed (e.g. "*").
+  // Prefer an explicit TRADESAFE_SCOPE when configured; otherwise try no scope,
+  // then fall back to wildcard scope if TradeSafe reports invalid_scope.
   const scope = Deno.env.get("TRADESAFE_SCOPE")?.trim();
-  const body = new URLSearchParams({
-    grant_type: "client_credentials",
-    client_id: clientId,
-    client_secret: clientSecret,
-  });
-  if (scope) body.set("scope", scope);
-  const response = await fetch(authUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Accept: "application/json",
-    },
-    body,
-  });
-  const raw = await response.text();
+  const requestedScopes = scope ? [scope] : [undefined, "*"];
+  let raw = "";
+  let response: Response | null = null;
+  for (const requestedScope of requestedScopes) {
+    const body = new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+    if (requestedScope) body.set("scope", requestedScope);
+    response = await fetch(authUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+      body,
+    });
+    raw = await response.text();
+    if (response.ok || scope || !/invalid_scope/i.test(raw)) break;
+  }
+  if (!response) throw new Error("TradeSafe authentication did not return a response");
   if (!response.ok) {
     const snippet = raw.slice(0, 300).replace(/\s+/g, " ");
     throw new Error(
