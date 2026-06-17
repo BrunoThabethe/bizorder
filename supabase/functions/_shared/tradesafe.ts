@@ -55,12 +55,15 @@ export const getTradeSafeAccessToken = async () => {
   const env = getTradeSafeEnv();
   const authUrl = getTradeSafeAuthUrl(env);
 
+  // TradeSafe's accepted scope differs between tenants/environments.
+  // Default to no scope (server picks the default). Override with TRADESAFE_SCOPE if needed (e.g. "*").
+  const scope = Deno.env.get("TRADESAFE_SCOPE")?.trim();
   const body = new URLSearchParams({
     grant_type: "client_credentials",
     client_id: clientId,
     client_secret: clientSecret,
-    scope: "auth",
   });
+  if (scope) body.set("scope", scope);
   const response = await fetch(authUrl, {
     method: "POST",
     headers: {
