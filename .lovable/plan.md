@@ -1,77 +1,28 @@
-# TradeSafe escrow integration
+# Secure TradeSafe credentials & fix "Payment setup unavailable"
 
-## Goal
-Customer must fund a TradeSafe escrow allocation before the business sees the order. Funds release to the business when the customer confirms completion (already wired via `customer_confirm_completion`). Disputes already block release.
+## Important: rotate the credentials you just pasted
 
-## How TradeSafe fits BizOrder
+You shared the Client ID and Client Secret in chat. Anything pasted into chat should be treated as compromised. **Before anything else, log into the TradeSafe dashboard and rotate (regenerate) that client secret.** I'll then store the *new* secret using Lovable's secure secret form — never in chat, never in `.env`, never in the frontend bundle.
 
-```text
-Customer creates order
-        │
-        ▼
-[awaiting_payment]  ──── unpaid 30 min ────► [cancelled]
-        │ pays via TradeSafe checkout
-        ▼
-TradeSafe webhook: funds received
-        │
-        ▼
-   [pending]   ◄── business now sees it in the queue
-        │
-        ▼ (existing flow: accepted → in_progress → ready_for_review)
-        ▼
-Customer confirms completion
-        │
-        ▼
-Edge function calls TradeSafe "release allocation"
-        │
-        ▼
-   [completed]   + payout row marked released
-```
+## Why not `.env`
 
-Disputes pause the release exactly like today.
+TradeSafe credentials must only ever be used server-side (in the Supabase edge functions `tradesafe-create-checkout`, `tradesafe-webhook`, `tradesafe-release`, `tradesafe-expire-unpaid`). Anything placed in a frontend `.env` (Vite `VITE_*` vars) is bundled into the JavaScript that ships to every visitor's browser — that's worse than the current state. The correct home for these values is Lovable Cloud / Supabase edge function secrets, which are injected as environment variables only inside the edge runtime.
 
-## What I'll build now (scaffolding — works once you add API keys)
+## Plan
 
-### 1. Database (one migration)
-- New order status `awaiting_payment` added to the `order_status` enum, set as the default for new orders.
-- New table `order_payments`:
-  - `order_id` (FK, unique), `provider` (`tradesafe`), `status` (`pending` | `funded` | `released` | `refunded` | `failed`)
-  - `tradesafe_transaction_id`, `tradesafe_allocation_id`, `checkout_url`
-  - `amount`, `currency`, `fee_customer`, `fee_business`, `funded_at`, `released_at`, `raw` (jsonb of last webhook)
-- New table `payment_webhook_events` for idempotent webhook processing (event id, payload, processed_at).
-- `system_settings` rows: `tradesafe_fee_split_customer_pct`, `tradesafe_fee_split_business_pct`, `awaiting_payment_timeout_minutes` (default 30) — admin can tune later.
-- RLS: customer reads own `order_payments`; business reads its own (only when funded+); service role full access. `payment_webhook_events` is service-role-only.
-- Function `expire_unpaid_orders()` + scheduled trigger logic (called from edge function cron) to cancel stale `awaiting_payment` orders.
+1. **You rotate the secret in TradeSafe** and have the new Client ID + Client Secret ready (Client ID can stay the same if TradeSafe doesn't rotate it; only the secret must change).
+2. I open the secure `add_secret` (or `update_secret`) form for these names — you paste the values directly into the form, not into chat:
+   - `TRADESAFE_CLIENT_ID`
+   - `TRADESAFE_CLIENT_SECRET`
+   - `TRADESAFE_ENV` — set to `sandbox` or `production` so the env-check added previously can validate it against `TRADESAFE_API_URL`
+3. I confirm via `fetch_secrets` that `TRADESAFE_API_URL` (and optionally `TRADESAFE_AUTH_URL`) point at the matching environment — sandbox creds → `https://api.sandbox.tradesafe.co.za`, production creds → `https://api.tradesafe.co.za`. If they don't match I'll flag it before we test.
+4. Scan the repo (`rg`) for any hardcoded TradeSafe ID/secret/token strings and remove them if present. No code changes expected — the edge functions already read from `Deno.env`.
+5. Trigger a checkout from the customer flow and tail `tradesafe-create-checkout` logs to confirm the 401 / "Payment setup unavailable" is gone.
 
-### 2. Edge functions (4 new)
-All gated by JWT except the webhook:
-- `tradesafe-create-checkout` — called after order insert. Creates TradeSafe transaction + allocation, returns `checkout_url`. Stores IDs on `order_payments`.
-- `tradesafe-webhook` — public, verifies TradeSafe signature, marks order `pending` on `FUNDS_DEPOSITED`, marks payment `released` on `ALLOCATION_RELEASED`, etc. Idempotent via `payment_webhook_events`.
-- `tradesafe-release` — called by `customer_confirm_completion` trigger via `pg_net`, releases the allocation server-side.
-- `tradesafe-expire-unpaid` — cron-style, run by a Postgres cron job every 5 min to cancel timed-out unpaid orders.
+## What I will NOT do
 
-All functions read `TRADESAFE_CLIENT_ID`, `TRADESAFE_CLIENT_SECRET`, `TRADESAFE_API_URL`, `TRADESAFE_WEBHOOK_SECRET` from secrets. Until you add them, the functions return a clear "TradeSafe not configured" 503 instead of crashing — so the UI can show a friendly message during dev.
+- Will not write the Client ID or Secret you pasted into any file, commit, or `.env`.
+- Will not add `VITE_TRADESAFE_*` variables — those would leak to the browser.
+- Will not change order/payment logic; this is purely a credentials + config fix.
 
-### 3. Frontend
-- `CreateOrderPage` → after insert, calls `tradesafe-create-checkout`, redirects to `checkout_url`.
-- New `/customer/orders/:id/payment-return` route — polls `order_payments.status` (5s) and routes to the order page once funded, or shows a "still waiting" / "retry payment" state.
-- `OrderStatusStepper` gains an `awaiting_payment` step shown before "Placed".
-- Business order queue (`OrdersQueuePage`, `fetchBusinessOrders`) filters out `awaiting_payment` — businesses never see unpaid orders. Admin sees everything.
-- Customer order list shows a clear "Awaiting payment — complete checkout" pill with a resume button.
-
-### 4. Admin
-- `AdminOrdersPage` gets an "Awaiting payment" filter.
-- New `AdminPaymentsPage` (light) listing `order_payments` rows so you can audit funded/released/failed states and copy the TradeSafe transaction ID.
-
-## What I will NOT do until you have credentials
-- Hit the real TradeSafe API. The functions are written against their published GraphQL schema but will only execute end-to-end once `TRADESAFE_CLIENT_ID` / `TRADESAFE_CLIENT_SECRET` are in secrets.
-- Wire the cron job. I'll create the function; you flip on the schedule when you go live.
-
-## After you have TradeSafe keys
-You tell me, I add the 4 secrets via the secrets tool, then we do one round of sandbox testing: place a test order → pay with TradeSafe sandbox card → confirm webhook moves status to `pending` → confirm completion → confirm release. No code changes needed at that point.
-
-## Open items I'm assuming (correct me if wrong)
-- ZAR only (TradeSafe is SA-only anyway).
-- Fee split starts 50/50 customer/business; you'll tune via admin.
-- 30-minute unpaid timeout.
-- Refunds on cancellation: customer-initiated cancel before business accepts → automatic refund via TradeSafe; after acceptance → goes through dispute flow.
+Please rotate the secret in TradeSafe now and approve the plan — I'll then open the secure secret form for the new values.
