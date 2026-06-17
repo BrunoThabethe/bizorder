@@ -36,7 +36,10 @@ export const getTradeSafeEnv = (): TradeSafeEnv => {
         `Use ${declared} credentials with a ${declared} API URL (or vice versa).`,
     );
   }
-  return declared ?? inferred ?? "production";
+  // Default to sandbox when nothing is configured — TradeSafe issues
+  // sandbox credentials by default, and production must be opted into
+  // explicitly via TRADESAFE_ENV=production or TRADESAFE_API_URL.
+  return declared ?? inferred ?? "sandbox";
 };
 
 const getTradeSafeAuthUrl = (env: TradeSafeEnv) => {
