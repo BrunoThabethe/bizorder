@@ -42,12 +42,11 @@ export const getTradeSafeEnv = (): TradeSafeEnv => {
   return declared ?? inferred ?? "sandbox";
 };
 
-const getTradeSafeAuthUrl = (env: TradeSafeEnv) => {
+const getTradeSafeAuthUrl = () => {
   const explicit = Deno.env.get("TRADESAFE_AUTH_URL");
   if (explicit) return explicit.replace(/\/$/, "");
-  return env === "sandbox"
-    ? "https://auth.sandbox.tradesafe.co.za/oauth/token"
-    : "https://auth.tradesafe.co.za/oauth/token";
+  // TradeSafe uses the same documented OAuth host for test and live apps.
+  return "https://auth.tradesafe.co.za/oauth/token";
 };
 
 export const getTradeSafeAccessToken = async () => {
@@ -56,7 +55,7 @@ export const getTradeSafeAccessToken = async () => {
   if (!clientId || !clientSecret) throw new Error("TradeSafe credentials are not configured");
 
   const env = getTradeSafeEnv();
-  const authUrl = getTradeSafeAuthUrl(env);
+  const authUrl = getTradeSafeAuthUrl();
 
   // TradeSafe's accepted scope differs between tenants/environments.
   // Prefer an explicit TRADESAFE_SCOPE when configured; otherwise try no scope,
@@ -97,8 +96,8 @@ export const getTradeSafeAccessToken = async () => {
 };
 
 export const getTradeSafeGraphQlUrl = () => {
-  const env = getTradeSafeEnv();
-  const fallback = env === "sandbox" ? "https://api.sandbox.tradesafe.co.za" : "https://api.tradesafe.co.za";
+  // TradeSafe uses the same documented API host for sandbox/test credentials.
+  const fallback = "https://api.tradesafe.co.za";
   const configured = Deno.env.get("TRADESAFE_API_URL") ?? fallback;
   return configured.replace(/\/$/, "").replace(/\/graphql$/, "") + "/graphql";
 };
