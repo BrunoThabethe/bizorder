@@ -96,8 +96,13 @@ export const getTradeSafeAccessToken = async () => {
 };
 
 export const getTradeSafeGraphQlUrl = () => {
-  // TradeSafe uses the same documented API host for sandbox/test credentials.
-  const fallback = "https://api.tradesafe.co.za";
+  // Per TradeSafe docs:
+  //   Sandbox/testing: https://api-developer.tradesafe.dev/graphql
+  //   Production:      https://api.tradesafe.co.za/graphql
+  const env = getTradeSafeEnv();
+  const fallback = env === "production"
+    ? "https://api.tradesafe.co.za"
+    : "https://api-developer.tradesafe.dev";
   const configured = Deno.env.get("TRADESAFE_API_URL") ?? fallback;
   return configured.replace(/\/$/, "").replace(/\/graphql$/, "") + "/graphql";
 };
