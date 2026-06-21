@@ -91,14 +91,16 @@ export async function tradeSafeQuery<T = unknown>(
   variables: object = {}
 ): Promise<T> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseAnonKey =
+    import.meta.env.VITE_SUPABASE_ANON_KEY ??
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl) {
     throw new Error("VITE_SUPABASE_URL is not configured");
   }
 
   if (!supabaseAnonKey) {
-    throw new Error("VITE_SUPABASE_ANON_KEY is not configured");
+    throw new Error("Supabase anon/publishable key is not configured");
   }
 
   const response = await fetch(`${supabaseUrl}/functions/v1/tradesafe-proxy`, {
