@@ -268,7 +268,7 @@ const CreateOrderPage = () => {
       const sellerToken = sellerRes.apiProfile.token;
 
       // Step 3 — Create transaction
-      const title = selectedService.name ?? "Order";
+      const title = selectedService.title ?? "Order";
       const description = notes?.trim() || `Order from ${business.name}`;
       const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(
         CREATE_TRANSACTION,
