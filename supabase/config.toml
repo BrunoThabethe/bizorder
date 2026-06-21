@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.tradesafe-expire-unpaid]
 verify_jwt = false
+
+[functions.tradesafe-proxy]
+verify_jwt = false
