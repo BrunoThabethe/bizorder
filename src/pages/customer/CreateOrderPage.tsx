@@ -240,19 +240,72 @@ const CreateOrderPage = () => {
       message: fulfillment === "delivery" ? "Delivery requested" : "Pickup / in-store",
     });
 
-    // Kick off TradeSafe escrow checkout. Returns 503 in scaffold mode (no API keys yet).
+    // Kick off TradeSafe escrow checkout via GraphQL proxy.
     try {
-      const checkoutUrl = await startTradeSafeCheckout(order.id);
-      setSubmitting(false);
+      // Fetch buyer profile details for the buyer token
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email, phone")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const fullName = (profile?.full_name ?? user.email ?? "Customer").trim();
+      const nameParts = fullName.split(/\s+/);
+      const givenName = nameParts[0] || "Customer";
+      const familyName = nameParts.slice(1).join(" ") || givenName;
+      const email = profile?.email ?? user.email ?? "";
+      const mobile = profile?.phone ?? "";
+
+      // Step 1 — Create buyer token
+      const buyerRes = await tradeSafeQuery<{ tokenCreate: { id: string } }>(
+        CREATE_BUYER_TOKEN,
+        { givenName, familyName, email, mobile },
+      );
+      const buyerToken = buyerRes.tokenCreate.id;
+
+      // Step 2 — Get our seller token
+      const sellerRes = await tradeSafeQuery<{ apiProfile: { token: string } }>(GET_MY_TOKEN);
+      const sellerToken = sellerRes.apiProfile.token;
+
+      // Step 3 — Create transaction
+      const title = selectedService.name ?? "Order";
+      const description = notes?.trim() || `Order from ${business.name}`;
+      const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(
+        CREATE_TRANSACTION,
+        {
+          title,
+          description,
+          industry: "GENERAL_GOODS_SERVICES",
+          workflow: "STANDARD_PAYMENT",
+          value: Number(total),
+          buyerToken,
+          sellerToken,
+        },
+      );
+      const transactionId = txRes.transactionCreate.id;
+
+      await supabase
+        .from("orders")
+        .update({ tradesafe_transaction_id: transactionId })
+        .eq("id", order.id);
+
+      // Step 4 — Get checkout link
+      const linkRes = await tradeSafeQuery<{ checkoutLink: string }>(GET_CHECKOUT_LINK, {
+        id: transactionId,
+      });
+      const checkoutUrl = linkRes.checkoutLink;
+      if (!checkoutUrl) throw new Error("TradeSafe did not return a checkout link");
+
       toast({ title: "Redirecting to secure checkout", description: "Pay via TradeSafe to confirm your order." });
-      window.location.assign(checkoutUrl);
+      // Step 5 — Redirect
+      window.location.href = checkoutUrl;
     } catch (checkoutError) {
       setSubmitting(false);
       toast({
-        title: "Payment setup unavailable",
-        description: checkoutError instanceof Error ? checkoutError.message : "Your order is saved. Try payment again from the order page.",
+        title: "Could not start payment",
+        description: checkoutError instanceof Error ? checkoutError.message : "Please try again.",
+        variant: "destructive",
       });
-      navigate(`/customer/orders/${order.id}`);
     }
   };
 
