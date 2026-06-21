@@ -891,6 +891,7 @@ export type Database = {
           service_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           total: number
+          tradesafe_transaction_id: string | null
           updated_at: string
         }
         Insert: {
@@ -911,6 +912,7 @@ export type Database = {
           service_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
+          tradesafe_transaction_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -931,6 +933,7 @@ export type Database = {
           service_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
+          tradesafe_transaction_id?: string | null
           updated_at?: string
         }
         Relationships: [

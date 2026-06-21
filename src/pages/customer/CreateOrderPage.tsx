@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarIcon, ImageIcon, Loader2, ShieldCheck, Truck, Store, X } from "lucide-react";
 import { z } from "zod";
@@ -61,7 +61,7 @@ type ServiceWithDelivery = Service & {
 
 const CreateOrderPage = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  
   const { toast } = useToast();
   const { user } = useAuth();
   const businessId = searchParams.get("business") ?? "";
@@ -268,7 +268,7 @@ const CreateOrderPage = () => {
       const sellerToken = sellerRes.apiProfile.token;
 
       // Step 3 — Create transaction
-      const title = selectedService.name ?? "Order";
+      const title = selectedService.title ?? "Order";
       const description = notes?.trim() || `Order from ${business.name}`;
       const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(
         CREATE_TRANSACTION,
