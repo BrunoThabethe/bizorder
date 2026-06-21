@@ -21,10 +21,16 @@ import {
   fetchBusinessServices,
   fetchMyAddresses,
   formatPrice,
-  startTradeSafeCheckout,
   type Address,
   type Service,
 } from "@/lib/customer/queries";
+import {
+  CREATE_BUYER_TOKEN,
+  CREATE_TRANSACTION,
+  GET_CHECKOUT_LINK,
+  GET_MY_TOKEN,
+  tradeSafeQuery,
+} from "@/lib/tradesafe";
 import {
   AVAILABILITY_LABEL,
   fetchBusinessHours,
