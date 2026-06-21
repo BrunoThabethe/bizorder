@@ -61,7 +61,7 @@ type ServiceWithDelivery = Service & {
 
 const CreateOrderPage = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  
   const { toast } = useToast();
   const { user } = useAuth();
   const businessId = searchParams.get("business") ?? "";
