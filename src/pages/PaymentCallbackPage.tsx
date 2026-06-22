@@ -46,8 +46,8 @@ const PaymentCallbackPage = ({ variant }: PaymentCallbackPageProps) => {
       <div className="w-full max-w-md rounded-3xl bg-card p-8 text-center shadow-card">
         {isSuccess ? (
           <>
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15">
+              <CheckCircle2 className="h-8 w-8 text-success" />
             </div>
             <h1 className="mt-6 font-display text-2xl font-bold text-foreground">
               Payment received!
