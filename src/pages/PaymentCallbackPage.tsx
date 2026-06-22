@@ -89,8 +89,8 @@ const PaymentCallbackPage = ({ variant }: PaymentCallbackPageProps) => {
           </>
         ) : (
           <>
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-              <AlertCircle className="h-8 w-8 text-red-600" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/15">
+              <AlertCircle className="h-8 w-8 text-destructive" />
             </div>
             <h1 className="mt-6 font-display text-2xl font-bold text-foreground">
               Payment was not completed
