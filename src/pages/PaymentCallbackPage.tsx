@@ -1,7 +1,8 @@
-import { useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle2, AlertCircle, ArrowRight, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { CheckCircle2, AlertCircle, ArrowRight, LayoutDashboard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentCallbackPageProps {
   variant: "success" | "error";
@@ -9,66 +10,106 @@ interface PaymentCallbackPageProps {
 
 /**
  * Public landing pages TradeSafe redirects the buyer to after checkout.
- * - /payment/success → forwards to the order's payment-return polling page
- *   (which then forwards to the order detail once the webhook confirms funds).
+ * - /payment/success → confirms payment and shows order status
  * - /payment/error   → shows a friendly retry message.
- *
- * TradeSafe appends transaction/reference query params; we also accept an
- * explicit `order_id` if we passed it through the return URL.
  */
 const PaymentCallbackPage = ({ variant }: PaymentCallbackPageProps) => {
   const [params] = useSearchParams();
-  const navigate = useNavigate();
+  const [orderStatus, setOrderStatus] = useState<string | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+
   const orderId = params.get("order_id") ?? params.get("orderId") ?? params.get("reference");
+  const isSuccess = variant === "success";
 
   useEffect(() => {
-    if (variant === "success" && orderId && /^[0-9a-f-]{8,}$/i.test(orderId)) {
-      const t = setTimeout(() => navigate(`/customer/orders/${orderId}/payment-return`, { replace: true }), 800);
-      return () => clearTimeout(t);
-    }
-  }, [variant, orderId, navigate]);
+    if (!isSuccess || !orderId) return;
 
-  const isSuccess = variant === "success";
+    const fetchStatus = async () => {
+      setStatusLoading(true);
+      const { data } = await supabase
+        .from("orders")
+        .select("status")
+        .eq("tradesafe_transaction_id", orderId)
+        .maybeSingle();
+
+      if (data?.status) {
+        setOrderStatus(data.status);
+      }
+      setStatusLoading(false);
+    };
+
+    fetchStatus();
+  }, [isSuccess, orderId]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md rounded-3xl bg-card p-8 text-center shadow-card">
         {isSuccess ? (
-          orderId ? (
-            <>
-              <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
-              <h1 className="mt-4 font-display text-xl font-bold">Thanks — confirming your payment</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Taking you to your order while TradeSafe confirms the funds.
-              </p>
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="mx-auto h-10 w-10 text-primary" />
-              <h1 className="mt-4 font-display text-xl font-bold">Payment received</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Your provider will be notified once TradeSafe confirms the funds. You can track progress from your
-                orders list.
-              </p>
-              <Button asChild className="mt-5">
+          <>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+            <h1 className="mt-6 font-display text-2xl font-bold text-foreground">
+              Payment received!
+            </h1>
+            <p className="mt-2 text-base text-muted-foreground">
+              Your order is being processed.
+            </p>
+
+            {orderId && (
+              <div className="mt-4 rounded-lg bg-muted p-3 text-sm">
+                {statusLoading ? (
+                  <span className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Checking order status...
+                  </span>
+                ) : orderStatus ? (
+                  <span className="text-foreground">
+                    Order status: <strong className="capitalize">{orderStatus.replace(/_/g, " ")}</strong>
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">
+                    We&apos;ll update your order as soon as TradeSafe confirms the funds.
+                  </span>
+                )}
+              </div>
+            )}
+              <div className="mt-6 flex flex-col gap-3">
+              <Button asChild className="w-full">
                 <Link to="/customer/orders">
                   View my orders <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
-            </>
-          )
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/customer">
+                  <LayoutDashboard className="mr-1.5 h-4 w-4" /> Back to dashboard
+                </Link>
+              </Button>
+            </div>
+          </>
         ) : (
           <>
-            <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
-            <h1 className="mt-4 font-display text-xl font-bold">Payment didn&rsquo;t go through</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              No money was taken. You can retry the payment from your orders list at any time.
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+            <h1 className="mt-6 font-display text-2xl font-bold text-foreground">
+              Payment was not completed
+            </h1>
+            <p className="mt-2 text-base text-muted-foreground">
+              Please try again.
             </p>
-            <Button asChild className="mt-5">
-              <Link to="/customer/orders">
-                Back to my orders <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Link>
-            </Button>
+            <div className="mt-6 flex flex-col gap-3">
+              <Button asChild className="w-full">
+                <Link to="/customer/orders">
+                  Retry my order <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/customer">
+                  <LayoutDashboard className="mr-1.5 h-4 w-4" /> Back to dashboard
+                </Link>
+              </Button>
+            </div>
           </>
         )}
       </div>
