@@ -14,12 +14,34 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { tradeSafeQuery, GET_MY_TOKEN } from "@/lib/tradesafe";
 
+type TestResult =
+  | { type: "success"; orgName: string }
+  | { type: "error"; message: string }
+  | null;
+
 const AdminSettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ key: "", value: "{}", description: "" });
+  const [testResult, setTestResult] = useState<TestResult>(null);
+  const [testLoading, setTestLoading] = useState(false);
   const { data, isLoading } = useQuery({ queryKey: ["admin", "system-settings"], queryFn: fetchSystemSettings });
+
+  const handleTestTradeSafe = async () => {
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      const data = await tradeSafeQuery<{ apiProfile: { name: string; token: string } }>(GET_MY_TOKEN, {});
+      const orgName = data.apiProfile?.name ?? "Unknown organization";
+      setTestResult({ type: "success", orgName });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setTestResult({ type: "error", message });
+    } finally {
+      setTestLoading(false);
+    }
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
