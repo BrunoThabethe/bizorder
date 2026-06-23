@@ -71,6 +71,34 @@ const AdminSettingsPage = () => {
           <p className="mt-1 text-sm text-muted-foreground">Platform-wide flags and configuration values.</p>
         </div>
 
+        <Card className="rounded-3xl border-0 shadow-card">
+          <CardContent className="space-y-4 p-5">
+            <h2 className="font-display text-lg font-bold">TradeSafe connection</h2>
+            <Button
+              onClick={handleTestTradeSafe}
+              disabled={testLoading}
+              className="w-full sm:w-auto"
+            >
+              {testLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              Test TradeSafe connection
+            </Button>
+            {testResult?.type === "success" && (
+              <Alert variant="success" className="rounded-xl border-success/30 bg-success/10">
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>Connected</AlertTitle>
+                <AlertDescription>{testResult.orgName}</AlertDescription>
+              </Alert>
+            )}
+            {testResult?.type === "error" && (
+              <Alert variant="destructive" className="rounded-xl">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Connection failed</AlertTitle>
+                <AlertDescription>{testResult.message}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
         <EmailChangeCard currentEmail={user?.email ?? null} />
         <Card className="rounded-3xl border-0 shadow-card">
           <CardContent className="space-y-4 p-5">
