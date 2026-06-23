@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, ShieldCheck, AlertCircle } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { EmailChangeCard } from "@/components/settings/EmailChangeCard";
 import { fetchSystemSettings, logAdminAction, upsertSystemSetting } from "@/lib/admin/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { tradeSafeQuery, GET_MY_TOKEN } from "@/lib/tradesafe";
 
 const AdminSettingsPage = () => {
   const { user } = useAuth();
