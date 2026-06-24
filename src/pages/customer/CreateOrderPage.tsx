@@ -263,9 +263,8 @@ const CreateOrderPage = () => {
       );
       const buyerToken = buyerRes.tokenCreate.id;
 
-      // Step 2 — Get our seller token
-      const sellerRes = await tradeSafeQuery<{ apiProfile: { token: string } }>(GET_MY_TOKEN);
-      const sellerToken = sellerRes.apiProfile.token;
+      // Step 2 — Hardcoded verified BizOrder Nexus seller token
+      const sellerToken = TRADESAFE_SELLER_TOKEN;
 
       // Step 3 — Create transaction
       const title = selectedService.title ?? "Order";
