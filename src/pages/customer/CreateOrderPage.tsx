@@ -28,7 +28,7 @@ import {
   CREATE_BUYER_TOKEN,
   CREATE_TRANSACTION,
   GET_CHECKOUT_LINK,
-  GET_MY_TOKEN,
+  TRADESAFE_SELLER_TOKEN,
   tradeSafeQuery,
 } from "@/lib/tradesafe";
 import {
