@@ -1,3 +1,6 @@
+// Hardcoded verified BizOrder Nexus seller token — no need to fetch it.
+export const TRADESAFE_SELLER_TOKEN = "33W5ORqo0XMiraZYNMKC3";
+
 export const GET_MY_TOKEN = `
   query {
     apiProfile {
