@@ -225,7 +225,8 @@ const CreateOrderPage = () => {
       scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
       fulfillment_type: fulfillment,
       delivery_distance_km: null,
-      delivery_fee: 0,
+      delivery_fee: deliveryFee,
+      delivery_option: fulfillment === "delivery" && chosenDelivery ? chosenDelivery : null,
       status: "awaiting_payment" as const,
     };
 
