@@ -7,6 +7,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PENDING_SIGNUP_KEY } from "@/pages/SignupPage";
+
+type PendingSignup = {
+  email: string;
+  password: string;
+  payload: {
+    full_name: string;
+    phone: string;
+    role: "customer" | "business";
+    business_name: string | null;
+    business_category: string | null;
+    business_address: string | null;
+    marketing_opt_in: boolean;
+  };
+};
+
+const readPending = (): PendingSignup | null => {
+  try {
+    const raw = sessionStorage.getItem(PENDING_SIGNUP_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as PendingSignup;
+  } catch {
+    return null;
+  }
+};
 
 const VerifyEmailPage = () => {
   const { toast } = useToast();
@@ -20,31 +45,90 @@ const VerifyEmailPage = () => {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email || !/^\d{6}$/.test(code)) {
-      toast({ title: "Check your details", description: "Enter your email and the 6-digit code.", variant: "destructive" });
+    const pending = readPending();
+    if (!pending || pending.email.toLowerCase() !== email.toLowerCase()) {
+      toast({
+        title: "Session expired",
+        description: "Please start the signup again so we can verify your email.",
+        variant: "destructive",
+      });
+      navigate("/signup", { replace: true });
       return;
     }
+    if (!/^\d{6}$/.test(code)) {
+      toast({ title: "Check your code", description: "Enter the 6-digit code.", variant: "destructive" });
+      return;
+    }
+
     setVerifying(true);
-    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "signup" });
-    setVerifying(false);
-    if (error) {
-      toast({ title: "Verification failed", description: error.message, variant: "destructive" });
+    const { data, error } = await supabase.functions.invoke("signup-otp", {
+      body: {
+        action: "verify",
+        email: pending.email,
+        password: pending.password,
+        code,
+        payload: pending.payload,
+      },
+    });
+
+    if (error || (data && (data as { error?: string }).error)) {
+      setVerifying(false);
+      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Verification failed";
+      toast({ title: "Verification failed", description: msg, variant: "destructive" });
       return;
     }
+
+    const role = (data as { role?: "customer" | "business" })?.role ?? pending.payload.role;
+
+    // Sign the new user in.
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: pending.email,
+      password: pending.password,
+    });
+    setVerifying(false);
+
+    try {
+      sessionStorage.removeItem(PENDING_SIGNUP_KEY);
+    } catch {
+      // ignore
+    }
+
+    if (signInError) {
+      toast({
+        title: "Account ready",
+        description: "Please sign in to continue.",
+      });
+      navigate("/login", { replace: true });
+      return;
+    }
+
     toast({ title: "Email verified", description: "Welcome to BizOrder." });
-    navigate("/login", { replace: true });
+    if (role === "business") {
+      navigate("/business/onboarding", { replace: true });
+    } else {
+      navigate("/customer/dashboard", { replace: true });
+    }
   };
 
   const resend = async () => {
-    if (!email) {
-      toast({ title: "Add your email", description: "Enter the email you signed up with.", variant: "destructive" });
+    const pending = readPending();
+    if (!pending || !email) {
+      toast({
+        title: "Session expired",
+        description: "Please start the signup again so we can send you a new code.",
+        variant: "destructive",
+      });
+      navigate("/signup", { replace: true });
       return;
     }
     setResending(true);
-    const { error } = await supabase.auth.resend({ type: "signup", email });
+    const { data, error } = await supabase.functions.invoke("signup-otp", {
+      body: { action: "request", email: pending.email },
+    });
     setResending(false);
-    if (error) {
-      toast({ title: "Could not resend", description: error.message, variant: "destructive" });
+    if (error || (data && (data as { error?: string }).error)) {
+      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Could not resend";
+      toast({ title: "Could not resend", description: msg, variant: "destructive" });
       return;
     }
     toast({ title: "New code sent", description: "Check your inbox." });

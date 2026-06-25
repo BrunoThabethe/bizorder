@@ -1229,6 +1229,36 @@ export type Database = {
           },
         ]
       }
+      signup_otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          used_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          used_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -1418,6 +1448,7 @@ export type Database = {
         Args: { _business_id: string; _end: string; _start: string }
         Returns: boolean
       }
+      issue_signup_otp: { Args: { _email: string }; Returns: string }
       list_day_slots: {
         Args: {
           _business_id: string
@@ -1514,6 +1545,10 @@ export type Database = {
       verify_email_change: {
         Args: { _code: string; _user_id: string }
         Returns: string
+      }
+      verify_signup_otp: {
+        Args: { _code: string; _email: string }
+        Returns: boolean
       }
     }
     Enums: {

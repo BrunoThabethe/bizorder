@@ -33,6 +33,8 @@ const roleOptions: { id: Role; title: string; text: string; icon: typeof Shoppin
   { id: "business", title: "I'm a business", text: "I want to take orders from customers.", icon: Briefcase },
 ];
 
+export const PENDING_SIGNUP_KEY = "bizorder.pendingSignup";
+
 const SignupPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ const SignupPage = () => {
     }
     const form = new FormData(event.currentTarget);
     const fullName = String(form.get("fullName") ?? "");
-    const email = String(form.get("email") ?? "");
+    const email = String(form.get("email") ?? "").trim().toLowerCase();
     const phone = String(form.get("phone") ?? "");
     const password = String(form.get("password") ?? "");
 
@@ -91,30 +93,37 @@ const SignupPage = () => {
       address = businessParsed.data.address;
     }
 
+    const payload = {
+      full_name: fullName,
+      phone,
+      role,
+      business_name: businessName,
+      business_category: category,
+      business_address: address,
+      marketing_opt_in: consentEmail,
+    };
+
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: fullName,
-          phone,
-          role,
-          business_name: businessName,
-          business_category: category,
-          business_address: address,
-          marketing_opt_in: consentEmail,
-          data_consent_accepted_at: new Date().toISOString(),
-        },
-      },
+    const { data, error } = await supabase.functions.invoke("signup-otp", {
+      body: { action: "request", email },
     });
     setLoading(false);
 
-    if (error) {
-      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+    if (error || (data && (data as { error?: string }).error)) {
+      const msg = (data as { error?: string } | null)?.error ?? error?.message ?? "Could not send code";
+      toast({ title: "Sign up failed", description: msg, variant: "destructive" });
       return;
     }
+
+    try {
+      sessionStorage.setItem(
+        PENDING_SIGNUP_KEY,
+        JSON.stringify({ email, password, payload }),
+      );
+    } catch {
+      // ignore storage errors
+    }
+
     toast({
       title: "Check your email",
       description: "We sent you a 6-digit code to verify your account.",
