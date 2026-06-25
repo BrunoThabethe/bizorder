@@ -72,14 +72,6 @@ export const CREATE_TRANSACTION = `
     }
   }
 `;
-tradeSafeQuery(CREATE_TRANSACTION, {
-  title,
-  description,
-  industry,
-  value,
-  buyerToken,
-  sellerToken,
-});
 
 export const GET_CHECKOUT_LINK = `
   mutation checkoutLink($id: ID!) {
