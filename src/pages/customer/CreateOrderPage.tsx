@@ -175,6 +175,10 @@ const CreateOrderPage = () => {
       toast({ title: "Pick a delivery address", description: "Choose where the provider should deliver.", variant: "destructive" });
       return;
     }
+    if (fulfillment === "delivery" && deliveryOptions.length > 0 && !chosenDelivery) {
+      toast({ title: "Pick a delivery option", description: "Choose how you'd like this delivered.", variant: "destructive" });
+      return;
+    }
 
     const parsed = orderSchema.safeParse({ serviceId, notes, scheduledFor });
     if (!parsed.success) {
