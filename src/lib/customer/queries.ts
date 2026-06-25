@@ -113,7 +113,15 @@ export const fetchOrderById = async (orderId: string) => {
     .eq("id", orderId)
     .maybeSingle();
   if (error) throw error;
-  return data as (typeof data & { rejected_reason?: string | null; reference_image_url?: string | null; fulfillment_type?: string; delivery_distance_km?: number | null; delivery_fee?: number | null }) | null;
+  return data as
+    | (typeof data & {
+        rejected_reason?: string | null;
+        reference_image_url?: string | null;
+        fulfillment_type?: string;
+        delivery_distance_km?: number | null;
+        delivery_fee?: number | null;
+      })
+    | null;
 };
 
 export const fetchOrderPayment = async (orderId: string) => {
@@ -151,10 +159,12 @@ export const startTradeSafeCheckout = async (orderId: string) => {
   const mobile = profile?.phone ?? "";
 
   // Step 1 — Create buyer token
-  const buyerRes = await tradeSafeQuery<{ tokenCreate: { id: string } }>(
-    CREATE_BUYER_TOKEN,
-    { givenName, familyName, email, mobile },
-  );
+  const buyerRes = await tradeSafeQuery<{ tokenCreate: { id: string } }>(CREATE_BUYER_TOKEN, {
+    givenName,
+    familyName,
+    email,
+    mobile,
+  });
   const buyerToken = buyerRes.tokenCreate.id;
 
   // Step 2 — Hardcoded verified seller token
@@ -165,24 +175,17 @@ export const startTradeSafeCheckout = async (orderId: string) => {
   const businessName = (order as unknown as { businesses?: { name?: string } | null }).businesses?.name;
   const title = serviceTitle ?? "Order";
   const description = order.notes?.trim() || `Order from ${businessName ?? "provider"}`;
-  const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(
-    CREATE_TRANSACTION,
-    {
-      title,
-      description,
-      industry: "GENERAL_GOODS_SERVICES",
-      workflow: "STANDARD_PAYMENT",
-      value: Number(order.total),
-      buyerToken,
-      sellerToken,
-    },
-  );
+  const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(CREATE_TRANSACTION, {
+    title,
+    description,
+    industry: "GENERAL_GOODS_SERVICES",
+    value: Number(order.total),
+    buyerToken,
+    sellerToken,
+  });
   const transactionId = txRes.transactionCreate.id;
 
-  await supabase
-    .from("orders")
-    .update({ tradesafe_transaction_id: transactionId })
-    .eq("id", orderId);
+  await supabase.from("orders").update({ tradesafe_transaction_id: transactionId }).eq("id", orderId);
 
   // Step 4 — Get checkout link
   const linkRes = await tradeSafeQuery<{ checkoutLink: string }>(GET_CHECKOUT_LINK, {
@@ -194,21 +197,13 @@ export const startTradeSafeCheckout = async (orderId: string) => {
 };
 
 export const fetchOrderEvents = async (orderId: string) => {
-  const { data, error } = await supabase
-    .from("order_events")
-    .select("*")
-    .eq("order_id", orderId)
-    .order("created_at");
+  const { data, error } = await supabase.from("order_events").select("*").eq("order_id", orderId).order("created_at");
   if (error) throw error;
   return data as OrderEvent[];
 };
 
 export const fetchOrderMessages = async (orderId: string) => {
-  const { data, error } = await supabase
-    .from("messages")
-    .select("*")
-    .eq("order_id", orderId)
-    .order("created_at");
+  const { data, error } = await supabase.from("messages").select("*").eq("order_id", orderId).order("created_at");
   if (error) throw error;
   return (data ?? []) as Message[];
 };
@@ -291,4 +286,3 @@ export const submitUserChangeRequest = async (input: {
   });
   if (error) throw error;
 };
-
