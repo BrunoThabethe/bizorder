@@ -120,9 +120,19 @@ const CreateOrderPage = () => {
   const availability = (settings?.availability ?? "available") as Availability;
   const isService = itemKind === "service";
 
-  const deliveryAvailable = !!selectedService?.delivery_available;
+  const deliveryOptions: DeliveryOption[] = Array.isArray(selectedService?.delivery_options)
+    ? (selectedService!.delivery_options as DeliveryOption[])
+    : [];
+  const deliveryAvailable = deliveryOptions.length > 0 || !!selectedService?.delivery_available;
+  const chosenDelivery = deliveryOptions.find((o) => o.id === deliveryOptionId) ?? null;
   const basePrice = Number(selectedService?.price ?? 0);
-  const total = basePrice;
+  const deliveryFee = fulfillment === "delivery" && chosenDelivery ? chosenDelivery.price : 0;
+  const total = basePrice + deliveryFee;
+
+  // Reset chosen option if service changes
+  useEffect(() => {
+    setDeliveryOptionId("");
+  }, [serviceId]);
 
   const slotDuration = Number(selectedService?.duration_minutes ?? 60);
   const dateKey = scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : "";
