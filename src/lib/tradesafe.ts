@@ -38,7 +38,6 @@ export const CREATE_TRANSACTION = `
     $title: String!
     $description: String!
     $industry: Industry!
-    $workflow: TransactionWorkflow!
     $value: Float
     $buyerToken: String
     $sellerToken: String
@@ -48,7 +47,6 @@ export const CREATE_TRANSACTION = `
         title: $title
         description: $description
         industry: $industry
-        workflow: $workflow
         currency: ZAR
         feeAllocation: AGENT
         allocations: {
