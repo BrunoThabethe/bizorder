@@ -32,6 +32,14 @@ export const CREATE_BUYER_TOKEN = `
     }
   }
 `;
+tradeSafeQuery(CREATE_TRANSACTION, {
+  title,
+  description,
+  industry,
+  value,
+  buyerToken,
+  sellerToken,
+});
 
 export const CREATE_TRANSACTION = `
   mutation transactionCreate(
@@ -72,14 +80,6 @@ export const CREATE_TRANSACTION = `
     }
   }
 `;
-tradeSafeQuery(CREATE_TRANSACTION, {
-  title,
-  description,
-  industry,
-  value,
-  buyerToken,
-  sellerToken,
-});
 
 export const GET_CHECKOUT_LINK = `
   mutation checkoutLink($id: ID!) {
