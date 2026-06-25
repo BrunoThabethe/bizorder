@@ -63,7 +63,7 @@ type ServiceWithDelivery = Service & {
 
 const CreateOrderPage = () => {
   const [searchParams] = useSearchParams();
-  
+
   const { toast } = useToast();
   const { user } = useAuth();
   const businessId = searchParams.get("business") ?? "";
@@ -172,17 +172,29 @@ const CreateOrderPage = () => {
       return;
     }
     if (fulfillment === "delivery" && !addressId) {
-      toast({ title: "Pick a delivery address", description: "Choose where the provider should deliver.", variant: "destructive" });
+      toast({
+        title: "Pick a delivery address",
+        description: "Choose where the provider should deliver.",
+        variant: "destructive",
+      });
       return;
     }
     if (fulfillment === "delivery" && deliveryOptions.length > 0 && !chosenDelivery) {
-      toast({ title: "Pick a delivery option", description: "Choose how you'd like this delivered.", variant: "destructive" });
+      toast({
+        title: "Pick a delivery option",
+        description: "Choose how you'd like this delivered.",
+        variant: "destructive",
+      });
       return;
     }
 
     const parsed = orderSchema.safeParse({ serviceId, notes, scheduledFor });
     if (!parsed.success) {
-      toast({ title: "Check your details", description: parsed.error.issues[0]?.message ?? "Invalid input", variant: "destructive" });
+      toast({
+        title: "Check your details",
+        description: parsed.error.issues[0]?.message ?? "Invalid input",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -191,7 +203,9 @@ const CreateOrderPage = () => {
     // Slot clash check for services with a scheduled time
     if (isService && scheduledFor) {
       const start = new Date(scheduledFor).toISOString();
-      const end = new Date(new Date(scheduledFor).getTime() + (selectedService.duration_minutes ?? 60) * 60_000).toISOString();
+      const end = new Date(
+        new Date(scheduledFor).getTime() + (selectedService.duration_minutes ?? 60) * 60_000,
+      ).toISOString();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: free, error: slotErr } = await (supabase as any).rpc("is_slot_available", {
         _business_id: business.id,
@@ -275,10 +289,12 @@ const CreateOrderPage = () => {
       const mobile = profile?.phone ?? "";
 
       // Step 1 — Create buyer token
-      const buyerRes = await tradeSafeQuery<{ tokenCreate: { id: string } }>(
-        CREATE_BUYER_TOKEN,
-        { givenName, familyName, email, mobile },
-      );
+      const buyerRes = await tradeSafeQuery<{ tokenCreate: { id: string } }>(CREATE_BUYER_TOKEN, {
+        givenName,
+        familyName,
+        email,
+        mobile,
+      });
       const buyerToken = buyerRes.tokenCreate.id;
 
       // Step 2 — Hardcoded verified BizOrder Nexus seller token
@@ -287,24 +303,17 @@ const CreateOrderPage = () => {
       // Step 3 — Create transaction
       const title = selectedService.title ?? "Order";
       const description = notes?.trim() || `Order from ${business.name}`;
-      const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(
-        CREATE_TRANSACTION,
-        {
-          title,
-          description,
-          industry: "GENERAL_GOODS_SERVICES",
-          workflow: "STANDARD_PAYMENT",
-          value: Number(total),
-          buyerToken,
-          sellerToken,
-        },
-      );
+      const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(CREATE_TRANSACTION, {
+        title,
+        description,
+        industry: "GENERAL_GOODS_SERVICES",
+        value: Number(total),
+        buyerToken,
+        sellerToken,
+      });
       const transactionId = txRes.transactionCreate.id;
 
-      await supabase
-        .from("orders")
-        .update({ tradesafe_transaction_id: transactionId })
-        .eq("id", order.id);
+      await supabase.from("orders").update({ tradesafe_transaction_id: transactionId }).eq("id", order.id);
 
       // Step 4 — Get checkout link
       const linkRes = await tradeSafeQuery<{ checkoutLink: string }>(GET_CHECKOUT_LINK, {
@@ -391,13 +400,19 @@ const CreateOrderPage = () => {
                       <div>
                         <p className="font-display text-sm font-bold">
                           {sw.title}{" "}
-                          <span className={`ml-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                            serviceId === sw.id ? "bg-background/20 text-background" : "bg-foreground/10 text-foreground"
-                          }`}>
+                          <span
+                            className={`ml-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                              serviceId === sw.id
+                                ? "bg-background/20 text-background"
+                                : "bg-foreground/10 text-foreground"
+                            }`}
+                          >
                             {(sw.kind ?? "service") === "product" ? "Product" : "Service"}
                           </span>
                         </p>
-                        <p className={`text-xs ${serviceId === sw.id ? "text-background/70" : "text-muted-foreground"}`}>
+                        <p
+                          className={`text-xs ${serviceId === sw.id ? "text-background/70" : "text-muted-foreground"}`}
+                        >
                           {sw.duration_minutes ? `${sw.duration_minutes} min · ` : ""}
                           {sw.description?.slice(0, 60) ?? ""}
                         </p>
@@ -478,9 +493,7 @@ const CreateOrderPage = () => {
                                 className="h-4 w-4 accent-foreground"
                               />
                               <div className="min-w-0">
-                                <p className="truncate font-display text-sm font-bold">
-                                  {PROVIDER_NAME[opt.provider]}
-                                </p>
+                                <p className="truncate font-display text-sm font-bold">{PROVIDER_NAME[opt.provider]}</p>
                                 <p className="truncate text-xs text-muted-foreground">
                                   {opt.label.replace(/^[^—]+—\s*/, "")} · {opt.eta}
                                 </p>
@@ -516,13 +529,13 @@ const CreateOrderPage = () => {
                 </div>
                 {deliveryOptions.length === 0 && (
                   <div className="rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
-                    Delivery cost will be confirmed by the provider — you'll pay the item and delivery together once the work is approved.
+                    Delivery cost will be confirmed by the provider — you'll pay the item and delivery together once the
+                    work is approved.
                   </div>
                 )}
               </div>
             ) : null}
           </section>
-
 
           <section className="rounded-3xl bg-card p-5 shadow-card">
             <h2 className="font-display text-base font-bold">Details</h2>
@@ -576,7 +589,10 @@ const CreateOrderPage = () => {
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                         {freeSlots.map((slot) => {
                           const iso = slot.slot_start;
-                          const time = new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+                          const time = new Date(iso).toLocaleTimeString("en-GB", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          });
                           const active = scheduledSlot === iso;
                           const open = slot.capacity - slot.booked;
                           return (
@@ -592,14 +608,18 @@ const CreateOrderPage = () => {
                               )}
                             >
                               <span>{time}</span>
-                              <span className={cn("text-[10px] font-normal", active ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                              <span
+                                className={cn(
+                                  "text-[10px] font-normal",
+                                  active ? "text-primary-foreground/80" : "text-muted-foreground",
+                                )}
+                              >
                                 {open} of {slot.capacity} open
                               </span>
                             </button>
                           );
                         })}
                       </div>
-
                     )}
                     <p className="text-[11px] text-muted-foreground">
                       Slots are {slotDuration} minutes long and only show times that aren't already booked.
@@ -607,7 +627,6 @@ const CreateOrderPage = () => {
                   </div>
                 ) : null}
               </div>
-
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes for the provider</Label>
@@ -673,7 +692,8 @@ const CreateOrderPage = () => {
               <div>
                 <p className="font-display text-sm font-bold">Pay on completion</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  No money moves now. You'll pay your provider once you've approved the work — secure online payments are coming soon.
+                  No money moves now. You'll pay your provider once you've approved the work — secure online payments
+                  are coming soon.
                 </p>
               </div>
             </div>
@@ -687,8 +707,12 @@ const CreateOrderPage = () => {
               <Row label="Item">{selectedService?.title ?? "—"}</Row>
               <Row label="Provider">{business?.name ?? "—"}</Row>
               <Row label="Fulfilment">{fulfillment === "delivery" ? "Delivery" : "Pickup / in-store"}</Row>
-              <Row label="Address">{fulfillment === "delivery" ? selectedAddress?.label ?? "Not set" : "Not needed"}</Row>
-              <Row label="When">{scheduledFor ? new Date(scheduledFor).toLocaleString("en-GB") : "As soon as possible"}</Row>
+              <Row label="Address">
+                {fulfillment === "delivery" ? (selectedAddress?.label ?? "Not set") : "Not needed"}
+              </Row>
+              <Row label="When">
+                {scheduledFor ? new Date(scheduledFor).toLocaleString("en-GB") : "As soon as possible"}
+              </Row>
               <div className="my-3 h-px bg-border" />
               <Row label="Item price">{selectedService ? formatPrice(basePrice, selectedService.currency) : "—"}</Row>
               {fulfillment === "delivery" && (
