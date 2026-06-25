@@ -27,6 +27,8 @@ import {
   uploadBusinessImage,
   type Service,
 } from "@/lib/business/queries";
+import { DeliveryOptionsEditor } from "@/components/business/DeliveryOptionsEditor";
+import type { DeliveryOption } from "@/lib/delivery/catalog";
 
 type CatalogKind = "service" | "product";
 
