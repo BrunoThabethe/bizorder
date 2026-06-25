@@ -39,6 +39,7 @@ import {
   type DaySlot,
   type Availability,
 } from "@/lib/business/queries";
+import { PROVIDER_NAME, formatRand, type DeliveryOption } from "@/lib/delivery/catalog";
 
 const orderSchema = z.object({
   serviceId: z.string().uuid(),
