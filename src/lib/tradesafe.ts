@@ -48,6 +48,7 @@ export const CREATE_TRANSACTION = `
         title: $title
         description: $description
         industry: $industry
+        workflow: $workflow
         currency: ZAR
         feeAllocation: AGENT
         allocations: {
@@ -89,10 +90,7 @@ interface GraphQLResponse<T = unknown> {
   errors?: GraphQLError[];
 }
 
-export async function tradeSafeQuery<T = unknown>(
-  query: string,
-  variables: object = {}
-): Promise<T> {
+export async function tradeSafeQuery<T = unknown>(query: string, variables: object = {}): Promise<T> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
