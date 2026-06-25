@@ -257,15 +257,19 @@ const ServicesManagerPage = () => {
                 )}
               </div>
             )}
-            <div className="rounded-2xl bg-muted/40 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <Label htmlFor="delivery">Offer delivery</Label>
-                  <p className="text-[11px] text-muted-foreground">You'll arrange the delivery fee directly with the customer.</p>
+            {kind === "product" ? (
+              <DeliveryOptionsEditor options={deliveryOptions} onChange={setDeliveryOptions} />
+            ) : (
+              <div className="rounded-2xl bg-muted/40 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label htmlFor="delivery">Offer delivery</Label>
+                    <p className="text-[11px] text-muted-foreground">You'll arrange the delivery fee directly with the customer.</p>
+                  </div>
+                  <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
                 </div>
-                <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
               </div>
-            </div>
+            )}
             <Button
               className="w-full"
               onClick={() => create.mutate()}
