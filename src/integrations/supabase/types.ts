@@ -881,6 +881,7 @@ export type Database = {
           customer_id: string
           delivery_distance_km: number | null
           delivery_fee: number
+          delivery_option: Json | null
           estimated_completion_at: string | null
           fulfillment_type: string
           id: string
@@ -902,6 +903,7 @@ export type Database = {
           customer_id: string
           delivery_distance_km?: number | null
           delivery_fee?: number
+          delivery_option?: Json | null
           estimated_completion_at?: string | null
           fulfillment_type?: string
           id?: string
@@ -923,6 +925,7 @@ export type Database = {
           customer_id?: string
           delivery_distance_km?: number | null
           delivery_fee?: number
+          delivery_option?: Json | null
           estimated_completion_at?: string | null
           fulfillment_type?: string
           id?: string
@@ -1170,6 +1173,7 @@ export type Database = {
           created_at: string
           currency: string
           delivery_available: boolean
+          delivery_options: Json
           delivery_price_per_km: number
           description: string | null
           duration_minutes: number | null
@@ -1188,6 +1192,7 @@ export type Database = {
           created_at?: string
           currency?: string
           delivery_available?: boolean
+          delivery_options?: Json
           delivery_price_per_km?: number
           description?: string | null
           duration_minutes?: number | null
@@ -1206,6 +1211,7 @@ export type Database = {
           created_at?: string
           currency?: string
           delivery_available?: boolean
+          delivery_options?: Json
           delivery_price_per_km?: number
           description?: string | null
           duration_minutes?: number | null
