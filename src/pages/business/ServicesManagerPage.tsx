@@ -123,6 +123,7 @@ const ServicesManagerPage = () => {
       setDescription("");
       setImageUrl("");
       setDeliveryAvailable(false);
+      setDeliveryOptions([]);
       setPriceMode("fixed");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
