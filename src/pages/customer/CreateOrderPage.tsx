@@ -692,7 +692,13 @@ const CreateOrderPage = () => {
               <div className="my-3 h-px bg-border" />
               <Row label="Item price">{selectedService ? formatPrice(basePrice, selectedService.currency) : "—"}</Row>
               {fulfillment === "delivery" && (
-                <Row label="Delivery fee">Confirmed by provider</Row>
+                <Row label="Delivery fee">
+                  {chosenDelivery
+                    ? formatPrice(deliveryFee, selectedService!.currency)
+                    : deliveryOptions.length > 0
+                      ? "Pick an option above"
+                      : "Confirmed by provider"}
+                </Row>
               )}
               <Row label="Total">
                 <span className="font-display text-lg font-bold">
