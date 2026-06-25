@@ -444,7 +444,9 @@ const CreateOrderPage = () => {
                   <p className="font-display text-sm font-bold">Delivery</p>
                   <p className="text-xs text-muted-foreground">
                     {deliveryAvailable
-                      ? "Fee confirmed by the provider."
+                      ? deliveryOptions.length > 0
+                        ? `${deliveryOptions.length} option${deliveryOptions.length === 1 ? "" : "s"} available`
+                        : "Fee confirmed by the provider."
                       : "Not offered for this item."}
                   </p>
                 </div>
@@ -453,6 +455,45 @@ const CreateOrderPage = () => {
 
             {fulfillment === "delivery" ? (
               <div className="mt-3 space-y-3">
+                {deliveryOptions.length > 0 ? (
+                  <div className="space-y-2">
+                    <Label>Choose a delivery option</Label>
+                    <div className="grid gap-2">
+                      {deliveryOptions.map((opt) => {
+                        const active = deliveryOptionId === opt.id;
+                        return (
+                          <label
+                            key={opt.id}
+                            className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 p-3 transition-colors ${
+                              active ? "border-foreground bg-foreground/5" : "border-border bg-muted/30"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <input
+                                type="radio"
+                                name="delivery-option"
+                                value={opt.id}
+                                checked={active}
+                                onChange={() => setDeliveryOptionId(opt.id)}
+                                className="h-4 w-4 accent-foreground"
+                              />
+                              <div className="min-w-0">
+                                <p className="truncate font-display text-sm font-bold">
+                                  {PROVIDER_NAME[opt.provider]}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {opt.label.replace(/^[^—]+—\s*/, "")} · {opt.eta}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-display text-sm font-bold">{formatRand(opt.price)}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="space-y-2">
                   <Label htmlFor="address">Delivery address</Label>
                   <Select value={addressId} onValueChange={setAddressId}>
@@ -473,12 +514,15 @@ const CreateOrderPage = () => {
                     </Button>
                   ) : null}
                 </div>
-                <div className="rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
-                  Delivery cost will be confirmed by the provider — you'll pay the item and delivery together once the work is approved.
-                </div>
+                {deliveryOptions.length === 0 && (
+                  <div className="rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
+                    Delivery cost will be confirmed by the provider — you'll pay the item and delivery together once the work is approved.
+                  </div>
+                )}
               </div>
             ) : null}
           </section>
+
 
           <section className="rounded-3xl bg-card p-5 shadow-card">
             <h2 className="font-display text-base font-bold">Details</h2>
