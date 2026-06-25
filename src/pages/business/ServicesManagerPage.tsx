@@ -104,8 +104,9 @@ const ServicesManagerPage = () => {
         is_active: true,
         ...({
           kind,
-          delivery_available: deliveryAvailable,
+          delivery_available: kind === "product" ? deliveryOptions.length > 0 : deliveryAvailable,
           delivery_price_per_km: 0,
+          delivery_options: kind === "product" ? deliveryOptions : [],
           price_min: isRange ? minVal : null,
           price_max: isRange ? maxVal : null,
         } as Record<string, unknown>),
