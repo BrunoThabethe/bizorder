@@ -27,6 +27,8 @@ import {
   uploadBusinessImage,
   type Service,
 } from "@/lib/business/queries";
+import { DeliveryOptionsEditor } from "@/components/business/DeliveryOptionsEditor";
+import type { DeliveryOption } from "@/lib/delivery/catalog";
 
 type CatalogKind = "service" | "product";
 
@@ -60,6 +62,7 @@ const ServicesManagerPage = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [deliveryAvailable, setDeliveryAvailable] = useState(false);
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
 
   const onUploadProductImage = async (file: File) => {
     if (!business) {
@@ -101,8 +104,9 @@ const ServicesManagerPage = () => {
         is_active: true,
         ...({
           kind,
-          delivery_available: deliveryAvailable,
+          delivery_available: kind === "product" ? deliveryOptions.length > 0 : deliveryAvailable,
           delivery_price_per_km: 0,
+          delivery_options: kind === "product" ? deliveryOptions : [],
           price_min: isRange ? minVal : null,
           price_max: isRange ? maxVal : null,
         } as Record<string, unknown>),
@@ -119,6 +123,7 @@ const ServicesManagerPage = () => {
       setDescription("");
       setImageUrl("");
       setDeliveryAvailable(false);
+      setDeliveryOptions([]);
       setPriceMode("fixed");
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: kind === "product" ? "Product added" : "Service added" });
@@ -252,15 +257,19 @@ const ServicesManagerPage = () => {
                 )}
               </div>
             )}
-            <div className="rounded-2xl bg-muted/40 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <Label htmlFor="delivery">Offer delivery</Label>
-                  <p className="text-[11px] text-muted-foreground">You'll arrange the delivery fee directly with the customer.</p>
+            {kind === "product" ? (
+              <DeliveryOptionsEditor options={deliveryOptions} onChange={setDeliveryOptions} />
+            ) : (
+              <div className="rounded-2xl bg-muted/40 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label htmlFor="delivery">Offer delivery</Label>
+                    <p className="text-[11px] text-muted-foreground">You'll arrange the delivery fee directly with the customer.</p>
+                  </div>
+                  <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
                 </div>
-                <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
               </div>
-            </div>
+            )}
             <Button
               className="w-full"
               onClick={() => create.mutate()}

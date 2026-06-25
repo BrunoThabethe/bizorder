@@ -39,6 +39,7 @@ import {
   type DaySlot,
   type Availability,
 } from "@/lib/business/queries";
+import { PROVIDER_NAME, formatRand, type DeliveryOption } from "@/lib/delivery/catalog";
 
 const orderSchema = z.object({
   serviceId: z.string().uuid(),
@@ -57,6 +58,7 @@ const fetchBusiness = async (id: string) => {
 type ServiceWithDelivery = Service & {
   kind?: string;
   delivery_available?: boolean;
+  delivery_options?: DeliveryOption[] | null;
 };
 
 const CreateOrderPage = () => {
@@ -76,6 +78,7 @@ const CreateOrderPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [refFile, setRefFile] = useState<File | null>(null);
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
+  const [deliveryOptionId, setDeliveryOptionId] = useState<string>("");
 
   const { data: business } = useQuery({
     queryKey: ["business-by-id", businessId],
@@ -117,9 +120,19 @@ const CreateOrderPage = () => {
   const availability = (settings?.availability ?? "available") as Availability;
   const isService = itemKind === "service";
 
-  const deliveryAvailable = !!selectedService?.delivery_available;
+  const deliveryOptions: DeliveryOption[] = Array.isArray(selectedService?.delivery_options)
+    ? (selectedService!.delivery_options as DeliveryOption[])
+    : [];
+  const deliveryAvailable = deliveryOptions.length > 0 || !!selectedService?.delivery_available;
+  const chosenDelivery = deliveryOptions.find((o) => o.id === deliveryOptionId) ?? null;
   const basePrice = Number(selectedService?.price ?? 0);
-  const total = basePrice;
+  const deliveryFee = fulfillment === "delivery" && chosenDelivery ? chosenDelivery.price : 0;
+  const total = basePrice + deliveryFee;
+
+  // Reset chosen option if service changes
+  useEffect(() => {
+    setDeliveryOptionId("");
+  }, [serviceId]);
 
   const slotDuration = Number(selectedService?.duration_minutes ?? 60);
   const dateKey = scheduledDate ? format(scheduledDate, "yyyy-MM-dd") : "";
@@ -160,6 +173,10 @@ const CreateOrderPage = () => {
     }
     if (fulfillment === "delivery" && !addressId) {
       toast({ title: "Pick a delivery address", description: "Choose where the provider should deliver.", variant: "destructive" });
+      return;
+    }
+    if (fulfillment === "delivery" && deliveryOptions.length > 0 && !chosenDelivery) {
+      toast({ title: "Pick a delivery option", description: "Choose how you'd like this delivered.", variant: "destructive" });
       return;
     }
 
@@ -208,7 +225,8 @@ const CreateOrderPage = () => {
       scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
       fulfillment_type: fulfillment,
       delivery_distance_km: null,
-      delivery_fee: 0,
+      delivery_fee: deliveryFee,
+      delivery_option: fulfillment === "delivery" && chosenDelivery ? chosenDelivery : null,
       status: "awaiting_payment" as const,
     };
 
@@ -426,7 +444,9 @@ const CreateOrderPage = () => {
                   <p className="font-display text-sm font-bold">Delivery</p>
                   <p className="text-xs text-muted-foreground">
                     {deliveryAvailable
-                      ? "Fee confirmed by the provider."
+                      ? deliveryOptions.length > 0
+                        ? `${deliveryOptions.length} option${deliveryOptions.length === 1 ? "" : "s"} available`
+                        : "Fee confirmed by the provider."
                       : "Not offered for this item."}
                   </p>
                 </div>
@@ -435,6 +455,45 @@ const CreateOrderPage = () => {
 
             {fulfillment === "delivery" ? (
               <div className="mt-3 space-y-3">
+                {deliveryOptions.length > 0 ? (
+                  <div className="space-y-2">
+                    <Label>Choose a delivery option</Label>
+                    <div className="grid gap-2">
+                      {deliveryOptions.map((opt) => {
+                        const active = deliveryOptionId === opt.id;
+                        return (
+                          <label
+                            key={opt.id}
+                            className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 p-3 transition-colors ${
+                              active ? "border-foreground bg-foreground/5" : "border-border bg-muted/30"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <input
+                                type="radio"
+                                name="delivery-option"
+                                value={opt.id}
+                                checked={active}
+                                onChange={() => setDeliveryOptionId(opt.id)}
+                                className="h-4 w-4 accent-foreground"
+                              />
+                              <div className="min-w-0">
+                                <p className="truncate font-display text-sm font-bold">
+                                  {PROVIDER_NAME[opt.provider]}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {opt.label.replace(/^[^—]+—\s*/, "")} · {opt.eta}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-display text-sm font-bold">{formatRand(opt.price)}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="space-y-2">
                   <Label htmlFor="address">Delivery address</Label>
                   <Select value={addressId} onValueChange={setAddressId}>
@@ -455,12 +514,15 @@ const CreateOrderPage = () => {
                     </Button>
                   ) : null}
                 </div>
-                <div className="rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
-                  Delivery cost will be confirmed by the provider — you'll pay the item and delivery together once the work is approved.
-                </div>
+                {deliveryOptions.length === 0 && (
+                  <div className="rounded-2xl bg-muted/50 p-3 text-xs text-muted-foreground">
+                    Delivery cost will be confirmed by the provider — you'll pay the item and delivery together once the work is approved.
+                  </div>
+                )}
               </div>
             ) : null}
           </section>
+
 
           <section className="rounded-3xl bg-card p-5 shadow-card">
             <h2 className="font-display text-base font-bold">Details</h2>
@@ -630,7 +692,13 @@ const CreateOrderPage = () => {
               <div className="my-3 h-px bg-border" />
               <Row label="Item price">{selectedService ? formatPrice(basePrice, selectedService.currency) : "—"}</Row>
               {fulfillment === "delivery" && (
-                <Row label="Delivery fee">Confirmed by provider</Row>
+                <Row label="Delivery fee">
+                  {chosenDelivery
+                    ? formatPrice(deliveryFee, selectedService!.currency)
+                    : deliveryOptions.length > 0
+                      ? "Pick an option above"
+                      : "Confirmed by provider"}
+                </Row>
               )}
               <Row label="Total">
                 <span className="font-display text-lg font-bold">
