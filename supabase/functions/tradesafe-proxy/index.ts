@@ -1,5 +1,7 @@
+import { getTradeSafeAccessToken, tradeSafeGraphQl } from "../_shared/tradesafe.ts";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://bizorder.co.za",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
@@ -11,58 +13,30 @@ Deno.serve(async (req) => {
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
-  try {
-    if (req.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Method not allowed" }), {
-        status: 405,
-        headers: jsonHeaders,
-      });
-    }
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: jsonHeaders,
+    });
+  }
 
+  try {
     const { query, variables } = await req.json();
 
-    const clientId = Deno.env.get("TRADESAFE_CLIENT_ID");
-    const clientSecret = Deno.env.get("TRADESAFE_CLIENT_SECRET");
-    if (!clientId || !clientSecret) {
-      throw new Error("TradeSafe credentials are not configured");
-    }
+    // Step 1: Get OAuth token using shared helper
+    const accessToken = await getTradeSafeAccessToken();
 
-    const tokenForm = new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: clientId,
-      client_secret: clientSecret,
-    });
+    // Step 2: Run GraphQL query
+    const data = await tradeSafeGraphQl(accessToken, query, variables ?? {});
 
-    const tokenRes = await fetch("https://auth.tradesafe.co.za/oauth/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: tokenForm.toString(),
-    });
-
-    const tokenJson = await tokenRes.json();
-    if (!tokenRes.ok || !tokenJson.access_token) {
-      throw new Error(
-        `Failed to obtain TradeSafe token: ${tokenRes.status} ${JSON.stringify(tokenJson)}`,
-      );
-    }
-
-    const gqlRes = await fetch("https://api-developer.tradesafe.dev/graphql", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${tokenJson.access_token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query, variables }),
-    });
-
-    const gqlJson = await gqlRes.json();
-    return new Response(JSON.stringify(gqlJson), {
-      status: gqlRes.status,
+    return new Response(JSON.stringify({ data }), {
+      status: 200,
       headers: jsonHeaders,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: message }), {
+    console.error("TradeSafe proxy error:", message);
+    return new Response(JSON.stringify({ errors: [{ message }] }), {
       status: 500,
       headers: jsonHeaders,
     });
