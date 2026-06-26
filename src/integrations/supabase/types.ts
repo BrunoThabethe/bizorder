@@ -1179,6 +1179,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           image_url: string | null
+          images: string[]
           is_active: boolean
           kind: string
           price: number
@@ -1198,6 +1199,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           image_url?: string | null
+          images?: string[]
           is_active?: boolean
           kind?: string
           price?: number
@@ -1217,6 +1219,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           image_url?: string | null
+          images?: string[]
           is_active?: boolean
           kind?: string
           price?: number

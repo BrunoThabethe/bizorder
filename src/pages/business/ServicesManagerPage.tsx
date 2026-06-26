@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Image as ImageIcon, Loader2, Plus, Trash2, X } from "lucide-react";
+import { Image as ImageIcon, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +31,32 @@ import { DeliveryOptionsEditor } from "@/components/business/DeliveryOptionsEdit
 import type { DeliveryOption } from "@/lib/delivery/catalog";
 
 type CatalogKind = "service" | "product";
+type PriceMode = "fixed" | "range";
+
+const MAX_IMAGES = 3;
+
+type ServiceExtra = {
+  kind?: string;
+  images?: string[] | null;
+  price_min?: number | null;
+  price_max?: number | null;
+  delivery_available?: boolean | null;
+  delivery_options?: DeliveryOption[] | null;
+};
+
+const emptyForm = {
+  kind: "service" as CatalogKind,
+  priceMode: "fixed" as PriceMode,
+  title: "",
+  price: "",
+  priceMin: "",
+  priceMax: "",
+  duration: "",
+  description: "",
+  images: [] as string[],
+  deliveryAvailable: false,
+  deliveryOptions: [] as DeliveryOption[],
+};
 
 const ServicesManagerPage = () => {
   const { user } = useAuth();
@@ -50,29 +76,53 @@ const ServicesManagerPage = () => {
     enabled: !!business?.id,
   });
 
-  type PriceMode = "fixed" | "range";
-  const [kind, setKind] = useState<CatalogKind>("service");
-  const [priceMode, setPriceMode] = useState<PriceMode>("fixed");
-  const [title, setTitle] = useState("");
-  const [price, setPrice] = useState("");
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
-  const [duration, setDuration] = useState("");
-  const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
   const [uploading, setUploading] = useState(false);
-  const [deliveryAvailable, setDeliveryAvailable] = useState(false);
-  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
 
-  const onUploadProductImage = async (file: File) => {
+  const resetForm = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+  };
+
+  const loadIntoForm = (s: Service) => {
+    const extra = s as unknown as ServiceExtra;
+    const kind = (extra.kind ?? "service") as CatalogKind;
+    const hasRange =
+      extra.price_min !== null && extra.price_min !== undefined &&
+      extra.price_max !== null && extra.price_max !== undefined;
+    const imgs = Array.isArray(extra.images) ? extra.images.filter(Boolean) : [];
+    if (imgs.length === 0 && s.image_url) imgs.push(s.image_url);
+    setEditingId(s.id);
+    setForm({
+      kind,
+      priceMode: hasRange ? "range" : "fixed",
+      title: s.title,
+      price: hasRange ? "" : String(s.price ?? ""),
+      priceMin: hasRange ? String(extra.price_min ?? "") : "",
+      priceMax: hasRange ? String(extra.price_max ?? "") : "",
+      duration: s.duration_minutes ? String(s.duration_minutes) : "",
+      description: s.description ?? "",
+      images: imgs.slice(0, MAX_IMAGES),
+      deliveryAvailable: !!extra.delivery_available,
+      deliveryOptions: Array.isArray(extra.delivery_options) ? extra.delivery_options : [],
+    });
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const onUploadImage = async (file: File) => {
     if (!business) {
       toast({ title: "Save your business first", variant: "destructive" });
+      return;
+    }
+    if (form.images.length >= MAX_IMAGES) {
+      toast({ title: `Up to ${MAX_IMAGES} photos`, variant: "destructive" });
       return;
     }
     setUploading(true);
     try {
       const url = await uploadBusinessImage(business.id, file, "product");
-      setImageUrl(url);
+      setForm((f) => ({ ...f, images: [...f.images, url].slice(0, MAX_IMAGES) }));
     } catch (e) {
       toast({ title: "Upload failed", description: (e as Error).message, variant: "destructive" });
     } finally {
@@ -80,55 +130,60 @@ const ServicesManagerPage = () => {
     }
   };
 
-  const create = useMutation({
+  const removeImage = (url: string) => {
+    setForm((f) => ({ ...f, images: f.images.filter((u) => u !== url) }));
+  };
+
+  const save = useMutation({
     mutationFn: async () => {
       if (!business) throw new Error("Create your business profile first");
-      if (kind === "product" && !imageUrl) throw new Error("Add a product photo so customers can see it.");
-      const isRange = priceMode === "range";
-      const minVal = isRange ? Number(priceMin) : null;
-      const maxVal = isRange ? Number(priceMax) : null;
+      if (form.kind === "product" && form.images.length === 0) {
+        throw new Error("Add at least one product photo.");
+      }
+      const isRange = form.priceMode === "range";
+      const minVal = isRange ? Number(form.priceMin) : null;
+      const maxVal = isRange ? Number(form.priceMax) : null;
       if (isRange) {
-        if (!priceMin || !priceMax) throw new Error("Add both a minimum and maximum price.");
+        if (!form.priceMin || !form.priceMax) throw new Error("Add both a minimum and maximum price.");
         if ((minVal ?? 0) < 0 || (maxVal ?? 0) < 0) throw new Error("Prices must be zero or more.");
         if ((minVal ?? 0) > (maxVal ?? 0)) throw new Error("Minimum price must be lower than the maximum.");
-      } else if (!price) {
+      } else if (!form.price) {
         throw new Error("Add a price.");
       }
-      const baseRow = {
+      const primaryImage = form.images[0] ?? null;
+      const row = {
         business_id: business.id,
-        title,
-        description: description || null,
-        price: isRange ? (minVal ?? 0) : Number(price) || 0,
-        duration_minutes: kind === "service" && duration ? Number(duration) : null,
-        image_url: kind === "product" ? imageUrl : null,
+        title: form.title,
+        description: form.description || null,
+        price: isRange ? (minVal ?? 0) : Number(form.price) || 0,
+        duration_minutes: form.kind === "service" && form.duration ? Number(form.duration) : null,
+        image_url: primaryImage,
         is_active: true,
         ...({
-          kind,
-          delivery_available: kind === "product" ? deliveryOptions.length > 0 : deliveryAvailable,
+          kind: form.kind,
+          images: form.images,
+          delivery_available: form.kind === "product" ? form.deliveryOptions.length > 0 : form.deliveryAvailable,
           delivery_price_per_km: 0,
-          delivery_options: kind === "product" ? deliveryOptions : [],
+          delivery_options: form.kind === "product" ? form.deliveryOptions : [],
           price_min: isRange ? minVal : null,
           price_max: isRange ? maxVal : null,
         } as Record<string, unknown>),
       };
-      const { error } = await supabase.from("services").insert(baseRow);
-      if (error) throw error;
+      if (editingId) {
+        const { error } = await supabase.from("services").update(row).eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("services").insert(row);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      setTitle("");
-      setPrice("");
-      setPriceMin("");
-      setPriceMax("");
-      setDuration("");
-      setDescription("");
-      setImageUrl("");
-      setDeliveryAvailable(false);
-      setDeliveryOptions([]);
-      setPriceMode("fixed");
+      const wasEditing = !!editingId;
+      resetForm();
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
-      toast({ title: kind === "product" ? "Product added" : "Service added" });
+      toast({ title: wasEditing ? "Saved changes" : form.kind === "product" ? "Product added" : "Service added" });
     },
-    onError: (e: Error) => toast({ title: "Could not add", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Could not save", description: e.message, variant: "destructive" }),
   });
 
   const toggle = useMutation({
@@ -144,11 +199,22 @@ const ServicesManagerPage = () => {
       const { error } = await supabase.from("services").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      if (editingId === id) resetForm();
       qc.invalidateQueries({ queryKey: ["business-services", business?.id] });
       toast({ title: "Removed" });
     },
   });
+
+  // Clear edit state if the edited item disappears (e.g. removed elsewhere)
+  useEffect(() => {
+    if (editingId && !services.some((s) => s.id === editingId)) setEditingId(null);
+  }, [services, editingId]);
+
+  const canSubmit =
+    !!form.title &&
+    (form.priceMode === "fixed" ? !!form.price : !!form.priceMin && !!form.priceMax) &&
+    !save.isPending;
 
   return (
     <BusinessLayout>
@@ -157,10 +223,23 @@ const ServicesManagerPage = () => {
       <div className="grid gap-5 lg:grid-cols-[1fr_1.3fr]">
         <Card className="rounded-3xl border-0 shadow-card">
           <CardContent className="space-y-3 p-5">
-            <h2 className="font-display text-lg font-bold">Add a new item</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">
+                {editingId ? "Edit item" : "Add a new item"}
+              </h2>
+              {editingId ? (
+                <Button variant="ghost" size="sm" onClick={resetForm}>
+                  Cancel
+                </Button>
+              ) : null}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="kind">Type</Label>
-              <Select value={kind} onValueChange={(v) => setKind(v as CatalogKind)}>
+              <Select
+                value={form.kind}
+                onValueChange={(v) => setForm((f) => ({ ...f, kind: v as CatalogKind }))}
+              >
                 <SelectTrigger id="kind">
                   <SelectValue />
                 </SelectTrigger>
@@ -170,13 +249,23 @@ const ServicesManagerPage = () => {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="title">{kind === "product" ? "Product name" : "Service name"}</Label>
-              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} />
+              <Label htmlFor="title">{form.kind === "product" ? "Product name" : "Service name"}</Label>
+              <Input
+                id="title"
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                maxLength={120}
+              />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="priceMode">Price type</Label>
-              <Select value={priceMode} onValueChange={(v) => setPriceMode(v as PriceMode)}>
+              <Select
+                value={form.priceMode}
+                onValueChange={(v) => setForm((f) => ({ ...f, priceMode: v as PriceMode }))}
+              >
                 <SelectTrigger id="priceMode">
                   <SelectValue />
                 </SelectTrigger>
@@ -189,98 +278,152 @@ const ServicesManagerPage = () => {
                 Use a range when the final price depends on the job (e.g. R350 – R600).
               </p>
             </div>
+
             <div className="grid grid-cols-2 gap-2">
-              {priceMode === "fixed" ? (
+              {form.priceMode === "fixed" ? (
                 <div className="space-y-2">
                   <Label htmlFor="price">Price (ZAR)</Label>
-                  <Input id="price" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
+                  <Input
+                    id="price"
+                    type="number"
+                    min={0}
+                    value={form.price}
+                    onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                  />
                 </div>
               ) : (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="priceMin">From (ZAR)</Label>
-                    <Input id="priceMin" type="number" min={0} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} />
+                    <Input
+                      id="priceMin"
+                      type="number"
+                      min={0}
+                      value={form.priceMin}
+                      onChange={(e) => setForm((f) => ({ ...f, priceMin: e.target.value }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="priceMax">To (ZAR)</Label>
-                    <Input id="priceMax" type="number" min={0} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} />
+                    <Input
+                      id="priceMax"
+                      type="number"
+                      min={0}
+                      value={form.priceMax}
+                      onChange={(e) => setForm((f) => ({ ...f, priceMax: e.target.value }))}
+                    />
                   </div>
                 </>
               )}
-              {kind === "service" && priceMode === "fixed" && (
+              {form.kind === "service" && form.priceMode === "fixed" && (
                 <div className="space-y-2">
                   <Label htmlFor="duration">Duration (min)</Label>
-                  <Input id="duration" type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+                  <Input
+                    id="duration"
+                    type="number"
+                    min={0}
+                    value={form.duration}
+                    onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+                  />
                 </div>
               )}
             </div>
-            {kind === "service" && priceMode === "range" && (
+
+            {form.kind === "service" && form.priceMode === "range" && (
               <div className="space-y-2">
                 <Label htmlFor="duration">Duration (min)</Label>
-                <Input id="duration" type="number" min={0} value={duration} onChange={(e) => setDuration(e.target.value)} />
+                <Input
+                  id="duration"
+                  type="number"
+                  min={0}
+                  value={form.duration}
+                  onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+                />
               </div>
             )}
+
             <div className="space-y-2">
               <Label htmlFor="desc">Description</Label>
-              <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={600} />
+              <Textarea
+                id="desc"
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                maxLength={600}
+              />
             </div>
-            {kind === "product" && (
-              <div className="space-y-2">
-                <Label>Product photo</Label>
-                {imageUrl ? (
-                  <div className="relative h-40 overflow-hidden rounded-2xl bg-muted">
-                    <img src={imageUrl} alt="Product preview" className="h-full w-full object-cover" />
+
+            <div className="space-y-2">
+              <Label>
+                Photos{" "}
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  ({form.images.length}/{MAX_IMAGES}
+                  {form.kind === "product" ? " · at least 1 required" : " · optional"})
+                </span>
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                {form.images.map((url) => (
+                  <div key={url} className="relative h-24 overflow-hidden rounded-xl bg-muted">
+                    <img src={url} alt="" className="h-full w-full object-cover" />
                     <button
                       type="button"
-                      onClick={() => setImageUrl("")}
-                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-background/90 text-foreground shadow-card hover:bg-background"
+                      onClick={() => removeImage(url)}
+                      className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-background/90 text-foreground shadow-card hover:bg-background"
                       aria-label="Remove photo"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                ) : (
-                  <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 text-xs text-muted-foreground hover:bg-muted/50">
-                    {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
-                    <span>{uploading ? "Uploading…" : "Click to upload (JPG, PNG, WebP · max 5 MB)"}</span>
+                ))}
+                {form.images.length < MAX_IMAGES ? (
+                  <label className="flex h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-muted/30 text-[10px] text-muted-foreground hover:bg-muted/50">
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                    <span>{uploading ? "Uploading…" : "Add photo"}</span>
                     <input
                       type="file"
                       accept={businessImageAccept}
                       className="hidden"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
-                        if (f) onUploadProductImage(f);
+                        if (f) onUploadImage(f);
                         e.currentTarget.value = "";
                       }}
                     />
                   </label>
-                )}
+                ) : null}
               </div>
-            )}
-            {kind === "product" ? (
-              <DeliveryOptionsEditor options={deliveryOptions} onChange={setDeliveryOptions} />
+              <p className="text-[11px] text-muted-foreground">JPG, PNG or WebP · max 5 MB each.</p>
+            </div>
+
+            {form.kind === "product" ? (
+              <DeliveryOptionsEditor
+                options={form.deliveryOptions}
+                onChange={(options) => setForm((f) => ({ ...f, deliveryOptions: options }))}
+              />
             ) : (
               <div className="rounded-2xl bg-muted/40 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <Label htmlFor="delivery">Offer delivery</Label>
-                    <p className="text-[11px] text-muted-foreground">You'll arrange the delivery fee directly with the customer.</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      You'll arrange the delivery fee directly with the customer.
+                    </p>
                   </div>
-                  <Switch id="delivery" checked={deliveryAvailable} onCheckedChange={setDeliveryAvailable} />
+                  <Switch
+                    id="delivery"
+                    checked={form.deliveryAvailable}
+                    onCheckedChange={(checked) => setForm((f) => ({ ...f, deliveryAvailable: checked }))}
+                  />
                 </div>
               </div>
             )}
-            <Button
-              className="w-full"
-              onClick={() => create.mutate()}
-              disabled={
-                !title ||
-                (priceMode === "fixed" ? !price : !priceMin || !priceMax) ||
-                create.isPending
-              }
-            >
-              {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {kind === "product" ? " Add product" : " Add service"}
+
+            <Button className="w-full" onClick={() => save.mutate()} disabled={!canSubmit}>
+              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {editingId
+                ? " Save changes"
+                : form.kind === "product"
+                  ? " Add product"
+                  : " Add service"}
             </Button>
           </CardContent>
         </Card>
@@ -295,19 +438,29 @@ const ServicesManagerPage = () => {
             ) : (
               <ul className="space-y-2">
                 {services.map((s: Service) => {
-                  const itemKind = ((s as unknown as { kind?: string }).kind ?? "service") as CatalogKind;
-                  const extra = s as unknown as { price_min?: number | null; price_max?: number | null };
+                  const extra = s as unknown as ServiceExtra;
+                  const itemKind = (extra.kind ?? "service") as CatalogKind;
                   const hasRange =
                     extra.price_min !== null && extra.price_min !== undefined &&
                     extra.price_max !== null && extra.price_max !== undefined;
                   const priceLabel = hasRange
                     ? `${formatPrice(Number(extra.price_min), s.currency)} – ${formatPrice(Number(extra.price_max), s.currency)}`
                     : formatPrice(Number(s.price), s.currency);
+                  const imgs = Array.isArray(extra.images) ? extra.images.filter(Boolean) : [];
+                  const primary = imgs[0] ?? s.image_url ?? null;
+                  const isEditing = editingId === s.id;
                   return (
-                    <li key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border p-3">
-                      {s.image_url ? (
-                        <img src={s.image_url} alt={s.title} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
-                      ) : null}
+                    <li
+                      key={s.id}
+                      className={`flex items-center gap-3 rounded-2xl border p-3 ${isEditing ? "border-primary bg-primary/5" : "border-border"}`}
+                    >
+                      {primary ? (
+                        <img src={primary} alt={s.title} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                      ) : (
+                        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
+                          <ImageIcon className="h-4 w-4" />
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -318,10 +471,21 @@ const ServicesManagerPage = () => {
                         <p className="mt-1 text-xs text-muted-foreground">
                           {priceLabel}
                           {s.duration_minutes ? ` · ${s.duration_minutes} min` : ""}
+                          {imgs.length > 1 ? ` · ${imgs.length} photos` : ""}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Switch checked={s.is_active} onCheckedChange={(v) => toggle.mutate({ id: s.id, active: v })} />
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={s.is_active}
+                          onCheckedChange={(v) => toggle.mutate({ id: s.id, active: v })}
+                        />
+                        <button
+                          onClick={() => loadIntoForm(s)}
+                          className="grid h-9 w-9 place-items-center rounded-xl bg-muted text-muted-foreground hover:text-primary"
+                          aria-label="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => remove.mutate(s.id)}
                           className="grid h-9 w-9 place-items-center rounded-xl bg-muted text-muted-foreground hover:text-destructive"
