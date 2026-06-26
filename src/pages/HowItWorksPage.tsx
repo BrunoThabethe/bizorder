@@ -1,184 +1,96 @@
-import { ArrowRight, UserPlus, Store, ShoppingBag, Banknote, MessageCircle, Star, Bell, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ShoppingBag, Store, MessageCircle, Star, ShieldCheck, Banknote, ClipboardList, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SiteLayout } from "@/components/layout/SiteLayout";
 import { Button } from "@/components/ui/button";
-import { ClickAnimation, type ClickStep, type ClickAnimationItem } from "@/components/ClickAnimation";
 import { CtaForm } from "@/components/sections/CtaForm";
 
-type Flow = {
-  icon: typeof UserPlus;
-  badge: string;
+type Step = {
+  icon: typeof ShoppingBag;
   title: string;
-  steps: { text: string; targetIndex: number }[];
-  items: ClickAnimationItem[];
-  animTitle: string;
+  body: string;
 };
 
-const businessFlow: Flow[] = [
+const customerSteps: Step[] = [
   {
-    icon: UserPlus, badge: "Step 1", title: "Create your business account",
-    items: [
-      { label: "Home" }, { label: "How it works" }, { label: "Log in" },
-      { label: "Get started", primary: true }, { label: "I'm a business", primary: true },
-      { label: "Create account", primary: true }, { label: "Confirm email", primary: true },
-    ],
-    steps: [
-      { text: "Open the BizOrder homepage and click 'Get started' in the top right.", targetIndex: 3 },
-      { text: "Choose 'I'm a business' on the signup screen.", targetIndex: 4 },
-      { text: "Fill in your business name, email and password, then click 'Create account'.", targetIndex: 5 },
-      { text: "Open the verification email and click 'Confirm email'.", targetIndex: 6 },
-    ],
-    animTitle: "Where to click on the homepage",
+    icon: ShoppingBag,
+    title: "Browse verified businesses",
+    body: "Open the Customer portal, search by category or location, and pick a business. Every business on BizOrder Nexus is verified before they can sell.",
   },
   {
-    icon: Store, badge: "Step 2", title: "Add your products and services",
-    items: [
-      { label: "Products & services" }, { label: "Add new", primary: true },
-      { label: "Upload photo", primary: true }, { label: "Set pickup price" },
-      { label: "Enable delivery", primary: true }, { label: "Save and publish", primary: true },
-    ],
-    steps: [
-      { text: "From the sidebar, open 'Products & services'.", targetIndex: 0 },
-      { text: "Click 'Add new' to create a service or product.", targetIndex: 1 },
-      { text: "Upload a clear photo and set your pickup price.", targetIndex: 2 },
-      { text: "Toggle 'Enable delivery' if you offer delivery — you'll arrange the fee directly with the customer.", targetIndex: 4 },
-      { text: "Click 'Save and publish' to make it live.", targetIndex: 5 },
-    ],
-    animTitle: "Listing an item with delivery",
+    icon: ClipboardList,
+    title: "Place a secure order",
+    body: "Choose a product or service, add a reference photo if you'd like, select delivery or pickup, then pay through the secure payment gateway. Your money is only released once you confirm the job is done.",
   },
   {
-    icon: Bell, badge: "Step 3", title: "Set your weekly availability",
-    items: [
-      { label: "Settings" }, { label: "Weekly availability" }, { label: "Open Mon-Fri" },
-      { label: "Add time range", primary: true }, { label: "Save", primary: true },
-    ],
-    steps: [
-      { text: "Open 'Settings' from the sidebar.", targetIndex: 0 },
-      { text: "Scroll to 'Weekly availability'.", targetIndex: 1 },
-      { text: "Toggle the days you're open and add time windows.", targetIndex: 3 },
-      { text: "Click 'Save'. Customers can only book inside those windows — no double bookings.", targetIndex: 4 },
-    ],
-    animTitle: "Setting bookable hours",
+    icon: Bell,
+    title: "Track every stage live",
+    body: "Watch your order move through Accepted → In progress → Ready → Awaiting your confirmation → Completed. You get a notification at every stage.",
   },
   {
-    icon: ShoppingBag, badge: "Step 4", title: "Accept and progress orders",
-    items: [
-      { label: "Orders" }, { label: "View order" }, { label: "Reject with reason" },
-      { label: "Accept order", primary: true }, { label: "Start work", primary: true },
-      { label: "Mark ready", primary: true }, { label: "Send for confirmation", primary: true },
-    ],
-    steps: [
-      { text: "Open 'Orders' to see new requests.", targetIndex: 0 },
-      { text: "Open the order — you'll see the customer's reference photo and notes.", targetIndex: 1 },
-      { text: "Click 'Accept order' (or reject with a reason — required while pending).", targetIndex: 3 },
-      { text: "Walk through the stage stepper: Start work → Mark ready → Send for confirmation. Each stage locks once advanced.", targetIndex: 6 },
-    ],
-    animTitle: "Working an order to completion",
+    icon: MessageCircle,
+    title: "Message the business",
+    body: "Talk to the business directly from the order page if you need to share details or ask a question.",
   },
   {
-    icon: Banknote, badge: "Step 5", title: "Get paid",
-    items: [{ label: "Payouts" }, { label: "Withdraw", primary: true }, { label: "Confirm bank" }, { label: "Send to my bank", primary: true }],
-    steps: [
-      { text: "Once the customer confirms, your payout moves to 'Available'.", targetIndex: 0 },
-      { text: "Click 'Withdraw' next to your balance.", targetIndex: 1 },
-      { text: "Confirm your bank account.", targetIndex: 2 },
-      { text: "Click 'Send to my bank' to receive your money.", targetIndex: 3 },
-    ],
-    animTitle: "Withdrawing your earnings",
+    icon: Star,
+    title: "Confirm and review",
+    body: "Once you've received what you ordered, confirm completion and leave a rating. Your review helps other customers shop with confidence.",
   },
 ];
 
-const customerFlow: Flow[] = [
+const businessSteps: Step[] = [
   {
-    icon: ShoppingBag, badge: "Step 1", title: "Find a business and place an order",
-    items: [
-      { label: "Browse" }, { label: "Open profile" }, { label: "Order now", primary: true },
-      { label: "Pickup or Delivery", primary: true }, { label: "Add reference photo" },
-      { label: "Pick date & time" }, { label: "Place order", primary: true },
-    ],
-    steps: [
-      { text: "Click 'Browse' and find a business by category or location.", targetIndex: 0 },
-      { text: "Open their profile to see services, products and live availability.", targetIndex: 1 },
-      { text: "Click 'Order now' on the item you want.", targetIndex: 2 },
-      { text: "Choose Pickup or Delivery — for delivery, the distance is calculated automatically from your saved address.", targetIndex: 3 },
-      { text: "Add an optional reference photo (allergies, sample, inspiration) so the provider knows exactly what you want.", targetIndex: 4 },
-      { text: "Pick a date and time inside the provider's availability, then click 'Place order'.", targetIndex: 6 },
-    ],
-    animTitle: "Placing an order with a reference photo",
+    icon: Store,
+    title: "Set up your business profile",
+    body: "Sign up as a business, upload your verification documents, and wait for admin approval. Once verified you're live on the marketplace.",
   },
   {
-    icon: MessageCircle, badge: "Step 2", title: "Track every stage live",
-    items: [
-      { label: "My orders" }, { label: "Open order" }, { label: "Stage stepper" },
-      { label: "Message provider", primary: true },
-    ],
-    steps: [
-      { text: "Open 'My orders' to see all active orders.", targetIndex: 0 },
-      { text: "Open the order to see the 5-stage stepper: Accepted → In progress → Ready → Awaiting your confirmation → Completed.", targetIndex: 1 },
-      { text: "Get a notification each time the provider advances a stage.", targetIndex: 2 },
-      { text: "Click 'Message provider' if you need to ask anything.", targetIndex: 3 },
-    ],
-    animTitle: "Following the order stages",
+    icon: ClipboardList,
+    title: "Build your catalog",
+    body: "Open the Catalog page to add services and products. Upload 1–3 photos per item, set a fixed price or price range, and choose delivery options.",
   },
   {
-    icon: CheckCircle2, badge: "Step 3", title: "Confirm completion",
-    items: [{ label: "Open order" }, { label: "View proof photos" }, { label: "Open dispute" }, { label: "Confirm completion", primary: true }],
-    steps: [
-      { text: "When the provider sends the order for your confirmation, open it.", targetIndex: 0 },
-      { text: "Check the proof photos against your reference.", targetIndex: 1 },
-      { text: "If something is off, open a dispute. Otherwise click 'Confirm completion'.", targetIndex: 3 },
-    ],
-    animTitle: "Confirming completion",
+    icon: Bell,
+    title: "Set your availability",
+    body: "Set your weekly hours in Settings → Availability. Customers can only book inside those windows, so no double bookings.",
   },
   {
-    icon: Star, badge: "Step 4", title: "Leave a review",
-    items: [{ label: "★★★★★" }, { label: "Write a note" }, { label: "Submit review", primary: true }],
-    steps: [
-      { text: "Click the stars to set a 1-5 rating.", targetIndex: 0 },
-      { text: "Write a short note about your experience.", targetIndex: 1 },
-      { text: "Click 'Submit review' to publish.", targetIndex: 2 },
-    ],
-    animTitle: "Submitting your review",
+    icon: ShieldCheck,
+    title: "Accept and fulfil orders",
+    body: "Paid orders land in your Orders queue. Accept or reject, then walk through the stage stepper: Start work → Mark ready → Send for customer confirmation. Upload proof photos at each stage.",
+  },
+  {
+    icon: Banknote,
+    title: "Get paid",
+    body: "When the customer confirms completion, the payout moves to your Payouts page. Withdraw to your bank when you're ready.",
   },
 ];
 
-const FlowList = ({ flows }: { flows: Flow[] }) => (
-  <div className="mt-12 space-y-8">
-    {flows.map((step) => {
+const StepList = ({ steps }: { steps: Step[] }) => (
+  <ol className="mt-10 space-y-4">
+    {steps.map((step, index) => {
       const Icon = step.icon;
       return (
-        <div key={step.title} className="grid items-start gap-6 rounded-2xl bg-background/30 p-6 backdrop-blur-sm md:grid-cols-[1fr_1fr] md:gap-10 md:p-8">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="grid h-12 w-12 place-items-center rounded-xl bg-foreground/10 text-foreground">
-                <Icon className="h-6 w-6" />
-              </span>
-              <span className="rounded-full bg-foreground/10 px-3 py-1 text-xs font-bold uppercase tracking-wider">
-                {step.badge}
-              </span>
-            </div>
-            <h3 className="mt-5 font-display text-2xl font-bold">{step.title}</h3>
-            <ol className="mt-5 space-y-3">
-              {step.steps.map((line, i) => (
-                <li key={i} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-foreground text-background text-xs font-bold">
-                    {i + 1}
-                  </span>
-                  <span>{line.text}</span>
-                </li>
-              ))}
-            </ol>
+        <li
+          key={step.title}
+          className="flex gap-5 rounded-2xl border border-border/60 bg-card-gradient p-6 shadow-card md:p-7"
+        >
+          <div className="flex shrink-0 flex-col items-center gap-2">
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary text-primary-foreground">
+              <Icon className="h-6 w-6" />
+            </span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Step {index + 1}
+            </span>
           </div>
-
-          <ClickAnimation
-            title={step.animTitle}
-            items={step.items}
-            steps={step.steps.map<ClickStep>((s) => ({ label: s.text, targetIndex: s.targetIndex }))}
-          />
-        </div>
+          <div className="min-w-0">
+            <h3 className="font-display text-xl font-bold">{step.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-base">{step.body}</p>
+          </div>
+        </li>
       );
     })}
-  </div>
+  </ol>
 );
 
 const HowItWorksPage = () => {
@@ -186,36 +98,47 @@ const HowItWorksPage = () => {
     <SiteLayout>
       <section className="relative pt-32 pb-12 md:pt-40">
         <div className="container mx-auto px-4 text-center">
-          <span className="inline-block rounded-full bg-foreground/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">How it works</span>
+          <span className="inline-block rounded-full bg-foreground/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            How it works
+          </span>
           <h1 className="mt-5 font-display text-5xl font-bold md:text-6xl">
-            From signup to first sale.<br /><span className="text-foreground/60">In simple steps.</span>
+            One platform.<br />
+            <span className="text-foreground/60">Two simple portals.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-            BizOrder takes you through every step — with clear instructions and animated tutorials.
+            Customers shop with proof. Businesses sell with trust. Here's exactly how each side works.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button size="xl" asChild><Link to="/signup">Get started <ArrowRight className="h-5 w-5" /></Link></Button>
+            <Button size="xl" asChild>
+              <Link to="/signup">
+                Get started <ArrowRight className="h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      <section className="relative py-16 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold md:text-4xl">For business owners</h2>
-            <p className="mt-3 text-muted-foreground">Five steps to take your business online and start getting paid.</p>
+      <section className="relative py-12 md:py-16">
+        <div className="container mx-auto grid gap-12 px-4 lg:grid-cols-2">
+          <div>
+            <div className="mx-auto max-w-xl">
+              <h2 className="font-display text-3xl font-bold md:text-4xl">Customer portal</h2>
+              <p className="mt-3 text-muted-foreground">
+                Order from verified local businesses, track every step, and only pay when you're happy.
+              </p>
+              <StepList steps={customerSteps} />
+            </div>
           </div>
-          <FlowList flows={businessFlow} />
-        </div>
-      </section>
 
-      <section className="relative py-16 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl font-bold md:text-4xl">For customers</h2>
-            <p className="mt-3 text-muted-foreground">Order safely from real local businesses in four easy steps.</p>
+          <div>
+            <div className="mx-auto max-w-xl">
+              <h2 className="font-display text-3xl font-bold md:text-4xl">Business portal</h2>
+              <p className="mt-3 text-muted-foreground">
+                Take your business online, manage orders end to end, and get paid securely.
+              </p>
+              <StepList steps={businessSteps} />
+            </div>
           </div>
-          <FlowList flows={customerFlow} />
         </div>
       </section>
 
