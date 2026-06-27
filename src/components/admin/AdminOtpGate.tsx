@@ -1,6 +1,8 @@
-import { ReactNode, useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 
 // Per-session: we tie the verification flag to the current access token.
@@ -46,14 +48,71 @@ export const clearAllAdminOtpFlags = (): void => {
 
 type AdminOtpGateProps = { children: ReactNode };
 
+const INACTIVITY_MS = 5 * 60 * 1000;
+
 export const AdminOtpGate = ({ children }: AdminOtpGateProps) => {
   const { loading, session, role } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [ready, setReady] = useState(false);
+  const timerRef = useRef<number | null>(null);
+  const tokenRef = useRef<string | undefined>(session?.access_token);
 
   useEffect(() => {
     setReady(true);
   }, []);
+
+  // Sign out completely if the admin navigates away from any /admin route.
+  useEffect(() => {
+    if (!ready || loading) return;
+    if (role !== "admin") return;
+    if (!location.pathname.startsWith("/admin")) {
+      clearAllAdminOtpFlags();
+      void supabase.auth.signOut();
+      navigate("/login", { replace: true });
+    }
+  }, [location.pathname, role, ready, loading, navigate]);
+
+  // Inactivity watchdog — 5 min with no input clears the OTP flag and forces re-verify.
+  useEffect(() => {
+    if (!session || role !== "admin") return;
+    tokenRef.current = session.access_token;
+
+    const reset = () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => {
+        const key = tokenRef.current;
+        if (!key) return;
+        try {
+          sessionStorage.removeItem(`${STORAGE_PREFIX}${key.slice(-32)}`);
+        } catch {
+          /* ignore */
+        }
+        toast({
+          title: "Session locked",
+          description: "You were inactive for 5 minutes. Please verify again.",
+        });
+        navigate("/admin/verify", { replace: true, state: { from: location.pathname } });
+      }, INACTIVITY_MS);
+    };
+
+    const events: (keyof WindowEventMap)[] = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    reset();
+
+    return () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      events.forEach((e) => window.removeEventListener(e, reset));
+    };
+  }, [session, role, navigate, toast, location.pathname]);
 
   if (loading || !ready) {
     return (
