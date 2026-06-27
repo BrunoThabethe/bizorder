@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Send, MessageSquare, ArrowRight } from "lucide-react";
+import { Loader2, Send, MessageSquare, ArrowRight, ArrowLeft } from "lucide-react";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,7 +69,10 @@ const MessagesPage = () => {
   });
 
   useEffect(() => {
-    if (!activeOrderId && threads.length > 0) setActiveOrderId(threads[0].orderId);
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(min-width: 1024px)").matches && !activeOrderId && threads.length > 0) {
+      setActiveOrderId(threads[0].orderId);
+    }
   }, [threads, activeOrderId]);
 
   const { data: messages = [] } = useQuery({
@@ -157,7 +160,12 @@ const MessagesPage = () => {
         </Card>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <Card className="rounded-3xl border-0 shadow-card">
+          <Card
+            className={cn(
+              "rounded-3xl border-0 shadow-card",
+              activeOrderId ? "hidden lg:block" : "block",
+            )}
+          >
             <CardContent className="space-y-1 p-2">
               {threads.map((t) => (
                 <button
@@ -187,14 +195,29 @@ const MessagesPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border-0 shadow-card">
+          <Card
+            className={cn(
+              "rounded-3xl border-0 shadow-card",
+              activeOrderId ? "block" : "hidden lg:block",
+            )}
+          >
             <CardContent className="flex h-[70vh] flex-col p-0">
               {active ? (
                 <>
-                  <div className="flex items-center justify-between border-b border-border px-5 py-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-display text-base font-bold">{active.providerName}</p>
-                      <p className="truncate text-xs text-muted-foreground">{active.serviceTitle}</p>
+                  <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-3 md:px-5">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveOrderId(null)}
+                        aria-label="Back to conversations"
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted text-foreground hover:bg-primary/15 hover:text-primary lg:hidden"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </button>
+                      <div className="min-w-0">
+                        <p className="truncate font-display text-base font-bold">{active.providerName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{active.serviceTitle}</p>
+                      </div>
                     </div>
                     <Button asChild size="sm" variant="secondary">
                       <Link to={`/customer/orders/${active.orderId}`}>
@@ -202,6 +225,7 @@ const MessagesPage = () => {
                       </Link>
                     </Button>
                   </div>
+
 
                   <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto p-5">
                     {messages.length === 0 ? (
