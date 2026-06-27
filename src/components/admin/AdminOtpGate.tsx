@@ -1,9 +1,10 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 // Per-session: we tie the verification flag to the current access token.
 // A new login (any device) issues a new token, so OTP is required again every time.
