@@ -69,7 +69,10 @@ const MessagesPage = () => {
   });
 
   useEffect(() => {
-    if (!activeOrderId && threads.length > 0) setActiveOrderId(threads[0].orderId);
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(min-width: 1024px)").matches && !activeOrderId && threads.length > 0) {
+      setActiveOrderId(threads[0].orderId);
+    }
   }, [threads, activeOrderId]);
 
   const { data: messages = [] } = useQuery({
