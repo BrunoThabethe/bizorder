@@ -234,7 +234,7 @@ const CreateOrderPage = () => {
       delivery_distance_km: null,
       delivery_fee: deliveryFee,
       delivery_option: fulfillment === "delivery" && chosenDelivery ? chosenDelivery : null,
-      status: "awaiting_payment" as const,
+      status: "pending" as const,
     };
 
     const { data: order, error } = await supabase.from("orders").insert(payload).select("id").single();
