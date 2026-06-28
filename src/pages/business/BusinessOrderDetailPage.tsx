@@ -288,7 +288,7 @@ const BusinessOrderDetailPage = () => {
                 <span className="font-display text-xl font-bold">{formatPrice(Number(o.total), o.currency)}</span>
                 {o.payment?.status === "funded" || o.payment?.status === "released" ? (
                   <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background">
-                    Paid via TradeSafe
+                    Paid
                   </span>
                 ) : null}
                 {o.estimated_completion_at ? (
