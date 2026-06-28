@@ -115,31 +115,15 @@ const OrderDetailPage = () => {
     mutationFn: async () => {
       if (!user) throw new Error("Not signed in");
       await customerConfirmCompletion(orderId);
-      // Best-effort release of escrowed funds via TradeSafe. Failure here
-      // doesn't block the confirmation — the webhook / admin can retry.
-      try {
-        await supabase.functions.invoke("tradesafe-release", { body: { order_id: orderId } });
-      } catch {
-        // ignore — admin tools / webhook will reconcile
-      }
     },
     onSuccess: () => {
-      toast({ title: "Approved", description: "Thanks — payout is being released. Leave a review below." });
+      toast({ title: "Approved", description: "Thanks — leave a review below." });
       qc.invalidateQueries({ queryKey: ["order", orderId] });
       qc.invalidateQueries({ queryKey: ["order-events", orderId] });
     },
     onError: (e) => toast({ title: "Could not approve", description: (e as Error).message, variant: "destructive" }),
   });
 
-  const retryPayment = useMutation({
-    mutationFn: () => startTradeSafeCheckout(orderId),
-    onSuccess: (checkoutUrl) => window.location.assign(checkoutUrl),
-    onError: (error: Error) => toast({
-      title: "Could not start payment",
-      description: error.message,
-      variant: "destructive",
-    }),
-  });
 
   const submitReview = useMutation({
     mutationFn: async () => {
