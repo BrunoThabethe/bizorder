@@ -1,12 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import {
-  CREATE_BUYER_TOKEN,
-  CREATE_TRANSACTION,
-  GET_CHECKOUT_LINK,
-  TRADESAFE_SELLER_TOKEN,
-  tradeSafeQuery,
-} from "@/lib/tradesafe";
 
 export type Business = Database["public"]["Tables"]["businesses"]["Row"];
 export type Service = Database["public"]["Tables"]["services"]["Row"];
