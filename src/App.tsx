@@ -99,12 +99,6 @@ const App = () => (
             <Route path="/refunds" element={<RefundPage />} />
             <Route path="/rules" element={<PlatformRulesPage />} />
 
-            {/* TradeSafe buyer return pages (public) */}
-            <Route path="/payment/success" element={<PaymentCallbackPage variant="success" />} />
-            <Route path="/payment/error" element={<PaymentCallbackPage variant="error" />} />
-
-            {/* OAuth callback (public) */}
-            <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
             {/* Customer portal */}
             <Route path="/verify-email" element={<VerifyEmailPage />} />
