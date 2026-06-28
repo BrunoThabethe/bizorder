@@ -111,7 +111,7 @@ const App = () => (
             <Route path="/customer/order/new" element={<RoleGuard allow={["customer"]}><CreateOrderPage /></RoleGuard>} />
             <Route path="/customer/orders" element={<RoleGuard allow={["customer"]}><OrdersPage /></RoleGuard>} />
             <Route path="/customer/orders/:orderId" element={<RoleGuard allow={["customer"]}><OrderDetailPage /></RoleGuard>} />
-            <Route path="/customer/orders/:orderId/payment-return" element={<RoleGuard allow={["customer"]}><PaymentReturnPage /></RoleGuard>} />
+            
             <Route path="/customer/messages" element={<RoleGuard allow={["customer"]}><MessagesPage /></RoleGuard>} />
             <Route path="/customer/addresses" element={<RoleGuard allow={["customer"]}><AddressesPage /></RoleGuard>} />
             <Route path="/customer/notifications" element={<RoleGuard allow={["customer"]}><NotificationsPage /></RoleGuard>} />
