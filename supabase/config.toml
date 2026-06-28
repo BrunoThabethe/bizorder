@@ -18,14 +18,3 @@ verify_jwt = false
 [functions.send-newsletter-broadcast]
 verify_jwt = false
 
-[functions.tradesafe-webhook]
-verify_jwt = false
-
-[functions.tradesafe-expire-unpaid]
-verify_jwt = false
-
-[functions.tradesafe-proxy]
-verify_jwt = false
-
-[functions.tradesafe-callback]
-verify_jwt = false
