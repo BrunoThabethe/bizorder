@@ -221,12 +221,6 @@ const OrderDetailPage = () => {
         ) : null}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {status === "awaiting_payment" ? (
-            <Button size="lg" onClick={() => retryPayment.mutate()} disabled={retryPayment.isPending}>
-              {retryPayment.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              Pay securely with TradeSafe
-            </Button>
-          ) : null}
           <Button asChild size="lg" variant="secondary">
             <Link to={`/customer/messages?order=${order.id}`}>
               <MessageSquare className="h-4 w-4" /> Message provider
