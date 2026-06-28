@@ -19,7 +19,7 @@ import {
   fetchOrderMessages,
   fetchOrderPayment,
   formatPrice,
-  startTradeSafeCheckout,
+  
   DISPUTE_STATUS_LABEL,
   DISPUTE_STATUS_TONE,
   STATUS_LABEL,
