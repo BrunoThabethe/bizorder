@@ -31,7 +31,7 @@ import BrowseBusinessesPage from "./pages/customer/BrowseBusinessesPage.tsx";
 import BusinessProfilePage from "./pages/customer/BusinessProfilePage.tsx";
 import CreateOrderPage from "./pages/customer/CreateOrderPage.tsx";
 import OrderDetailPage from "./pages/customer/OrderDetailPage.tsx";
-import PaymentReturnPage from "./pages/customer/PaymentReturnPage.tsx";
+
 import OrdersPage from "./pages/customer/OrdersPage.tsx";
 import MessagesPage from "./pages/customer/MessagesPage.tsx";
 import AddressesPage from "./pages/customer/AddressesPage.tsx";
