@@ -324,7 +324,7 @@ const OrderDetailPage = () => {
               <dl className="mt-3 space-y-2 text-sm">
                 <Row label="Service">{order.services?.title ?? "—"}</Row>
                 <Row label="Total">{formatPrice(Number(order.total), order.currency)}</Row>
-                <Row label="Payment">{payment?.status === "funded" || payment?.status === "released" ? "Paid via TradeSafe" : "Awaiting payment"}</Row>
+                <Row label="Payment">{payment?.status === "funded" || payment?.status === "released" ? "Paid" : "Awaiting payment"}</Row>
                 {order.scheduled_for && (
                   <Row label="Scheduled">{new Date(order.scheduled_for).toLocaleString("en-GB")}</Row>
                 )}
