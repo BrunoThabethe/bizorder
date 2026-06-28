@@ -25,13 +25,6 @@ import {
   type Service,
 } from "@/lib/customer/queries";
 import {
-  CREATE_BUYER_TOKEN,
-  CREATE_TRANSACTION,
-  GET_CHECKOUT_LINK,
-  TRADESAFE_SELLER_TOKEN,
-  tradeSafeQuery,
-} from "@/lib/tradesafe";
-import {
   AVAILABILITY_LABEL,
   fetchBusinessHours,
   fetchBusinessSettings,
@@ -241,7 +234,7 @@ const CreateOrderPage = () => {
       delivery_distance_km: null,
       delivery_fee: deliveryFee,
       delivery_option: fulfillment === "delivery" && chosenDelivery ? chosenDelivery : null,
-      status: "awaiting_payment" as const,
+      status: "pending" as const,
     };
 
     const { data: order, error } = await supabase.from("orders").insert(payload).select("id").single();
@@ -272,68 +265,16 @@ const CreateOrderPage = () => {
       message: fulfillment === "delivery" ? "Delivery requested" : "Pickup / in-store",
     });
 
-    // Kick off TradeSafe escrow checkout via GraphQL proxy.
-    try {
-      // Fetch buyer profile details for the buyer token
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, email, phone")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      const fullName = (profile?.full_name ?? user.email ?? "Customer").trim();
-      const nameParts = fullName.split(/\s+/);
-      const givenName = nameParts[0] || "Customer";
-      const familyName = nameParts.slice(1).join(" ") || givenName;
-      const email = profile?.email ?? user.email ?? "";
-      const mobile = profile?.phone ?? "";
-
-      // Step 1 — Create buyer token
-      const buyerRes = await tradeSafeQuery<{ tokenCreate: { id: string } }>(CREATE_BUYER_TOKEN, {
-        givenName,
-        familyName,
-        email,
-        mobile,
-      });
-      const buyerToken = buyerRes.tokenCreate.id;
-
-      // Step 2 — Hardcoded verified BizOrder Nexus seller token
-      const sellerToken = TRADESAFE_SELLER_TOKEN;
-
-      // Step 3 — Create transaction
-      const title = selectedService.title ?? "Order";
-      const description = notes?.trim() || `Order from ${business.name}`;
-      const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(CREATE_TRANSACTION, {
-        title,
-        description,
-        industry: "GENERAL_GOODS_SERVICES",
-        value: Number(total),
-        buyerToken,
-        sellerToken,
-      });
-      const transactionId = txRes.transactionCreate.id;
-
-      await supabase.from("orders").update({ tradesafe_transaction_id: transactionId }).eq("id", order.id);
-
-      // Step 4 — Get checkout link
-      const linkRes = await tradeSafeQuery<{ checkoutLink: string }>(GET_CHECKOUT_LINK, {
-        id: transactionId,
-      });
-      const checkoutUrl = linkRes.checkoutLink;
-      if (!checkoutUrl) throw new Error("TradeSafe did not return a checkout link");
-
-      toast({ title: "Redirecting to secure checkout", description: "Pay via TradeSafe to confirm your order." });
-      // Step 5 — Redirect
-      window.location.href = checkoutUrl;
-    } catch (checkoutError) {
-      setSubmitting(false);
-      toast({
-        title: "Could not start payment",
-        description: checkoutError instanceof Error ? checkoutError.message : "Please try again.",
-        variant: "destructive",
-      });
-    }
+    // Payment gateway integration is being rebuilt — for now, the order is
+    // submitted directly and the customer is taken to its detail page.
+    toast({
+      title: "Order placed",
+      description: "Your provider will review it shortly.",
+    });
+    setSubmitting(false);
+    window.location.href = `/customer/orders/${order.id}`;
   };
+
 
   if (!businessId) {
     return (

@@ -1,12 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import {
-  CREATE_BUYER_TOKEN,
-  CREATE_TRANSACTION,
-  GET_CHECKOUT_LINK,
-  TRADESAFE_SELLER_TOKEN,
-  tradeSafeQuery,
-} from "@/lib/tradesafe";
 
 export type Business = Database["public"]["Tables"]["businesses"]["Row"];
 export type Service = Database["public"]["Tables"]["services"]["Row"];
@@ -134,67 +127,9 @@ export const fetchOrderPayment = async (orderId: string) => {
   return data;
 };
 
-export const startTradeSafeCheckout = async (orderId: string) => {
-  // Run the full TradeSafe checkout sequence directly from the client via the
-  // tradesafe-proxy edge function. No separate create-checkout function is used.
-  const { data: order, error: orderErr } = await supabase
-    .from("orders")
-    .select("id, total, notes, customer_id, business_id, services(title), businesses(name)")
-    .eq("id", orderId)
-    .maybeSingle();
-  if (orderErr) throw orderErr;
-  if (!order) throw new Error("Order not found");
+// Payment checkout removed — TradeSafe has been disconnected and a new
+// payment gateway (Paystack) will be wired up in a follow-up change.
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, email, phone")
-    .eq("id", order.customer_id)
-    .maybeSingle();
-
-  const fullName = (profile?.full_name ?? "Customer").trim();
-  const nameParts = fullName.split(/\s+/);
-  const givenName = nameParts[0] || "Customer";
-  const familyName = nameParts.slice(1).join(" ") || givenName;
-  const email = profile?.email ?? "";
-  const mobile = profile?.phone ?? "";
-
-  // Step 1 — Create buyer token
-  const buyerRes = await tradeSafeQuery<{ tokenCreate: { id: string } }>(CREATE_BUYER_TOKEN, {
-    givenName,
-    familyName,
-    email,
-    mobile,
-  });
-  const buyerToken = buyerRes.tokenCreate.id;
-
-  // Step 2 — Hardcoded verified seller token
-  const sellerToken = TRADESAFE_SELLER_TOKEN;
-
-  // Step 3 — Create transaction
-  const serviceTitle = (order as unknown as { services?: { title?: string } | null }).services?.title;
-  const businessName = (order as unknown as { businesses?: { name?: string } | null }).businesses?.name;
-  const title = serviceTitle ?? "Order";
-  const description = order.notes?.trim() || `Order from ${businessName ?? "provider"}`;
-  const txRes = await tradeSafeQuery<{ transactionCreate: { id: string } }>(CREATE_TRANSACTION, {
-    title,
-    description,
-    industry: "GENERAL_GOODS_SERVICES",
-    value: Number(order.total),
-    buyerToken,
-    sellerToken,
-  });
-  const transactionId = txRes.transactionCreate.id;
-
-  await supabase.from("orders").update({ tradesafe_transaction_id: transactionId }).eq("id", orderId);
-
-  // Step 4 — Get checkout link
-  const linkRes = await tradeSafeQuery<{ checkoutLink: string }>(GET_CHECKOUT_LINK, {
-    id: transactionId,
-  });
-  const checkoutUrl = linkRes.checkoutLink;
-  if (!checkoutUrl) throw new Error("TradeSafe did not return a checkout link");
-  return checkoutUrl;
-};
 
 export const fetchOrderEvents = async (orderId: string) => {
   const { data, error } = await supabase.from("order_events").select("*").eq("order_id", orderId).order("created_at");

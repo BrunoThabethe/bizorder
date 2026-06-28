@@ -19,7 +19,7 @@ import {
   fetchOrderMessages,
   fetchOrderPayment,
   formatPrice,
-  startTradeSafeCheckout,
+  
   DISPUTE_STATUS_LABEL,
   DISPUTE_STATUS_TONE,
   STATUS_LABEL,
@@ -115,31 +115,15 @@ const OrderDetailPage = () => {
     mutationFn: async () => {
       if (!user) throw new Error("Not signed in");
       await customerConfirmCompletion(orderId);
-      // Best-effort release of escrowed funds via TradeSafe. Failure here
-      // doesn't block the confirmation — the webhook / admin can retry.
-      try {
-        await supabase.functions.invoke("tradesafe-release", { body: { order_id: orderId } });
-      } catch {
-        // ignore — admin tools / webhook will reconcile
-      }
     },
     onSuccess: () => {
-      toast({ title: "Approved", description: "Thanks — payout is being released. Leave a review below." });
+      toast({ title: "Approved", description: "Thanks — leave a review below." });
       qc.invalidateQueries({ queryKey: ["order", orderId] });
       qc.invalidateQueries({ queryKey: ["order-events", orderId] });
     },
     onError: (e) => toast({ title: "Could not approve", description: (e as Error).message, variant: "destructive" }),
   });
 
-  const retryPayment = useMutation({
-    mutationFn: () => startTradeSafeCheckout(orderId),
-    onSuccess: (checkoutUrl) => window.location.assign(checkoutUrl),
-    onError: (error: Error) => toast({
-      title: "Could not start payment",
-      description: error.message,
-      variant: "destructive",
-    }),
-  });
 
   const submitReview = useMutation({
     mutationFn: async () => {
@@ -237,12 +221,6 @@ const OrderDetailPage = () => {
         ) : null}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {status === "awaiting_payment" ? (
-            <Button size="lg" onClick={() => retryPayment.mutate()} disabled={retryPayment.isPending}>
-              {retryPayment.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              Pay securely with TradeSafe
-            </Button>
-          ) : null}
           <Button asChild size="lg" variant="secondary">
             <Link to={`/customer/messages?order=${order.id}`}>
               <MessageSquare className="h-4 w-4" /> Message provider
@@ -346,7 +324,7 @@ const OrderDetailPage = () => {
               <dl className="mt-3 space-y-2 text-sm">
                 <Row label="Service">{order.services?.title ?? "—"}</Row>
                 <Row label="Total">{formatPrice(Number(order.total), order.currency)}</Row>
-                <Row label="Payment">{payment?.status === "funded" || payment?.status === "released" ? "Paid via TradeSafe" : "Awaiting payment"}</Row>
+                <Row label="Payment">{payment?.status === "funded" || payment?.status === "released" ? "Paid" : "Awaiting payment"}</Row>
                 {order.scheduled_for && (
                   <Row label="Scheduled">{new Date(order.scheduled_for).toLocaleString("en-GB")}</Row>
                 )}

@@ -1,47 +1,23 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, ShieldCheck, AlertCircle } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { EmailChangeCard } from "@/components/settings/EmailChangeCard";
 import { fetchSystemSettings, logAdminAction, upsertSystemSetting } from "@/lib/admin/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { tradeSafeQuery, GET_MY_TOKEN } from "@/lib/tradesafe";
-
-type TestResult =
-  | { type: "success"; orgName: string }
-  | { type: "error"; message: string }
-  | null;
 
 const AdminSettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ key: "", value: "{}", description: "" });
-  const [testResult, setTestResult] = useState<TestResult>(null);
-  const [testLoading, setTestLoading] = useState(false);
   const { data, isLoading } = useQuery({ queryKey: ["admin", "system-settings"], queryFn: fetchSystemSettings });
-
-  const handleTestTradeSafe = async () => {
-    setTestLoading(true);
-    setTestResult(null);
-    try {
-      const data = await tradeSafeQuery<{ apiProfile: { name: string; token: string } }>(GET_MY_TOKEN, {});
-      const orgName = data.apiProfile?.name ?? "Unknown organization";
-      setTestResult({ type: "success", orgName });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setTestResult({ type: "error", message });
-    } finally {
-      setTestLoading(false);
-    }
-  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -71,33 +47,6 @@ const AdminSettingsPage = () => {
           <p className="mt-1 text-sm text-muted-foreground">Platform-wide flags and configuration values.</p>
         </div>
 
-        <Card className="rounded-3xl border-0 shadow-card">
-          <CardContent className="space-y-4 p-5">
-            <h2 className="font-display text-lg font-bold">TradeSafe connection</h2>
-            <Button
-              onClick={handleTestTradeSafe}
-              disabled={testLoading}
-              className="w-full sm:w-auto"
-            >
-              {testLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-              Test TradeSafe connection
-            </Button>
-            {testResult?.type === "success" && (
-              <Alert variant="success" className="rounded-xl border-success/30 bg-success/10">
-                <ShieldCheck className="h-4 w-4" />
-                <AlertTitle>Connected</AlertTitle>
-                <AlertDescription>{testResult.orgName}</AlertDescription>
-              </Alert>
-            )}
-            {testResult?.type === "error" && (
-              <Alert variant="destructive" className="rounded-xl">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Connection failed</AlertTitle>
-                <AlertDescription>{testResult.message}</AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
 
         <EmailChangeCard currentEmail={user?.email ?? null} />
         <Card className="rounded-3xl border-0 shadow-card">
