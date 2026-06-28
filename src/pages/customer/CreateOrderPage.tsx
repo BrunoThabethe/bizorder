@@ -25,13 +25,6 @@ import {
   type Service,
 } from "@/lib/customer/queries";
 import {
-  CREATE_BUYER_TOKEN,
-  CREATE_TRANSACTION,
-  GET_CHECKOUT_LINK,
-  TRADESAFE_SELLER_TOKEN,
-  tradeSafeQuery,
-} from "@/lib/tradesafe";
-import {
   AVAILABILITY_LABEL,
   fetchBusinessHours,
   fetchBusinessSettings,
