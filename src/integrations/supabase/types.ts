@@ -404,6 +404,7 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_id: string
+          paystack_subaccount_code: string | null
           phone: string | null
           rating_avg: number
           rating_count: number
@@ -431,6 +432,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_id: string
+          paystack_subaccount_code?: string | null
           phone?: string | null
           rating_avg?: number
           rating_count?: number
@@ -458,6 +460,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_id?: string
+          paystack_subaccount_code?: string | null
           phone?: string | null
           rating_avg?: number
           rating_count?: number
@@ -688,6 +691,63 @@ export type Database = {
         }
         Relationships: []
       }
+      order_adjustments: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          order_id: string
+          paid_at: string | null
+          paystack_reference: string | null
+          reason: string
+          status: Database["public"]["Enums"]["adjustment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          order_id: string
+          paid_at?: string | null
+          paystack_reference?: string | null
+          reason: string
+          status?: Database["public"]["Enums"]["adjustment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          order_id?: string
+          paid_at?: string | null
+          paystack_reference?: string | null
+          reason?: string
+          status?: Database["public"]["Enums"]["adjustment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_adjustments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_adjustments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_events: {
         Row: {
           actor_id: string | null
@@ -881,8 +941,10 @@ export type Database = {
           rejected_reason: string | null
           scheduled_for: string | null
           service_id: string | null
+          source_quote_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           total: number
+          total_adjustments_amount: number
           updated_at: string
         }
         Insert: {
@@ -902,8 +964,10 @@ export type Database = {
           rejected_reason?: string | null
           scheduled_for?: string | null
           service_id?: string | null
+          source_quote_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
+          total_adjustments_amount?: number
           updated_at?: string
         }
         Update: {
@@ -923,8 +987,10 @@ export type Database = {
           rejected_reason?: string | null
           scheduled_for?: string | null
           service_id?: string | null
+          source_quote_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
+          total_adjustments_amount?: number
           updated_at?: string
         }
         Relationships: [
@@ -947,6 +1013,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_source_quote_fk"
+            columns: ["source_quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
@@ -1104,6 +1177,73 @@ export type Database = {
         }
         Relationships: []
       }
+      quotes: {
+        Row: {
+          answers: Json
+          business_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          message: string | null
+          order_id: string | null
+          paystack_reference: string | null
+          quoted_price: number | null
+          service_id: string
+          status: Database["public"]["Enums"]["quote_status"]
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          business_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          message?: string | null
+          order_id?: string | null
+          paystack_reference?: string | null
+          quoted_price?: number | null
+          service_id: string
+          status?: Database["public"]["Enums"]["quote_status"]
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          business_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          message?: string | null
+          order_id?: string | null
+          paystack_reference?: string | null
+          quoted_price?: number | null
+          service_id?: string
+          status?: Database["public"]["Enums"]["quote_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           business_id: string
@@ -1152,6 +1292,47 @@ export type Database = {
           },
         ]
       }
+      service_tiers: {
+        Row: {
+          created_at: string
+          duration_hours: number | null
+          id: string
+          label: string
+          price: number
+          service_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_hours?: number | null
+          id?: string
+          label: string
+          price: number
+          service_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_hours?: number | null
+          id?: string
+          label?: string
+          price?: number
+          service_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_tiers_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           business_id: string
@@ -1162,6 +1343,7 @@ export type Database = {
           delivery_price_per_km: number
           description: string | null
           duration_minutes: number | null
+          hourly_rate: number | null
           id: string
           image_url: string | null
           images: string[]
@@ -1170,6 +1352,8 @@ export type Database = {
           price: number
           price_max: number | null
           price_min: number | null
+          quote_questions: Json
+          service_type: Database["public"]["Enums"]["service_type"]
           title: string
           updated_at: string
         }
@@ -1182,6 +1366,7 @@ export type Database = {
           delivery_price_per_km?: number
           description?: string | null
           duration_minutes?: number | null
+          hourly_rate?: number | null
           id?: string
           image_url?: string | null
           images?: string[]
@@ -1190,6 +1375,8 @@ export type Database = {
           price?: number
           price_max?: number | null
           price_min?: number | null
+          quote_questions?: Json
+          service_type?: Database["public"]["Enums"]["service_type"]
           title: string
           updated_at?: string
         }
@@ -1202,6 +1389,7 @@ export type Database = {
           delivery_price_per_km?: number
           description?: string | null
           duration_minutes?: number | null
+          hourly_rate?: number | null
           id?: string
           image_url?: string | null
           images?: string[]
@@ -1210,6 +1398,8 @@ export type Database = {
           price?: number
           price_max?: number | null
           price_min?: number | null
+          quote_questions?: Json
+          service_type?: Database["public"]["Enums"]["service_type"]
           title?: string
           updated_at?: string
         }
@@ -1546,6 +1736,7 @@ export type Database = {
       }
     }
     Enums: {
+      adjustment_status: "pending" | "paid" | "cancelled"
       app_role: "customer" | "business" | "admin" | "crew"
       order_status:
         | "awaiting_payment"
@@ -1557,6 +1748,8 @@ export type Database = {
         | "cancelled"
         | "out_for_delivery"
         | "ready_for_review"
+      quote_status: "pending" | "quoted" | "paid" | "cancelled" | "expired"
+      service_type: "fixed" | "tiered" | "quote_based" | "hourly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1684,6 +1877,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      adjustment_status: ["pending", "paid", "cancelled"],
       app_role: ["customer", "business", "admin", "crew"],
       order_status: [
         "awaiting_payment",
@@ -1696,6 +1890,8 @@ export const Constants = {
         "out_for_delivery",
         "ready_for_review",
       ],
+      quote_status: ["pending", "quoted", "paid", "cancelled", "expired"],
+      service_type: ["fixed", "tiered", "quote_based", "hourly"],
     },
   },
 } as const
