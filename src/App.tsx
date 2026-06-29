@@ -71,6 +71,11 @@ import AdminNewsletterPage from "./pages/admin/AdminNewsletterPage.tsx";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage.tsx";
 import AdminAuditPage from "./pages/admin/AdminAuditPage.tsx";
 import AdminProfileChangeRequestsPage from "./pages/admin/AdminProfileChangeRequestsPage.tsx";
+import BusinessQuotesPage from "./pages/business/BusinessQuotesPage.tsx";
+import CustomerQuotesPage from "./pages/customer/CustomerQuotesPage.tsx";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage.tsx";
+import PaymentErrorPage from "./pages/PaymentErrorPage.tsx";
+
 
 const queryClient = createQueryClient();
 
@@ -98,6 +103,9 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/refunds" element={<RefundPage />} />
             <Route path="/rules" element={<PlatformRulesPage />} />
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
+            <Route path="/payment/error" element={<PaymentErrorPage />} />
+
 
 
             {/* Customer portal */}
@@ -117,9 +125,13 @@ const App = () => (
             <Route path="/customer/notifications" element={<RoleGuard allow={["customer"]}><NotificationsPage /></RoleGuard>} />
             <Route path="/customer/reviews" element={<RoleGuard allow={["customer"]}><ReviewsPage /></RoleGuard>} />
             <Route path="/customer/settings" element={<RoleGuard allow={["customer"]}><SettingsPage /></RoleGuard>} />
+            <Route path="/customer/quotes" element={<RoleGuard allow={["customer"]}><CustomerQuotesPage /></RoleGuard>} />
+
 
             {/* Provider portal */}
             <Route path="/business" element={<RoleGuard allow={["business"]}><BusinessDashboardPage /></RoleGuard>} />
+            <Route path="/business/quotes" element={<RoleGuard allow={["business"]}><BusinessQuotesPage /></RoleGuard>} />
+
             <Route path="/business/orders" element={<RoleGuard allow={["business"]}><OrdersQueuePage /></RoleGuard>} />
             <Route path="/business/orders/:orderId" element={<RoleGuard allow={["business"]}><BusinessOrderDetailPage /></RoleGuard>} />
             <Route path="/business/services" element={<RoleGuard allow={["business"]}><ServicesManagerPage /></RoleGuard>} />

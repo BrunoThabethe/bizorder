@@ -29,9 +29,19 @@ import {
 } from "@/lib/business/queries";
 import { DeliveryOptionsEditor } from "@/components/business/DeliveryOptionsEditor";
 import type { DeliveryOption } from "@/lib/delivery/catalog";
+import {
+  fetchServiceTiers,
+  replaceServiceTiers,
+  type ServiceTier,
+} from "@/lib/business/quotes-adjustments";
 
 type CatalogKind = "service" | "product";
 type PriceMode = "fixed" | "range";
+type ServiceTypeValue = "fixed" | "tiered" | "quote_based" | "hourly";
+
+type TierDraft = { label: string; price: string; duration_hours: string };
+type QuestionDraft = { question: string };
+
 
 const MAX_IMAGES = 3;
 
@@ -42,21 +52,29 @@ type ServiceExtra = {
   price_max?: number | null;
   delivery_available?: boolean | null;
   delivery_options?: DeliveryOption[] | null;
+  service_type?: ServiceTypeValue | null;
+  hourly_rate?: number | null;
+  quote_questions?: Array<{ question: string }> | null;
 };
 
 const emptyForm = {
   kind: "service" as CatalogKind,
+  serviceType: "fixed" as ServiceTypeValue,
   priceMode: "fixed" as PriceMode,
   title: "",
   price: "",
   priceMin: "",
   priceMax: "",
+  hourlyRate: "",
   duration: "",
   description: "",
   images: [] as string[],
   deliveryAvailable: false,
   deliveryOptions: [] as DeliveryOption[],
+  tiers: [] as TierDraft[],
+  questions: [] as QuestionDraft[],
 };
+
 
 const ServicesManagerPage = () => {
   const { user } = useAuth();
@@ -85,30 +103,52 @@ const ServicesManagerPage = () => {
     setEditingId(null);
   };
 
-  const loadIntoForm = (s: Service) => {
+  const loadIntoForm = async (s: Service) => {
     const extra = s as unknown as ServiceExtra;
     const kind = (extra.kind ?? "service") as CatalogKind;
+    const stype = (extra.service_type ?? "fixed") as ServiceTypeValue;
     const hasRange =
       extra.price_min !== null && extra.price_min !== undefined &&
       extra.price_max !== null && extra.price_max !== undefined;
     const imgs = Array.isArray(extra.images) ? extra.images.filter(Boolean) : [];
     if (imgs.length === 0 && s.image_url) imgs.push(s.image_url);
+    let tiers: TierDraft[] = [];
+    if (stype === "tiered" || stype === "hourly") {
+      try {
+        const dbTiers = await fetchServiceTiers(s.id);
+        tiers = dbTiers.map((t: ServiceTier) => ({
+          label: t.label,
+          price: String(t.price ?? ""),
+          duration_hours: t.duration_hours != null ? String(t.duration_hours) : "",
+        }));
+      } catch {
+        tiers = [];
+      }
+    }
+    const questions: QuestionDraft[] = Array.isArray(extra.quote_questions)
+      ? extra.quote_questions.map((q) => ({ question: q.question ?? "" }))
+      : [];
     setEditingId(s.id);
     setForm({
       kind,
+      serviceType: stype,
       priceMode: hasRange ? "range" : "fixed",
       title: s.title,
       price: hasRange ? "" : String(s.price ?? ""),
       priceMin: hasRange ? String(extra.price_min ?? "") : "",
       priceMax: hasRange ? String(extra.price_max ?? "") : "",
+      hourlyRate: extra.hourly_rate != null ? String(extra.hourly_rate) : "",
       duration: s.duration_minutes ? String(s.duration_minutes) : "",
       description: s.description ?? "",
       images: imgs.slice(0, MAX_IMAGES),
       deliveryAvailable: !!extra.delivery_available,
       deliveryOptions: Array.isArray(extra.delivery_options) ? extra.delivery_options : [],
+      tiers,
+      questions,
     });
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
 
   const onUploadImage = async (file: File) => {
     if (!business) {
@@ -140,22 +180,57 @@ const ServicesManagerPage = () => {
       if (form.kind === "product" && form.images.length === 0) {
         throw new Error("Add at least one product photo.");
       }
+      const stype: ServiceTypeValue = form.kind === "product" ? "fixed" : form.serviceType;
       const isRange = form.priceMode === "range";
       const minVal = isRange ? Number(form.priceMin) : null;
       const maxVal = isRange ? Number(form.priceMax) : null;
-      if (isRange) {
-        if (!form.priceMin || !form.priceMax) throw new Error("Add both a minimum and maximum price.");
-        if ((minVal ?? 0) < 0 || (maxVal ?? 0) < 0) throw new Error("Prices must be zero or more.");
-        if ((minVal ?? 0) > (maxVal ?? 0)) throw new Error("Minimum price must be lower than the maximum.");
-      } else if (!form.price) {
-        throw new Error("Add a price.");
+
+      // Validation per service type
+      if (stype === "fixed") {
+        if (isRange) {
+          if (!form.priceMin || !form.priceMax) throw new Error("Add both a minimum and maximum price.");
+          if ((minVal ?? 0) < 0 || (maxVal ?? 0) < 0) throw new Error("Prices must be zero or more.");
+          if ((minVal ?? 0) > (maxVal ?? 0)) throw new Error("Minimum price must be lower than the maximum.");
+        } else if (!form.price) {
+          throw new Error("Add a price.");
+        }
+      } else if (stype === "tiered" || stype === "hourly") {
+        if (form.tiers.length === 0) throw new Error("Add at least one tier.");
+        for (const t of form.tiers) {
+          if (!t.label.trim()) throw new Error("Each tier needs a label.");
+          if (!t.price || Number(t.price) < 0) throw new Error("Each tier needs a valid price.");
+          if (stype === "hourly" && (!t.duration_hours || Number(t.duration_hours) <= 0)) {
+            throw new Error("Each hourly tier needs a duration in hours.");
+          }
+        }
+        if (stype === "hourly" && (!form.hourlyRate || Number(form.hourlyRate) <= 0)) {
+          throw new Error("Set an hourly rate.");
+        }
+      } else if (stype === "quote_based") {
+        if (form.questions.length === 0 || form.questions.some((q) => !q.question.trim())) {
+          throw new Error("Add at least one quote question.");
+        }
       }
+
       const primaryImage = form.images[0] ?? null;
+      // For non-fixed services, anchor price to the lowest tier (or 0 for quote-based)
+      const tierPrices = form.tiers.map((t) => Number(t.price) || 0);
+      const anchorPrice =
+        stype === "fixed"
+          ? isRange
+            ? (minVal ?? 0)
+            : Number(form.price) || 0
+          : stype === "quote_based"
+            ? 0
+            : tierPrices.length
+              ? Math.min(...tierPrices)
+              : 0;
+
       const row = {
         business_id: business.id,
         title: form.title,
         description: form.description || null,
-        price: isRange ? (minVal ?? 0) : Number(form.price) || 0,
+        price: anchorPrice,
         duration_minutes: form.kind === "service" && form.duration ? Number(form.duration) : null,
         image_url: primaryImage,
         is_active: true,
@@ -165,16 +240,40 @@ const ServicesManagerPage = () => {
           delivery_available: form.kind === "product" ? form.deliveryOptions.length > 0 : form.deliveryAvailable,
           delivery_price_per_km: 0,
           delivery_options: form.kind === "product" ? form.deliveryOptions : [],
-          price_min: isRange ? minVal : null,
-          price_max: isRange ? maxVal : null,
+          price_min: stype === "fixed" && isRange ? minVal : null,
+          price_max: stype === "fixed" && isRange ? maxVal : null,
+          service_type: stype,
+          hourly_rate: stype === "hourly" ? Number(form.hourlyRate) || null : null,
+          quote_questions: stype === "quote_based"
+            ? form.questions.map((q) => ({ question: q.question.trim() }))
+            : [],
         } as Record<string, unknown>),
       };
+
+      let serviceId = editingId;
       if (editingId) {
         const { error } = await supabase.from("services").update(row).eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("services").insert(row);
+        const { data, error } = await supabase.from("services").insert(row).select("id").single();
         if (error) throw error;
+        serviceId = data.id;
+      }
+
+      // Sync tiers
+      if (serviceId) {
+        if (stype === "tiered" || stype === "hourly") {
+          await replaceServiceTiers(
+            serviceId,
+            form.tiers.map((t) => ({
+              label: t.label.trim(),
+              price: Number(t.price) || 0,
+              duration_hours: stype === "hourly" ? Number(t.duration_hours) || null : null,
+            })),
+          );
+        } else {
+          await replaceServiceTiers(serviceId, []);
+        }
       }
     },
     onSuccess: () => {
@@ -185,6 +284,7 @@ const ServicesManagerPage = () => {
     },
     onError: (e: Error) => toast({ title: "Could not save", description: e.message, variant: "destructive" }),
   });
+
 
   const toggle = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
@@ -213,8 +313,13 @@ const ServicesManagerPage = () => {
 
   const canSubmit =
     !!form.title &&
-    (form.priceMode === "fixed" ? !!form.price : !!form.priceMin && !!form.priceMax) &&
+    (form.kind === "product" || form.serviceType === "fixed"
+      ? form.priceMode === "fixed" ? !!form.price : !!form.priceMin && !!form.priceMax
+      : form.serviceType === "quote_based"
+        ? form.questions.length > 0
+        : form.tiers.length > 0) &&
     !save.isPending;
+
 
   return (
     <BusinessLayout>
@@ -250,6 +355,26 @@ const ServicesManagerPage = () => {
               </Select>
             </div>
 
+            {form.kind === "service" && (
+              <div className="space-y-2">
+                <Label htmlFor="serviceType">Service pricing model</Label>
+                <Select
+                  value={form.serviceType}
+                  onValueChange={(v) => setForm((f) => ({ ...f, serviceType: v as ServiceTypeValue }))}
+                >
+                  <SelectTrigger id="serviceType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Fixed price</SelectItem>
+                    <SelectItem value="tiered">Tiered (sub-services)</SelectItem>
+                    <SelectItem value="hourly">Hourly (time blocks)</SelectItem>
+                    <SelectItem value="quote_based">Quote-based</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="title">{form.kind === "product" ? "Product name" : "Service name"}</Label>
               <Input
@@ -260,74 +385,222 @@ const ServicesManagerPage = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="priceMode">Price type</Label>
-              <Select
-                value={form.priceMode}
-                onValueChange={(v) => setForm((f) => ({ ...f, priceMode: v as PriceMode }))}
-              >
-                <SelectTrigger id="priceMode">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed">Fixed price</SelectItem>
-                  <SelectItem value="range">Price range (from – to)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                Use a range when the final price depends on the job (e.g. R350 – R600).
-              </p>
-            </div>
+            {(form.kind === "product" || form.serviceType === "fixed") && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="priceMode">Price type</Label>
+                  <Select
+                    value={form.priceMode}
+                    onValueChange={(v) => setForm((f) => ({ ...f, priceMode: v as PriceMode }))}
+                  >
+                    <SelectTrigger id="priceMode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">Fixed price</SelectItem>
+                      <SelectItem value="range">Price range (from – to)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {form.priceMode === "fixed" ? (
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price (ZAR)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    min={0}
-                    value={form.price}
-                    onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  {form.priceMode === "fixed" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="price">Price (ZAR)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        min={0}
+                        value={form.price}
+                        onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="priceMin">From (ZAR)</Label>
+                        <Input
+                          id="priceMin"
+                          type="number"
+                          min={0}
+                          value={form.priceMin}
+                          onChange={(e) => setForm((f) => ({ ...f, priceMin: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="priceMax">To (ZAR)</Label>
+                        <Input
+                          id="priceMax"
+                          type="number"
+                          min={0}
+                          value={form.priceMax}
+                          onChange={(e) => setForm((f) => ({ ...f, priceMax: e.target.value }))}
+                        />
+                      </div>
+                    </>
+                  )}
+                  {form.kind === "service" && form.priceMode === "fixed" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="duration">Duration (min)</Label>
+                      <Input
+                        id="duration"
+                        type="number"
+                        min={0}
+                        value={form.duration}
+                        onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+                      />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="priceMin">From (ZAR)</Label>
-                    <Input
-                      id="priceMin"
-                      type="number"
-                      min={0}
-                      value={form.priceMin}
-                      onChange={(e) => setForm((f) => ({ ...f, priceMin: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="priceMax">To (ZAR)</Label>
-                    <Input
-                      id="priceMax"
-                      type="number"
-                      min={0}
-                      value={form.priceMax}
-                      onChange={(e) => setForm((f) => ({ ...f, priceMax: e.target.value }))}
-                    />
-                  </div>
-                </>
-              )}
-              {form.kind === "service" && form.priceMode === "fixed" && (
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (min)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    min={0}
-                    value={form.duration}
-                    onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
-                  />
+              </>
+            )}
+
+            {form.kind === "service" && form.serviceType === "hourly" && (
+              <div className="space-y-2">
+                <Label htmlFor="hourlyRate">Hourly rate (ZAR)</Label>
+                <Input
+                  id="hourlyRate"
+                  type="number"
+                  min={0}
+                  value={form.hourlyRate}
+                  onChange={(e) => setForm((f) => ({ ...f, hourlyRate: e.target.value }))}
+                />
+                <p className="text-[11px] text-muted-foreground">Reference only — customers pay the tier block price below.</p>
+              </div>
+            )}
+
+            {form.kind === "service" && (form.serviceType === "tiered" || form.serviceType === "hourly") && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>{form.serviceType === "hourly" ? "Time-block tiers" : "Sub-service tiers"}</Label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      setForm((f) => ({
+                        ...f,
+                        tiers: [...f.tiers, { label: "", price: "", duration_hours: "" }],
+                      }))
+                    }
+                  >
+                    + Add tier
+                  </Button>
                 </div>
-              )}
-            </div>
+                <div className="space-y-2">
+                  {form.tiers.map((t, idx) => (
+                    <div key={idx} className="grid grid-cols-12 gap-2 rounded-xl border border-border p-2">
+                      <Input
+                        className="col-span-5"
+                        placeholder="Label (e.g. 2 hours)"
+                        value={t.label}
+                        onChange={(e) =>
+                          setForm((f) => {
+                            const next = [...f.tiers];
+                            next[idx] = { ...next[idx], label: e.target.value };
+                            return { ...f, tiers: next };
+                          })
+                        }
+                      />
+                      {form.serviceType === "hourly" && (
+                        <Input
+                          className="col-span-3"
+                          type="number"
+                          min={0}
+                          step="0.5"
+                          placeholder="Hours"
+                          value={t.duration_hours}
+                          onChange={(e) =>
+                            setForm((f) => {
+                              const next = [...f.tiers];
+                              next[idx] = { ...next[idx], duration_hours: e.target.value };
+                              return { ...f, tiers: next };
+                            })
+                          }
+                        />
+                      )}
+                      <Input
+                        className={form.serviceType === "hourly" ? "col-span-3" : "col-span-6"}
+                        type="number"
+                        min={0}
+                        placeholder="Price (ZAR)"
+                        value={t.price}
+                        onChange={(e) =>
+                          setForm((f) => {
+                            const next = [...f.tiers];
+                            next[idx] = { ...next[idx], price: e.target.value };
+                            return { ...f, tiers: next };
+                          })
+                        }
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="col-span-1"
+                        onClick={() =>
+                          setForm((f) => ({ ...f, tiers: f.tiers.filter((_, i) => i !== idx) }))
+                        }
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                  {form.tiers.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No tiers yet. Add at least one.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {form.kind === "service" && form.serviceType === "quote_based" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Quote questions</Label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      setForm((f) => ({ ...f, questions: [...f.questions, { question: "" }] }))
+                    }
+                  >
+                    + Add question
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {form.questions.map((q, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <Input
+                        placeholder={`Question ${idx + 1}`}
+                        value={q.question}
+                        onChange={(e) =>
+                          setForm((f) => {
+                            const next = [...f.questions];
+                            next[idx] = { question: e.target.value };
+                            return { ...f, questions: next };
+                          })
+                        }
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setForm((f) => ({ ...f, questions: f.questions.filter((_, i) => i !== idx) }))
+                        }
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                  {form.questions.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Add the questions customers must answer to request a quote.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
 
             {form.kind === "service" && form.priceMode === "range" && (
               <div className="space-y-2">

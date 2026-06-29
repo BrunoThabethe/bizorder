@@ -4,6 +4,7 @@ import {
   Bell,
   Briefcase,
   CalendarClock,
+  FileText,
   Home,
   Inbox,
   LogOut,
@@ -16,6 +17,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -31,8 +33,10 @@ type Props = { children: ReactNode };
 const navItems = [
   { to: "/business", label: "Dashboard", icon: Home, end: true },
   { to: "/business/orders", label: "Orders", icon: Inbox },
+  { to: "/business/quotes", label: "Quotes", icon: FileText },
   { to: "/business/messages", label: "Messages", icon: MessageSquare },
   { to: "/business/services", label: "Services", icon: Briefcase },
+
   { to: "/business/availability", label: "Availability", icon: CalendarClock },
   { to: "/business/crew", label: "Crew", icon: Users },
   { to: "/business/reviews", label: "Reviews", icon: Star },
