@@ -313,8 +313,13 @@ const ServicesManagerPage = () => {
 
   const canSubmit =
     !!form.title &&
-    (form.priceMode === "fixed" ? !!form.price : !!form.priceMin && !!form.priceMax) &&
+    (form.kind === "product" || form.serviceType === "fixed"
+      ? form.priceMode === "fixed" ? !!form.price : !!form.priceMin && !!form.priceMax
+      : form.serviceType === "quote_based"
+        ? form.questions.length > 0
+        : form.tiers.length > 0) &&
     !save.isPending;
+
 
   return (
     <BusinessLayout>
