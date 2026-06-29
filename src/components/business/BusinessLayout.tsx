@@ -4,6 +4,7 @@ import {
   Bell,
   Briefcase,
   CalendarClock,
+  FileText,
   Home,
   Inbox,
   LogOut,
@@ -16,6 +17,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
