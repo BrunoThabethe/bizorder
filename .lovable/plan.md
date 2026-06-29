@@ -1,87 +1,75 @@
-## Goal
+# Service Types, Quotes & Adjustments + Paystack Splits
 
-Let businesses set delivery options per product from a fixed list of trusted couriers (with preset prices) or their own self-delivery rate. At checkout, customers pick one of the enabled options (pick up or delivary with the fixed price selected by the business) and the fee is added to the order total.
+This is a large refactor across DB, business portal, customer portal, admin portal, and a new Paystack edge function layer. I'll ship it in 4 phases so each one is reviewable and the app stays working between phases.
 
-## Couriers & preset pricing (manual fulfilment — no API)
+## Phase 1 — Database schema
 
-Stored as a hardcoded catalog in `src/lib/delivery/catalog.ts` so prices are easy to update later.
+One migration that adds everything needed up front so later phases just consume it.
 
-**Pep Paxi**
+**New tables**
+- `service_tiers` — `id`, `service_id` (fk → services, cascade), `label`, `price` numeric, `duration_hours` numeric null, `sort_order` int, timestamps. RLS: public read for tiers of published services; business owner CRUD.
+- `quotes` — `id`, `service_id`, `business_id`, `customer_id`, `answers` jsonb, `quoted_price` numeric null, `status` enum (`pending`, `quoted`, `paid`, `cancelled`, `expired`), `paystack_reference` null, `order_id` null, timestamps. RLS: customer sees own, business sees own, admin all.
+- `order_adjustments` — `id`, `order_id`, `business_id`, `customer_id`, `reason`, `amount` numeric, `paystack_reference` null, `status` enum (`pending`, `paid`, `cancelled`), `created_at`, `paid_at` null. RLS: parties + admin.
 
-- Standard Bag (≤5kg): R59.95 (7–9 days) · R109.95 (3–5 days)
-- Large Bag (≤10kg): R109.95 (7–9 days) · R139.95 (3–5 days)
-- Store-to-Home (3–5 days): higher rate (configurable per product)
+**Column additions**
+- `services`: `service_type` enum (`fixed`, `tiered`, `quote_based`, `hourly`) default `fixed`; `quote_questions` jsonb default `[]`; `hourly_rate` numeric null.
+- `businesses`: `paystack_subaccount_code` text null.
+- `orders`: `total_adjustments_amount` numeric default 0; `source_quote_id` uuid null (links order back to its quote when applicable).
 
-**Pudo**
+**Triggers / helpers**
+- Trigger on `order_adjustments` AFTER UPDATE → recompute `orders.total_adjustments_amount = sum(paid adjustments)`.
+- `has_role` / `is_business_owner` reused for policies.
+- All public tables get the required GRANT block (anon read only where needed).
 
-- L Locker-to-Door: R157
-- XL Locker-to-Door: R209
-- XL Kiosk-to-Door: R250
-- Door-to-Locker: R70–R100 (business sets exact amount)
+## Phase 2 — Paystack edge functions
 
-**The Courier Guy**
+Three Deno edge functions in `supabase/functions/`, using `PAYSTACK_SECRET_KEY` + `PAYSTACK_PLATFORM_COMMISSION_BPS` (basis points) from secrets.
 
-- National Overnight: R130 (≤2kg) + R45/extra kg
-- National Economy Road: R90 (0–5kg) · R150 (6–15kg) · R200 (16–25kg)
-- Local Overnight: from R105
-- Local Same-Day Express: from R755 (≤2kg)
-- International: from R310 (business confirms before dispatch)
+- `paystack-init` — body: `{ transaction_type: 'booking'|'quote_payment'|'adjustment', order_id?, quote_id?, adjustment_id?, tier_id? }`. Server resolves amount + business subaccount, builds Paystack `/transaction/initialize` call with `split` config + metadata `{ order_id, service_id, business_id, customer_id, service_type, transaction_type }`. Returns `authorization_url` + `reference`. Validates caller owns the resource. Rate limited (per user, in-memory + DB attempt log).
+- `paystack-webhook` — verifies `x-paystack-signature` HMAC-SHA512 against `PAYSTACK_SECRET_KEY`. On `charge.success`, reads `metadata.transaction_type` and:
+  - `booking` → mark order `pending` (paid), insert `order_payments`, notify business.
+  - `quote_payment` → mark quote `paid`, insert matching `orders` row (status `pending`), link `source_quote_id`.
+  - `adjustment` → mark adjustment `paid`, set `paid_at`, recompute order total.
+  - Always idempotent via `payment_webhook_events.reference` unique check.
+- `paystack-verify` — fallback called from success-redirect page to confirm a reference before showing success UI.
 
-**Self-delivery** — business toggles on and sets a flat fee + service area description.
+`supabase/config.toml` gets `verify_jwt = true` for init, `false` for webhook + verify.
 
-## Business portal — Product form (ServicesManagerPage)
+## Phase 3 — Business portal
 
-New "Delivery options" section appears only when `kind === "product"`.
+- **ServicesManagerPage**: new "Service type" selector at top of the create/edit dialog. Conditional sections:
+  - fixed → current price field.
+  - tiered → repeatable rows (label + price), saved to `service_tiers`.
+  - quote_based → question builder (add/remove/reorder text questions), saved to `services.quote_questions`.
+  - hourly → hourly rate field + repeatable time-block rows (label + hours + total price) → `service_tiers` with `duration_hours`.
+- **Quotes inbox** (`/business/quotes`): list pending quotes with customer, service, answers, price input, "Send Quote" → updates `quotes` to `quoted` with `quoted_price`, notifies customer.
+- **Order detail** (`BusinessOrderDetailPage`): when order is `accepted/in_progress/ready_for_review/completed`, show "Send adjustment request" form (reason + amount) → inserts `order_adjustments`, notifies customer. List of past adjustments with status.
+- **Settings**: small field to paste `paystack_subaccount_code` (until we automate subaccount creation).
 
-```text
-Delivery options
-[ Self-delivery toggle ]
-   └ Flat fee: R___    Service area: ____________________
+## Phase 4 — Customer portal + Admin
 
-Trusted couriers (tap to enable, then pick size + speed)
-[ Paxi ▾ ]    size: Standard / Large    speed: 7–9 days / 3–5 days   → auto-fills price (editable)
-[ Pudo ▾ ]   variant: L L2D / XL L2D / XL K2D / D2L   → auto-fills price
-[ Courier Guy ▾ ]   tier: Nat Overnight / Nat Economy / Local Overnight / Local Same-day / Intl   → auto-fills price (weight band picker for tiered options)
-```
+- **BusinessProfilePage / service card** routes by `service_type`:
+  - fixed → existing Book Now → calls `paystack-init` (booking).
+  - tiered → tier cards, select one → Book Now → `paystack-init` with `tier_id`.
+  - quote_based → "Request a quote" modal renders `quote_questions`, submit → insert `quotes` (pending).
+  - hourly → time-block tier cards → Book Session → `paystack-init` with `tier_id`.
+- **Customer Quotes page** (`/customer/quotes`): list quotes; when `quoted`, show "Pay Now" → `paystack-init` (quote_payment).
+- **OrderDetailPage**: card for each pending adjustment → "Pay Adjustment" → `paystack-init` (adjustment). Paid adjustments shown in history.
+- **Payment success/failure routes**: `/payment/success?reference=…` calls `paystack-verify`, then redirects to relevant detail page; `/payment/error` shows retry.
+- **Admin Orders** (`AdminOrdersPage` + detail): full transaction chain — original payment + each adjustment (business, customer, order id, reason, amount, ref, status, time) + totals (collected, commission). Filters: business, customer, service type, transaction type, date range. Nothing hidden.
 
-Each enabled option becomes a row `{ provider, label, price, eta }` saved on the product.
+## Technical notes
 
-## Database
+- All amounts stored in ZAR major units (numeric), sent to Paystack as kobo/cents (`* 100`) at init time.
+- Commission = `PAYSTACK_PLATFORM_COMMISSION_BPS` (e.g. `500` = 5%). Split: `subaccount = business.paystack_subaccount_code`, `bearer = subaccount`, `transaction_charge = amount * bps / 10000`.
+- Quote → order creation reuses existing `orders` insert path so dashboards, messaging, status stepper all work unchanged.
+- Adjustments never mutate `orders.total`; reporting reads `total + total_adjustments_amount`.
+- TS strict, no `any`; service-layer files under `src/lib/{business,customer,admin}/` for new queries; React Query for all reads; Zod validation in edge functions; existing rate-limit pattern reused for new endpoints.
+- I'll request `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`, and `PAYSTACK_PLATFORM_COMMISSION_BPS` via `add_secret` at the start of Phase 2.
 
-Single migration adds one JSONB column to `services`:
+## Out of scope (call out)
 
-- `delivery_options jsonb not null default '[]'::jsonb` — array of `{ id, provider: 'paxi'|'pudo'|'courier_guy'|'self', label, price, eta, area? }`
+- Automatic Paystack subaccount creation for businesses — handled manually via the settings field for now; can add an "onboard with Paystack" flow next.
+- Refund automation for adjustments — manual via Paystack dashboard until requested.
 
-Keep existing `delivery_available` boolean as a derived flag (true when array non-empty or self-delivery on).
-
-Add to `orders`:
-
-- `delivery_option jsonb` — the chosen `{ provider, label, price, eta }` snapshot at checkout.
-- `delivery_fee` (already exists) is set from the chosen option.
-
-Update `enforce_order_pricing` trigger so `total = service.price + COALESCE(delivery_fee, 0)` and `delivery_fee` must match one of the product's enabled options (or 0 for pickup).
-
-## Customer portal — CreateOrderPage
-
-Replace the current Pickup/Delivery toggle with:
-
-1. **Pickup / in-store** (free) — unchanged.
-2. **Delivery** — radio list of the product's enabled options, each showing provider logo, label, ETA, and price. Selecting one sets `delivery_fee` and updates the order summary total live.
-3. Address required when any delivery option is chosen.
-
-Order summary already shows a "Delivery" row — wire it to the chosen option's price.
-
-## Files to change
-
-- `src/lib/delivery/catalog.ts` *(new)* — courier catalog + helpers (`listProviders`, `priceFor`).
-- `src/pages/business/ServicesManagerPage.tsx` — add Delivery options editor for products, save `delivery_options` JSONB.
-- `src/lib/business/queries.ts` — extend `Service` type with `delivery_options`.
-- `src/pages/customer/CreateOrderPage.tsx` — replace fulfilment block with option picker, compute total inc. delivery.
-- `src/lib/customer/queries.ts` — include `delivery_option` and `delivery_fee` on order create.
-- `src/pages/customer/OrderDetailPage.tsx`, `src/pages/business/BusinessOrderDetailPage.tsx` — display chosen courier + fee.
-- Supabase migration — add `services.delivery_options`, `orders.delivery_option`, update `enforce_order_pricing`.
-
-## Out of scope (can follow later)
-
-- Live courier API quotes, waybill creation, tracking numbers.
-- Weight-based auto-pricing for Courier Guy beyond the band picker (business enters the band that fits the product).
+Approve and I'll start with the Phase 1 migration.
