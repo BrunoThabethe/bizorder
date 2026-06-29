@@ -130,6 +130,8 @@ const App = () => (
 
             {/* Provider portal */}
             <Route path="/business" element={<RoleGuard allow={["business"]}><BusinessDashboardPage /></RoleGuard>} />
+            <Route path="/business/quotes" element={<RoleGuard allow={["business"]}><BusinessQuotesPage /></RoleGuard>} />
+
             <Route path="/business/orders" element={<RoleGuard allow={["business"]}><OrdersQueuePage /></RoleGuard>} />
             <Route path="/business/orders/:orderId" element={<RoleGuard allow={["business"]}><BusinessOrderDetailPage /></RoleGuard>} />
             <Route path="/business/services" element={<RoleGuard allow={["business"]}><ServicesManagerPage /></RoleGuard>} />
