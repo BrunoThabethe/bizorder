@@ -29,9 +29,19 @@ import {
 } from "@/lib/business/queries";
 import { DeliveryOptionsEditor } from "@/components/business/DeliveryOptionsEditor";
 import type { DeliveryOption } from "@/lib/delivery/catalog";
+import {
+  fetchServiceTiers,
+  replaceServiceTiers,
+  type ServiceTier,
+} from "@/lib/business/quotes-adjustments";
 
 type CatalogKind = "service" | "product";
 type PriceMode = "fixed" | "range";
+type ServiceTypeValue = "fixed" | "tiered" | "quote_based" | "hourly";
+
+type TierDraft = { label: string; price: string; duration_hours: string };
+type QuestionDraft = { question: string };
+
 
 const MAX_IMAGES = 3;
 
