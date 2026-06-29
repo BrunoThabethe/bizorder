@@ -71,6 +71,11 @@ import AdminNewsletterPage from "./pages/admin/AdminNewsletterPage.tsx";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage.tsx";
 import AdminAuditPage from "./pages/admin/AdminAuditPage.tsx";
 import AdminProfileChangeRequestsPage from "./pages/admin/AdminProfileChangeRequestsPage.tsx";
+import BusinessQuotesPage from "./pages/business/BusinessQuotesPage.tsx";
+import CustomerQuotesPage from "./pages/customer/CustomerQuotesPage.tsx";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage.tsx";
+import PaymentErrorPage from "./pages/PaymentErrorPage.tsx";
+
 
 const queryClient = createQueryClient();
 
