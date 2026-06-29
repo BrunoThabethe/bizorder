@@ -355,6 +355,26 @@ const ServicesManagerPage = () => {
               </Select>
             </div>
 
+            {form.kind === "service" && (
+              <div className="space-y-2">
+                <Label htmlFor="serviceType">Service pricing model</Label>
+                <Select
+                  value={form.serviceType}
+                  onValueChange={(v) => setForm((f) => ({ ...f, serviceType: v as ServiceTypeValue }))}
+                >
+                  <SelectTrigger id="serviceType">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Fixed price</SelectItem>
+                    <SelectItem value="tiered">Tiered (sub-services)</SelectItem>
+                    <SelectItem value="hourly">Hourly (time blocks)</SelectItem>
+                    <SelectItem value="quote_based">Quote-based</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="title">{form.kind === "product" ? "Product name" : "Service name"}</Label>
               <Input
@@ -365,74 +385,222 @@ const ServicesManagerPage = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="priceMode">Price type</Label>
-              <Select
-                value={form.priceMode}
-                onValueChange={(v) => setForm((f) => ({ ...f, priceMode: v as PriceMode }))}
-              >
-                <SelectTrigger id="priceMode">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed">Fixed price</SelectItem>
-                  <SelectItem value="range">Price range (from – to)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                Use a range when the final price depends on the job (e.g. R350 – R600).
-              </p>
-            </div>
+            {(form.kind === "product" || form.serviceType === "fixed") && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="priceMode">Price type</Label>
+                  <Select
+                    value={form.priceMode}
+                    onValueChange={(v) => setForm((f) => ({ ...f, priceMode: v as PriceMode }))}
+                  >
+                    <SelectTrigger id="priceMode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">Fixed price</SelectItem>
+                      <SelectItem value="range">Price range (from – to)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {form.priceMode === "fixed" ? (
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price (ZAR)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    min={0}
-                    value={form.price}
-                    onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  {form.priceMode === "fixed" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="price">Price (ZAR)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        min={0}
+                        value={form.price}
+                        onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="priceMin">From (ZAR)</Label>
+                        <Input
+                          id="priceMin"
+                          type="number"
+                          min={0}
+                          value={form.priceMin}
+                          onChange={(e) => setForm((f) => ({ ...f, priceMin: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="priceMax">To (ZAR)</Label>
+                        <Input
+                          id="priceMax"
+                          type="number"
+                          min={0}
+                          value={form.priceMax}
+                          onChange={(e) => setForm((f) => ({ ...f, priceMax: e.target.value }))}
+                        />
+                      </div>
+                    </>
+                  )}
+                  {form.kind === "service" && form.priceMode === "fixed" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="duration">Duration (min)</Label>
+                      <Input
+                        id="duration"
+                        type="number"
+                        min={0}
+                        value={form.duration}
+                        onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+                      />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="priceMin">From (ZAR)</Label>
-                    <Input
-                      id="priceMin"
-                      type="number"
-                      min={0}
-                      value={form.priceMin}
-                      onChange={(e) => setForm((f) => ({ ...f, priceMin: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="priceMax">To (ZAR)</Label>
-                    <Input
-                      id="priceMax"
-                      type="number"
-                      min={0}
-                      value={form.priceMax}
-                      onChange={(e) => setForm((f) => ({ ...f, priceMax: e.target.value }))}
-                    />
-                  </div>
-                </>
-              )}
-              {form.kind === "service" && form.priceMode === "fixed" && (
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (min)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    min={0}
-                    value={form.duration}
-                    onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
-                  />
+              </>
+            )}
+
+            {form.kind === "service" && form.serviceType === "hourly" && (
+              <div className="space-y-2">
+                <Label htmlFor="hourlyRate">Hourly rate (ZAR)</Label>
+                <Input
+                  id="hourlyRate"
+                  type="number"
+                  min={0}
+                  value={form.hourlyRate}
+                  onChange={(e) => setForm((f) => ({ ...f, hourlyRate: e.target.value }))}
+                />
+                <p className="text-[11px] text-muted-foreground">Reference only — customers pay the tier block price below.</p>
+              </div>
+            )}
+
+            {form.kind === "service" && (form.serviceType === "tiered" || form.serviceType === "hourly") && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>{form.serviceType === "hourly" ? "Time-block tiers" : "Sub-service tiers"}</Label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      setForm((f) => ({
+                        ...f,
+                        tiers: [...f.tiers, { label: "", price: "", duration_hours: "" }],
+                      }))
+                    }
+                  >
+                    + Add tier
+                  </Button>
                 </div>
-              )}
-            </div>
+                <div className="space-y-2">
+                  {form.tiers.map((t, idx) => (
+                    <div key={idx} className="grid grid-cols-12 gap-2 rounded-xl border border-border p-2">
+                      <Input
+                        className="col-span-5"
+                        placeholder="Label (e.g. 2 hours)"
+                        value={t.label}
+                        onChange={(e) =>
+                          setForm((f) => {
+                            const next = [...f.tiers];
+                            next[idx] = { ...next[idx], label: e.target.value };
+                            return { ...f, tiers: next };
+                          })
+                        }
+                      />
+                      {form.serviceType === "hourly" && (
+                        <Input
+                          className="col-span-3"
+                          type="number"
+                          min={0}
+                          step="0.5"
+                          placeholder="Hours"
+                          value={t.duration_hours}
+                          onChange={(e) =>
+                            setForm((f) => {
+                              const next = [...f.tiers];
+                              next[idx] = { ...next[idx], duration_hours: e.target.value };
+                              return { ...f, tiers: next };
+                            })
+                          }
+                        />
+                      )}
+                      <Input
+                        className={form.serviceType === "hourly" ? "col-span-3" : "col-span-6"}
+                        type="number"
+                        min={0}
+                        placeholder="Price (ZAR)"
+                        value={t.price}
+                        onChange={(e) =>
+                          setForm((f) => {
+                            const next = [...f.tiers];
+                            next[idx] = { ...next[idx], price: e.target.value };
+                            return { ...f, tiers: next };
+                          })
+                        }
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="col-span-1"
+                        onClick={() =>
+                          setForm((f) => ({ ...f, tiers: f.tiers.filter((_, i) => i !== idx) }))
+                        }
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                  {form.tiers.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No tiers yet. Add at least one.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {form.kind === "service" && form.serviceType === "quote_based" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Quote questions</Label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      setForm((f) => ({ ...f, questions: [...f.questions, { question: "" }] }))
+                    }
+                  >
+                    + Add question
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {form.questions.map((q, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <Input
+                        placeholder={`Question ${idx + 1}`}
+                        value={q.question}
+                        onChange={(e) =>
+                          setForm((f) => {
+                            const next = [...f.questions];
+                            next[idx] = { question: e.target.value };
+                            return { ...f, questions: next };
+                          })
+                        }
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setForm((f) => ({ ...f, questions: f.questions.filter((_, i) => i !== idx) }))
+                        }
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                  {form.questions.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Add the questions customers must answer to request a quote.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
 
             {form.kind === "service" && form.priceMode === "range" && (
               <div className="space-y-2">
