@@ -18,3 +18,13 @@ verify_jwt = false
 [functions.send-newsletter-broadcast]
 verify_jwt = false
 
+[functions.paystack-init]
+verify_jwt = true
+
+[functions.paystack-webhook]
+verify_jwt = false
+
+[functions.paystack-verify]
+verify_jwt = false
+
+
