@@ -410,7 +410,6 @@ export type Database = {
           registration_number: string | null
           slug: string
           tagline: string | null
-          tradesafe_token_id: string | null
           trading_address: string | null
           updated_at: string
           website_url: string | null
@@ -438,7 +437,6 @@ export type Database = {
           registration_number?: string | null
           slug: string
           tagline?: string | null
-          tradesafe_token_id?: string | null
           trading_address?: string | null
           updated_at?: string
           website_url?: string | null
@@ -466,7 +464,6 @@ export type Database = {
           registration_number?: string | null
           slug?: string
           tagline?: string | null
-          tradesafe_token_id?: string | null
           trading_address?: string | null
           updated_at?: string
           website_url?: string | null
@@ -743,8 +740,6 @@ export type Database = {
           refunded_at: string | null
           released_at: string | null
           status: string
-          tradesafe_allocation_id: string | null
-          tradesafe_transaction_id: string | null
           updated_at: string
         }
         Insert: {
@@ -758,13 +753,11 @@ export type Database = {
           id?: string
           last_error?: string | null
           order_id: string
-          provider?: string
+          provider: string
           raw?: Json | null
           refunded_at?: string | null
           released_at?: string | null
           status?: string
-          tradesafe_allocation_id?: string | null
-          tradesafe_transaction_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -783,8 +776,6 @@ export type Database = {
           refunded_at?: string | null
           released_at?: string | null
           status?: string
-          tradesafe_allocation_id?: string | null
-          tradesafe_transaction_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -892,7 +883,6 @@ export type Database = {
           service_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           total: number
-          tradesafe_transaction_id: string | null
           updated_at: string
         }
         Insert: {
@@ -914,7 +904,6 @@ export type Database = {
           service_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
-          tradesafe_transaction_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -936,7 +925,6 @@ export type Database = {
           service_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
-          tradesafe_transaction_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1092,7 +1080,6 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
-          tradesafe_token_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1103,7 +1090,6 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
-          tradesafe_token_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1114,7 +1100,6 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
-          tradesafe_token_id?: string | null
           updated_at?: string
         }
         Relationships: []
