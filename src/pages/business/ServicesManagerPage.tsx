@@ -52,21 +52,29 @@ type ServiceExtra = {
   price_max?: number | null;
   delivery_available?: boolean | null;
   delivery_options?: DeliveryOption[] | null;
+  service_type?: ServiceTypeValue | null;
+  hourly_rate?: number | null;
+  quote_questions?: Array<{ question: string }> | null;
 };
 
 const emptyForm = {
   kind: "service" as CatalogKind,
+  serviceType: "fixed" as ServiceTypeValue,
   priceMode: "fixed" as PriceMode,
   title: "",
   price: "",
   priceMin: "",
   priceMax: "",
+  hourlyRate: "",
   duration: "",
   description: "",
   images: [] as string[],
   deliveryAvailable: false,
   deliveryOptions: [] as DeliveryOption[],
+  tiers: [] as TierDraft[],
+  questions: [] as QuestionDraft[],
 };
+
 
 const ServicesManagerPage = () => {
   const { user } = useAuth();
