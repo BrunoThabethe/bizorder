@@ -103,30 +103,52 @@ const ServicesManagerPage = () => {
     setEditingId(null);
   };
 
-  const loadIntoForm = (s: Service) => {
+  const loadIntoForm = async (s: Service) => {
     const extra = s as unknown as ServiceExtra;
     const kind = (extra.kind ?? "service") as CatalogKind;
+    const stype = (extra.service_type ?? "fixed") as ServiceTypeValue;
     const hasRange =
       extra.price_min !== null && extra.price_min !== undefined &&
       extra.price_max !== null && extra.price_max !== undefined;
     const imgs = Array.isArray(extra.images) ? extra.images.filter(Boolean) : [];
     if (imgs.length === 0 && s.image_url) imgs.push(s.image_url);
+    let tiers: TierDraft[] = [];
+    if (stype === "tiered" || stype === "hourly") {
+      try {
+        const dbTiers = await fetchServiceTiers(s.id);
+        tiers = dbTiers.map((t: ServiceTier) => ({
+          label: t.label,
+          price: String(t.price ?? ""),
+          duration_hours: t.duration_hours != null ? String(t.duration_hours) : "",
+        }));
+      } catch {
+        tiers = [];
+      }
+    }
+    const questions: QuestionDraft[] = Array.isArray(extra.quote_questions)
+      ? extra.quote_questions.map((q) => ({ question: q.question ?? "" }))
+      : [];
     setEditingId(s.id);
     setForm({
       kind,
+      serviceType: stype,
       priceMode: hasRange ? "range" : "fixed",
       title: s.title,
       price: hasRange ? "" : String(s.price ?? ""),
       priceMin: hasRange ? String(extra.price_min ?? "") : "",
       priceMax: hasRange ? String(extra.price_max ?? "") : "",
+      hourlyRate: extra.hourly_rate != null ? String(extra.hourly_rate) : "",
       duration: s.duration_minutes ? String(s.duration_minutes) : "",
       description: s.description ?? "",
       images: imgs.slice(0, MAX_IMAGES),
       deliveryAvailable: !!extra.delivery_available,
       deliveryOptions: Array.isArray(extra.delivery_options) ? extra.delivery_options : [],
+      tiers,
+      questions,
     });
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
 
   const onUploadImage = async (file: File) => {
     if (!business) {
