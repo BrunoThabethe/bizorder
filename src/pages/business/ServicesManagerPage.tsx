@@ -180,22 +180,57 @@ const ServicesManagerPage = () => {
       if (form.kind === "product" && form.images.length === 0) {
         throw new Error("Add at least one product photo.");
       }
+      const stype: ServiceTypeValue = form.kind === "product" ? "fixed" : form.serviceType;
       const isRange = form.priceMode === "range";
       const minVal = isRange ? Number(form.priceMin) : null;
       const maxVal = isRange ? Number(form.priceMax) : null;
-      if (isRange) {
-        if (!form.priceMin || !form.priceMax) throw new Error("Add both a minimum and maximum price.");
-        if ((minVal ?? 0) < 0 || (maxVal ?? 0) < 0) throw new Error("Prices must be zero or more.");
-        if ((minVal ?? 0) > (maxVal ?? 0)) throw new Error("Minimum price must be lower than the maximum.");
-      } else if (!form.price) {
-        throw new Error("Add a price.");
+
+      // Validation per service type
+      if (stype === "fixed") {
+        if (isRange) {
+          if (!form.priceMin || !form.priceMax) throw new Error("Add both a minimum and maximum price.");
+          if ((minVal ?? 0) < 0 || (maxVal ?? 0) < 0) throw new Error("Prices must be zero or more.");
+          if ((minVal ?? 0) > (maxVal ?? 0)) throw new Error("Minimum price must be lower than the maximum.");
+        } else if (!form.price) {
+          throw new Error("Add a price.");
+        }
+      } else if (stype === "tiered" || stype === "hourly") {
+        if (form.tiers.length === 0) throw new Error("Add at least one tier.");
+        for (const t of form.tiers) {
+          if (!t.label.trim()) throw new Error("Each tier needs a label.");
+          if (!t.price || Number(t.price) < 0) throw new Error("Each tier needs a valid price.");
+          if (stype === "hourly" && (!t.duration_hours || Number(t.duration_hours) <= 0)) {
+            throw new Error("Each hourly tier needs a duration in hours.");
+          }
+        }
+        if (stype === "hourly" && (!form.hourlyRate || Number(form.hourlyRate) <= 0)) {
+          throw new Error("Set an hourly rate.");
+        }
+      } else if (stype === "quote_based") {
+        if (form.questions.length === 0 || form.questions.some((q) => !q.question.trim())) {
+          throw new Error("Add at least one quote question.");
+        }
       }
+
       const primaryImage = form.images[0] ?? null;
+      // For non-fixed services, anchor price to the lowest tier (or 0 for quote-based)
+      const tierPrices = form.tiers.map((t) => Number(t.price) || 0);
+      const anchorPrice =
+        stype === "fixed"
+          ? isRange
+            ? (minVal ?? 0)
+            : Number(form.price) || 0
+          : stype === "quote_based"
+            ? 0
+            : tierPrices.length
+              ? Math.min(...tierPrices)
+              : 0;
+
       const row = {
         business_id: business.id,
         title: form.title,
         description: form.description || null,
-        price: isRange ? (minVal ?? 0) : Number(form.price) || 0,
+        price: anchorPrice,
         duration_minutes: form.kind === "service" && form.duration ? Number(form.duration) : null,
         image_url: primaryImage,
         is_active: true,
@@ -205,16 +240,40 @@ const ServicesManagerPage = () => {
           delivery_available: form.kind === "product" ? form.deliveryOptions.length > 0 : form.deliveryAvailable,
           delivery_price_per_km: 0,
           delivery_options: form.kind === "product" ? form.deliveryOptions : [],
-          price_min: isRange ? minVal : null,
-          price_max: isRange ? maxVal : null,
+          price_min: stype === "fixed" && isRange ? minVal : null,
+          price_max: stype === "fixed" && isRange ? maxVal : null,
+          service_type: stype,
+          hourly_rate: stype === "hourly" ? Number(form.hourlyRate) || null : null,
+          quote_questions: stype === "quote_based"
+            ? form.questions.map((q) => ({ question: q.question.trim() }))
+            : [],
         } as Record<string, unknown>),
       };
+
+      let serviceId = editingId;
       if (editingId) {
         const { error } = await supabase.from("services").update(row).eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("services").insert(row);
+        const { data, error } = await supabase.from("services").insert(row).select("id").single();
         if (error) throw error;
+        serviceId = data.id;
+      }
+
+      // Sync tiers
+      if (serviceId) {
+        if (stype === "tiered" || stype === "hourly") {
+          await replaceServiceTiers(
+            serviceId,
+            form.tiers.map((t) => ({
+              label: t.label.trim(),
+              price: Number(t.price) || 0,
+              duration_hours: stype === "hourly" ? Number(t.duration_hours) || null : null,
+            })),
+          );
+        } else {
+          await replaceServiceTiers(serviceId, []);
+        }
       }
     },
     onSuccess: () => {
@@ -225,6 +284,7 @@ const ServicesManagerPage = () => {
     },
     onError: (e: Error) => toast({ title: "Could not save", description: e.message, variant: "destructive" }),
   });
+
 
   const toggle = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
