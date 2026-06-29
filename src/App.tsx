@@ -103,6 +103,9 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/refunds" element={<RefundPage />} />
             <Route path="/rules" element={<PlatformRulesPage />} />
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
+            <Route path="/payment/error" element={<PaymentErrorPage />} />
+
 
 
             {/* Customer portal */}
