@@ -41,7 +41,14 @@ const PayoutsPage = () => {
     <BusinessLayout>
       <PageHeader eyebrow="Earnings" title="Payouts" description="Money owed to you and what's been paid out." />
 
+      {business && (
+        <div className="mb-5">
+          <PaystackSubaccountSetup business={business} />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+
         {(["pending", "released", "paid"] as const).map((k) => (
           <Card key={k} className="rounded-3xl border-0 shadow-card">
             <CardContent className="p-4">
