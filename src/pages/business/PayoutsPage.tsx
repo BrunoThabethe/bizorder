@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BusinessLayout } from "@/components/business/BusinessLayout";
 import { PageHeader } from "@/components/customer/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { PaystackSubaccountSetup } from "@/components/business/PaystackSubaccountSetup";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchMyBusiness, fetchPayouts, formatPrice, type Payout } from "@/lib/business/queries";
 import { cn } from "@/lib/utils";
